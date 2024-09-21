@@ -4,3 +4,7 @@ data-collector-testutils
 data-collector-core
 data-collector-docker
 data-collector-documentation
+data-collector-samples
+data-collector-connector-content-stream-discarding
+data-collector-connector-content-stream-rawdata
+data-collector-javascript-processor
