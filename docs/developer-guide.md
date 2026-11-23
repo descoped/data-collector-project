@@ -57,8 +57,9 @@ after that zip is checked against the `.sha512` file Maven publishes next to it.
 `.github/workflows/ci.yml` runs on pushes to `master`, release tags, pull requests to `master`, and by hand. It builds
 on JDK 17 and JDK 27 (Temurin) with `./mvnw --batch-mode --no-transfer-progress verify javadoc:javadoc`. On JDK 17,
 for pushes and for pull requests from this repository, it adds the `coverage` profile and a SonarCloud analysis
-(project `descoped_data-collector-project`, profile `sonar`); the analysis does not fail the build. Nothing in this
-repository publishes to Maven Central.
+(project `descoped_data-collector-project`, profile `sonar`); the analysis does not fail the build. The build on
+JDK 17 also builds the three server images (regular, distroless, debug) and starts each until it is ready; it pushes
+none. Nothing in this repository publishes to Maven Central.
 
 After a green build, the job `snapshot` publishes SNAPSHOTs to Descoped's AWS CodeArtifact repository, read publicly at
 `https://maven.descoped.io/`:
@@ -73,6 +74,9 @@ looks up the publishing endpoint and names it on the deploy command line
 (`-DaltSnapshotDeploymentRepository=descoped-snapshots::<endpoint>`), so neither the account nor the endpoint is in
 the repository. That option applies to SNAPSHOTs only, and the POM has no `<distributionManagement>`, so a release
 version has no repository to deploy to and fails. The samples are not published.
+
+A release is the server images on Docker Hub (`descoped/data-collector`), made by hand with `release.yml` and the
+owner's go-ahead; no jar is released. See [Administration: releasing](administration.md#releasing).
 
 ## Testing
 

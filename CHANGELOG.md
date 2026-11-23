@@ -13,6 +13,10 @@ dependencies and Java 17. dc's own behaviour stays as in 2.x, except for the cha
 
 ### Breaking
 
+- **Server image settings:** JVM options and system properties go in `JAVA_TOOL_OPTIONS`, which the JVM reads itself.
+  The 2.x variables `JAVA_OPTS`, `PROXY_HTTP_HOST`, `PROXY_HTTP_PORT`, `PROXY_HTTPS_HOST`, `PROXY_HTTPS_PORT` and
+  `ENABLE_JMX_REMOTE_DEBUGGING` and the script `/run.sh` are gone: give `-Dhttp.proxyHost=...` and the JMX options in
+  `JAVA_TOOL_OPTIONS`. `Dockerfile-dev` is gone; the dev image is the debug variant, and `run-dev.sh` turns JMX on.
 - **Message ids are UUIDv7**, as rawdata-client 3 gives them:
   - `ContentStreamBuffer.ulid()` is now `id()` and returns a `UUID`;
   - `io.descoped.dc.api.ulid` is replaced by `io.descoped.dc.api.ids.TimeOrderedIds`, whose order is unsigned;
@@ -31,7 +35,7 @@ dependencies and Java 17. dc's own behaviour stays as in 2.x, except for the cha
 ### Changed
 
 - **One reactor, one version.**
-  - Every module is released together under `io.descoped.dc`, with a new BOM, `data-collector-bom`.
+  - Every module has one version under `io.descoped.dc`, with a new BOM, `data-collector-bom`.
   - Artifact ids and JPMS module names are unchanged.
 - **Descoped libraries on 3.x:**
 
@@ -57,13 +61,17 @@ dependencies and Java 17. dc's own behaviour stays as in 2.x, except for the cha
   - only `true`, in any case, reads as true.
 
   The secrets-client 3 key names are mapped internally, so dc's configuration keys are unchanged.
-- **Server image:**
-  - Temurin 17 on Ubuntu, for `linux/amd64` and `linux/arm64`;
-  - runs as user `dc` (uid 10001);
-  - JMX remote is off unless `ENABLE_JMX_REMOTE_DEBUGGING=true`, which the dev image sets;
-  - only runtime jars, with no test jars or mock API;
-  - the jars are split between module path and class path the way the tests run;
-  - the release image is built from `Dockerfile`.
+- **Server image**, `descoped/data-collector` on Docker Hub, in three variants from one `Dockerfile`:
+  - regular (`X.Y.Z`, `latest`), with a shell (busybox); distroless (`X.Y.Z-distroless`), no shell and no program but
+    `java`; debug (`X.Y.Z-debug`), with the JDK's diagnostic tools;
+  - Temurin 17 linked with `jlink` to the modules dc uses, on distroless Debian 13 (glibc), for `linux/amd64` and
+    `linux/arm64`, every base pinned by digest;
+  - runs as user `dc` (uid 10001); `java` is the container's process, started with `/opt/dc/java.args`;
+  - only runtime jars, with no test jars or mock API, split between module path and class path the way the tests run;
+  - JMX remote is off in every variant.
+- **Releases** are the server images, pushed to Docker Hub with an SBOM, the provenance of the build and a cosign
+  signature by `release.yml`, which the owner starts by hand; it also tags the version and makes the GitHub release.
+  No jar is released.
 - **PostgreSQL 18** in the compose setups. `init-db-and-user.sql` makes `rdc` the owner of its database, which
   PostgreSQL 15 and later require.
 - **SNAPSHOTs** are published from CI to `https://maven.descoped.io/` (Descoped's AWS CodeArtifact repository, no

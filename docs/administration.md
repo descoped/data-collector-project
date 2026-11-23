@@ -27,7 +27,7 @@ replaces the same key from an earlier one.
 | 3 | `/conf/application.properties` | The file, if it exists. |
 | 4 | `/conf/application-override.properties` | The file, if it exists. |
 | 5 | Environment variables with the prefix `DC_` | Every variable whose name starts with `DC_`. The key is the rest of the name, unchanged: `DC_http.port` sets `http.port`. There is no case conversion and no mapping of `_` to `.`. |
-| 6 | Java system properties | Every system property, including the JVM's own (`java.version`, `user.dir`, ...). `-Dhttp.port=9991` in `JAVA_OPTS` sets `http.port`. |
+| 6 | Java system properties | Every system property, including the JVM's own (`java.version`, `user.dir`, ...). `-Dhttp.port=9991` in `JAVA_TOOL_OPTIONS` sets `http.port`. |
 
 The sources are implemented by `io.descoped.dc.application.server.Configurations`:
 
@@ -170,18 +170,30 @@ name as it is.
 
 ## The Docker image
 
-`data-collector-server/Dockerfile` builds the release image and `Dockerfile-dev` the development image. They differ
-only in `ENABLE_JMX_REMOTE_DEBUGGING`.
+`data-collector-server/Dockerfile` builds the server image in three variants, from the jars Maven has built:
+
+| Variant | Target | Base | For |
+|---|---|---|---|
+| regular | `regular` (the default) | distroless Debian 13 with busybox (`sh`, `ls`, `ps`, `wget`, ...) | looking around in a running container |
+| distroless | `distroless` | distroless Debian 13, no shell and no program but `java` | production |
+| debug | `debug` | as regular, with the JDK's diagnostic tools and modules | `jcmd`, `jstack`, `jmap`, `jstat`, `jhsdb`, JFR, heap dumps, remote JMX and a remote debugger |
+
+All three hold the same server and configuration. None turns JMX, a debugger or any other remote access on; that is
+done with `JAVA_TOOL_OPTIONS` (see [JMX and VisualVM](#jmx-and-visualvm)).
 
 | | |
 |---|---|
-| Base image | `eclipse-temurin:17.0.21_9-jdk-noble` (Temurin JDK 17 on Ubuntu, glibc), for build and runtime stages |
-| Platforms | `linux/amd64`, `linux/arm64` (the native libraries of jffi and lmdbjava are built for glibc) |
-| User | `dc`, uid 10001, group `dc` (gid 10001). `/opt/dc` and `/rawdata` belong to `dc:0` and the group has the owner's rights, so any `--user` in group 0 can write them. |
+| Java runtime | Temurin 17, linked with `jlink` to the JDK modules the server and its libraries use (found by `jdeps` and by the modules' descriptors), plus `jdk.crypto.ec`, `java.instrument`, `jdk.charsets` and `jdk.localedata`. In `/opt/java`. |
+| Platforms | `linux/amd64`, `linux/arm64` (glibc, for the native libraries of jffi and lmdbjava) |
+| User | `dc`, uid 10001, group `dc` (gid 10001). `/opt/dc` and `/rawdata` belong to `10001:0` and the group can write them, so any `--user` in group 0 can write them. |
 | Working directory | `/opt/dc` (`DC_HOME`) |
-| Ports | `9990` (HTTP, `http.port`), `9992` (JMX, only when enabled) |
+| Ports | `9990` (HTTP, `http.port`), `9992` (JMX, only when turned on) |
 | Volumes | `/conf` (configuration files), `/certs` (certificate bundles). `/rawdata` exists and is writable but is not a declared volume, and no key the code reads points at it by default. |
-| Command | `/run.sh` (`docker/start-collector.sh`) |
+| Entrypoint | `java @/opt/dc/java.args` (`docker/java.args`). `java` is the process of the container, so `docker stop` reaches it. |
+| Health check | none in the image; whoever runs it asks `/health/ready` (see [REST API](rest-api.md)) |
+
+Every base image is named by its digest, and Renovate moves the digests; the Temurin version is raised by hand with
+the Java baseline.
 
 Files in the image:
 
@@ -189,6 +201,7 @@ Files in the image:
 |---|---|
 | `/opt/dc/lib` | jars on the module path |
 | `/opt/dc/classpath` | jars on the class path |
+| `/opt/dc/java.args` | the arguments of `java` (below) |
 | `/opt/dc/log4j2-logstash.xml` | the JSON log configuration (see [Logging](#logging)) |
 | `/opt/dc/application.log` | the log file of the default log configuration, written at run time |
 | `/opt/dc/lmdb` | the default location of the integrity check indexes, written at run time |
@@ -197,10 +210,7 @@ Files in the image:
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `JAVA_OPTS` | empty | Extra JVM options, for example `-Xmx2g` or `-Dhttp.port=9991`. |
-| `PROXY_HTTP_HOST`, `PROXY_HTTP_PORT` | empty | Passed as `-Dhttp.proxyHost` and `-Dhttp.proxyPort`. |
-| `PROXY_HTTPS_HOST`, `PROXY_HTTPS_PORT` | empty | Passed as `-Dhttps.proxyHost` and `-Dhttps.proxyPort`. |
-| `ENABLE_JMX_REMOTE_DEBUGGING` | `false` in `Dockerfile`, `true` in `Dockerfile-dev` | `true` opens JMX remote on port 9992 (see [Metrics and profiling](#metrics-and-profiling)). |
+| `JAVA_TOOL_OPTIONS` | not set | Options of the JVM and system properties, for example `-Xmx2g`, `-Dhttp.port=9991`, `-Dhttps.proxyHost=proxy -Dhttps.proxyPort=3128` or `-Dlog4j2.configurationFile=/conf/log4j2.xml`. The JVM reads it itself and prints `Picked up JAVA_TOOL_OPTIONS: ...`. |
 | `LOGBACK_CONFIGURATION_FILE` | not set | Read by `Server`, which sets the system property `log4j.configurationFile` from it. See [Logging](#logging) for its effect. |
 | `LOG4J_LEVEL` | not set | Log level of `io.descoped.dc` and of the root logger in the shipped log configurations. |
 | `DC_<key>` | | Configuration keys (see [Configuration sources](#configuration-sources)). |
@@ -213,52 +223,69 @@ module, every module it requires (also `requires static` when the jar is there),
 services these modules `use`; every other jar moves to the class path directory. It prints
 `Module path: N jars, class path: M jars`.
 
-`/run.sh` starts the server like this (shown with JMX off):
+`/opt/dc/java.args` starts the server like this:
 
-```sh
-java \
-  --add-opens java.base/java.nio=lmdbjava \
-  --add-exports java.base/sun.nio.ch=lmdbjava \
-  --add-reads io.descoped.dc.core=ALL-UNNAMED \
-  --add-opens io.descoped.dc.core/io.descoped.dc.core=ALL-UNNAMED \
-  --add-reads io.descoped.dc.content.rawdata=io.descoped.dc.core \
-  --add-modules ALL-MODULE-PATH \
-  $JAVA_OPTS $PROXY_OPTS \
-  -XX:+UseContainerSupport \
-  -XX:+StartAttachListener -javaagent:/opt/dc/lib/byte-buddy-agent-<version>.jar \
-  -p /opt/dc/lib -cp '/opt/dc/classpath/*' \
-  -m io.descoped.dc.server/io.descoped.dc.server.Server
+```text
+-XX:+UseContainerSupport
+-XX:+StartAttachListener
+-javaagent:/opt/dc/lib/byte-buddy-agent.jar
+--add-opens java.base/java.nio=lmdbjava
+--add-exports java.base/sun.nio.ch=lmdbjava
+--add-reads io.descoped.dc.core=ALL-UNNAMED
+--add-opens io.descoped.dc.core/io.descoped.dc.core=ALL-UNNAMED
+--add-reads io.descoped.dc.content.rawdata=io.descoped.dc.core
+--add-modules ALL-MODULE-PATH
+--module-path /opt/dc/lib
+--class-path /opt/dc/classpath/*
+--module io.descoped.dc.server/io.descoped.dc.server.Server
 ```
 
 The Byte Buddy agent instruments the HTTP client and the content store for the Prometheus metrics.
 
 ### Building
 
-From the root of the repository:
+From the root of the repository (`package` copies the server's runtime dependencies to
+`data-collector-server/target/dependency`):
 
 ```sh
-./mvnw -pl data-collector-server -am clean verify dependency:copy-dependencies -DskipTests
-cd data-collector-server
-docker build -t data-collector:local .                         # release Dockerfile
-docker build -t data-collector:dev -f Dockerfile-dev .         # development image
+./mvnw -pl data-collector-server -am clean package -DskipTests
+docker build -t data-collector data-collector-server                                 # regular
+docker build -t data-collector:distroless --target distroless data-collector-server
+docker build -t data-collector:debug --target debug data-collector-server
 ```
 
-`data-collector-server/build-dev.sh` does the Maven build and the `Dockerfile-dev` build in one step.
-`data-collector-server/run-dev.sh` runs `data-collector:dev` with ports 9990 and 9992 and mounts `./certs` on
-`/opt/dc/certs`.
+`data-collector-server/build-dev.sh` does the Maven build and builds the debug image as `data-collector:dev`, which the
+`-dev` targets of `examples/` use. `data-collector-server/run-dev.sh` runs it with JMX remote on port 9992 of this
+machine only, and mounts `./certs` on `/opt/dc/certs`.
+
+CI builds the three images on every build on JDK 17 and starts each until it is ready; it pushes none.
 
 ### Releasing
 
-Images are pushed only from release tags, by hand, with the owner's go-ahead; CI builds no image. From a checkout of
-the release tag, build both platforms and push the version tag and `latest` (the version follows semantic versioning):
+A release is the three images on Docker Hub, `descoped/data-collector`, for `linux/amd64` and `linux/arm64`, with a
+tag of the version and a release on GitHub. No jar is released: SNAPSHOT jars go to `https://maven.descoped.io/` from
+CI, and nothing goes to Maven Central. A release is made with the owner's go-ahead only:
 
-```sh
-./mvnw -B -pl data-collector-server -am clean verify dependency:copy-dependencies -DskipTests
-cd data-collector-server
-docker login -u USERNAME
-docker buildx build --no-cache --platform linux/amd64,linux/arm64 -f ./Dockerfile \
-  -t descoped/data-collector:MAJOR.MINOR.PATCH -t descoped/data-collector:latest --push .
-```
+1. A pull request sets the version (`./mvnw versions:set -DnewVersion=X.Y.Z -DgenerateBackupPoms=false
+   -DprocessAllModules=true`), sets `project.build.outputTimestamp` in the root POM to the time of the release, and
+   gives the version's section in `CHANGELOG.md` its date (`## [X.Y.Z] - YYYY-MM-DD`). No dependency may be a SNAPSHOT.
+2. When it is merged and CI has passed on JDK 17 and 27, the owner starts the release, and approves it in the
+   environment `release`:
+
+   ```sh
+   gh workflow run release.yml -f version=X.Y.Z
+   ```
+
+   `.github/workflows/release.yml` checks all of the above before it publishes anything, then builds, pushes and signs
+   the images (cosign, keyless), with an SBOM and the provenance of the build, and makes the tag and the GitHub
+   release with the version's section of `CHANGELOG.md` as its notes. It is safe to run again until the tag exists.
+3. A pull request moves the version to the next `-SNAPSHOT`.
+
+| Tags | Image |
+|---|---|
+| `X.Y.Z`, `X.Y`, `X`, `latest` | regular |
+| `X.Y.Z-distroless`, `X.Y-distroless`, `X-distroless`, `distroless` | distroless |
+| `X.Y.Z-debug`, `X.Y-debug`, `X-debug`, `debug` | debug |
 
 ### Running
 
@@ -278,9 +305,9 @@ the container.
 
 `data-collector-server/build-and-run.sh` builds the server, copies the server jar into `target/dependency`, splits the
 jars into `target/dependency` (module path) and `target/classpath` (class path) with `docker/SplitModulePath.java`,
-and starts `io.descoped.dc.server.Server` in the foreground. It must be run from `data-collector-server`. It reads
-`ENABLE_JMX_REMOTE_DEBUGGING` like the image. Its `java` command adds `--add-opens=java.base/java.nio=lmdbjava` and the
-Byte Buddy agent, but not the other JPMS switches of `/run.sh`.
+and starts `io.descoped.dc.server.Server` in the foreground. It must be run from `data-collector-server`. With
+`ENABLE_JMX_REMOTE_DEBUGGING=true` it opens JMX remote on port 9992. Its `java` command adds
+`--add-opens=java.base/java.nio=lmdbjava` and the Byte Buddy agent, but not the other JPMS switches of `java.args`.
 
 The working directory is `data-collector-server`, so the log file is `data-collector-server/application.log` and the
 indexes go to `data-collector-server/lmdb`. Without `/conf`, the class path defaults apply: port 9990,
@@ -311,17 +338,17 @@ appender writes the same pattern to `application.log` in the working directory.
 compact JSON object per line (log4j2 `JsonLayout`, with the MDC, `timeMillis` and a field `timeZone` with the value
 `UTC`). It has the same loggers and levels, without the file appender.
 
-To select a configuration file, set the log4j2 system property in `JAVA_OPTS`:
+To select a configuration file, set the log4j2 system property in `JAVA_TOOL_OPTIONS`:
 
 ```sh
-docker run -e 'JAVA_OPTS=-Dlog4j2.configurationFile=/opt/dc/log4j2-logstash.xml' -p 9990:9990 data-collector:dev
+docker run -e 'JAVA_TOOL_OPTIONS=-Dlog4j2.configurationFile=/opt/dc/log4j2-logstash.xml' -p 9990:9990 data-collector:dev
 ```
 
 `Server.main` also reads `LOGBACK_CONFIGURATION_FILE` and sets the system property `log4j.configurationFile` from it.
 log4j2 is initialised before that, by the static logger of `Server`, and reads that property only when it initialises,
 so setting `LOGBACK_CONFIGURATION_FILE` does not change the configuration in use. The `filesystem` and
-`filesystem-secrets` Compose files of `examples/` pass `-Dlog4j2.configurationFile=/conf/log4j2.xml` in `JAVA_OPTS`
-instead.
+`filesystem-secrets` Compose files of `examples/` pass `-Dlog4j2.configurationFile=/conf/log4j2.xml` in
+`JAVA_TOOL_OPTIONS` instead.
 
 ## Metrics and profiling
 
@@ -354,8 +381,9 @@ Prometheus Java client (`simpleclient_hotspot` default exports) are registered a
 
 ### JMX and VisualVM
 
-With `ENABLE_JMX_REMOTE_DEBUGGING=true` (the default in `Dockerfile-dev`), the JVM opens JMX remote with these
-options:
+No image turns JMX remote on. To turn it on, give the JVM these options in `JAVA_TOOL_OPTIONS`
+(`data-collector-server/run-dev.sh` does; the debug image has the modules for it, and the regular and distroless
+images do not):
 
 ```text
 -Dcom.sun.management.jmxremote=true
@@ -367,14 +395,15 @@ options:
 -Djava.rmi.server.hostname=localhost
 ```
 
-JMX then has no authentication and no TLS: anyone who reaches port 9992 can use it. The release image has it off.
+JMX then has no authentication and no TLS: anyone who reaches port 9992 can use it, so publish the port on this
+machine only (`-p 127.0.0.1:9992:9992`).
 
 To profile with [VisualVM](https://visualvm.github.io/):
 
-1. Build and start the dev image, for example `make build-data-collector-dev-image` and `make start-filesystem-dev` in
-   `examples/`. The Compose files publish port 9992.
+1. Build the dev image (`data-collector-server/build-dev.sh`, or `make build-data-collector-dev-image` in `examples/`)
+   and start it with `data-collector-server/run-dev.sh`.
 2. In VisualVM, add a JMX connection to `localhost:9992`.
-3. Submit a task, for example `make collect-enheter-test`.
+3. Submit a task, for example `make collect-enheter-test` in `examples/`.
 
 Without Docker, run `ENABLE_JMX_REMOTE_DEBUGGING=true ./build-and-run.sh` in `data-collector-server`, or start
 `io.descoped.dc.server.Server` from an IDE with VisualVM attached.
@@ -589,7 +618,7 @@ Makefile targets, by group (each `-dev` variant uses the local image `data-colle
 | Filesystem | `pull-filesystem`, `start-filesystem`, `start-filesystem-with-console`, `start-filesystem-using-secrets-with-console`, `tail-filesystem`, `stop-filesystem`, `remove-filesystem`, and the `-dev` variants (`start-filesystem-with-console-dev`, `start-filesystem-using-secrets-with-console-dev`, ...) |
 | PostgreSQL | `pull-postgres`, `start-postgres`, `start-postgres-with-console`, `tail-postgres`, `stop-postgres`, `stop-postgres-clean` (also removes the volumes, the database volume `dc-postgres-test` included), `remove-postgres`, `open-postgres-adminer`, and the `-dev` variants |
 | GCS | `pull-gcs`, `start-gcs`, `tail-gcs`, `stop-gcs`, `stop-gcs-clean`, `remove-gcs`, `open-gcs-adminer`, and the `-dev` variants |
-| Dev image | `build-data-collector-dev-image` (Maven build and `Dockerfile-dev`), `update-data-collector-dev-image` (`Dockerfile-dev` only) |
+| Dev image | `build-data-collector-dev-image` (Maven build and the debug image), `update-data-collector-dev-image` (the debug image only) |
 | Tasks | `collect-enheter-test`, `collect-enheter-download`, `collect-freg-playground`, `collect-freg-konsument-test`, `collect-freg-bulk-uttrekk-prod`, `collect-sirius-person-utkast`, `collect-sirius-person-fastsatt`, `collect-tvinn-test`, `collect-tvinn-api-test`, `collect-altinn-test`, `collect-moveit-test`: each sends `PUT /tasks` with a file from `specs/` |
 | Operations | `list-tasks`, `cancel-task` (prints the `curl` command to cancel a task), `health`, `health-all`, `health-alive`, `health-ready` |
 

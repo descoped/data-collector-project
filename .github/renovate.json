@@ -76,6 +76,16 @@
       "enabled": false
     },
     {
+      "description": "The JDK of the server image is the baseline (17) and is raised by hand, together with maven.compiler.release, the workflows and .claude/CLAUDE.md (see Invariants).",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "eclipse-temurin"
+      ],
+      "allowedVersions": "/^17([._-]|$)/"
+    },
+    {
       "description": "Maven bumps through the wrapper: Renovate does not update distributionSha256Sum, so CI fails until it is set by hand (see .claude/CLAUDE.md, Maven Wrapper)",
       "matchManagers": [
         "maven-wrapper"

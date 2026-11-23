@@ -165,13 +165,22 @@
 
     <build>
         <plugins>
-            <!-- dependency:copy-dependencies gathers the image's jars: runtime scope only, no test jars -->
+            <!-- The image's jars, gathered in target/dependency by package: runtime scope only, no test jars -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <configuration>
                     <includeScope>runtime</includeScope>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>image-jars</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

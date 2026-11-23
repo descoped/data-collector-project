@@ -10,13 +10,12 @@ repository.
 
 | File | Purpose |
 |---|---|
-| `Dockerfile` | The release image: Temurin 17 on Ubuntu, `linux/amd64` and `linux/arm64`, JMX off |
-| `Dockerfile-dev` | The same image with JMX remote on (port 9992), for Visual VM |
-| `docker/start-collector.sh` | The image's launch script |
+| `Dockerfile` | The image in three variants (regular, distroless, debug): Temurin 17 linked with `jlink` on distroless Debian 13, `linux/amd64` and `linux/arm64`, JMX off |
+| `docker/java.args` | The arguments of `java`, the image's entrypoint |
 | `docker/SplitModulePath.java` | Splits the jars into module path and class path at image build |
-| `build-dev.sh` | Builds the server and the image `data-collector:dev` |
+| `build-dev.sh` | Builds the server and the debug image as `data-collector:dev` |
 | `build-and-run.sh` | Builds the server and runs it locally, without Docker |
-| `run-dev.sh` | Runs `data-collector:dev` |
+| `run-dev.sh` | Runs `data-collector:dev` with JMX remote on port 9992, on this machine only, for VisualVM |
 | `docker-compose.yml`, `init-db-and-user.sql`, `docker-postgres-init-db.bash` | A PostgreSQL 18 database for running the server locally |
 
 ## Documentation
