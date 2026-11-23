@@ -83,9 +83,10 @@ jobs:
 
   # SNAPSHOTs to Descoped's AWS CodeArtifact repository, read publicly at https://maven.descoped.io/, for development
   # across repositories: on a push to master (X.Y.Z-SNAPSHOT) and on a run by hand, on master as a push does and on
-  # any other branch as X.Y.Z-<branch>-SNAPSHOT, so it never replaces master's. Never on a pull request or a tag. The role is taken
-  # through GitHub's OIDC token; its ARN is an organization secret. The profile descoped-snapshots refuses a release
-  # version, and so does the guard below, before anything is uploaded. The samples are not published.
+  # any other branch as X.Y.Z-<branch>-SNAPSHOT, so it never replaces master's. Never on a pull request or a tag. The
+  # role is taken through GitHub's OIDC token; its ARN is an organization secret. The POM has no distributionManagement
+  # and the deploy names only a SNAPSHOT target, so a release version has no repository; the guard below refuses one
+  # before anything is uploaded. The samples are not published.
   snapshot:
     name: Publish SNAPSHOTs
     needs: build

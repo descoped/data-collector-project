@@ -82,9 +82,8 @@ this repository. The plan and its order of work are in the owner's notes; the wo
   only). **The POM has no `<distributionManagement>`**, in no profile: that is what makes a release version fail to
   deploy instead of reaching maven.descoped.io. Never add one. The AWS account and the publishing endpoint never go
   into the repository: CI takes the role from the organization secret `CODEARTIFACT_SNAPSHOTS_ROLE_ARN` and looks the
-  endpoint up. The POM reads maven.descoped.io under the id
-  `descoped-snapshots-public`, never `descoped-snapshots`, so the publishing token is not sent there. Container images
-  are pushed only from release tags.
+  endpoint up. The POM reads maven.descoped.io under the id `descoped-snapshots-public`, never `descoped-snapshots`,
+  so the publishing token is not sent there. Container images are pushed only from release tags.
 - **SonarCloud**: one project, `descoped_data-collector-project`, for the whole reactor.
 
 ## Testing
