@@ -68,9 +68,10 @@ After a green build, the job `snapshot` publishes SNAPSHOTs to Descoped's AWS Co
   `X.Y.Z-<branch>-SNAPSHOT`, so it never replaces master's;
 - never on a pull request or a tag.
 
-It deploys with the profile `descoped-snapshots`, whose enforcer refuses a release version. The job takes an AWS role through GitHub's OIDC token (the organization secret
-`CODEARTIFACT_SNAPSHOTS_ROLE_ARN`), looks up the publishing endpoint and passes it as `descoped.snapshots.url`, so
-neither the account nor the endpoint is in the repository. The samples are not published.
+It deploys with the profile `descoped-snapshots`, whose enforcer refuses a release version. The job takes an AWS role
+through GitHub's OIDC token (the organization secret `CODEARTIFACT_SNAPSHOTS_ROLE_ARN`), looks up the publishing
+endpoint and passes it as `descoped.snapshots.url`, so neither the account nor the endpoint is in the repository. The
+samples are not published.
 
 ## Testing
 
@@ -191,7 +192,7 @@ A module's tests can add controllers, services and components of their own: list
 
 `data-collector-samples` holds example specifications for real APIs, run as tests, in five submodules:
 `altinn3-test-worker`, `enhetsregisteret-worker`, `moveit-test-worker`, `ske-sirius-worker` and `toll-tvinn-worker`.
-The module is not published (`maven.deploy.skip`, `maven.install.skip`, and excluded from the Central upload).
+The module is not published (`maven.deploy.skip`, `maven.install.skip`).
 
 The samples that need closed sources are `@Disabled`, each with its reason: Maskinporten, business certificates, or
 access to Skatteetaten, Altinn, Toll or MoveIt. Some read credentials from an `application-override.properties` that is

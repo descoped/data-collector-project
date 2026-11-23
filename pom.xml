@@ -112,8 +112,8 @@
     </scm>
 
     <!-- SNAPSHOTs of the Descoped libraries, read from Descoped's AWS CodeArtifact repository without credentials.
-         Release dependencies come from Maven Central. The id differs from the publishing server's (descoped-snapshots), so
-         Maven never sends the CodeArtifact token to maven.descoped.io. -->
+         Release dependencies are resolved from Maven Central. The id differs from the publishing server's
+         (descoped-snapshots), so Maven never sends the CodeArtifact token to maven.descoped.io. -->
     <repositories>
         <repository>
             <id>descoped-snapshots-public</id>
