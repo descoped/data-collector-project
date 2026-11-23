@@ -14,7 +14,6 @@ import io.descoped.dc.api.node.builder.SecurityBuilder;
 import io.descoped.dc.core.executor.Worker;
 import io.descoped.dc.test.server.TestServer;
 import io.descoped.dc.test.server.TestServerExtension;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -56,7 +55,6 @@ public class PostTest {
 //        assertEquals("foo=bar&foobar=baz", bodyPublisher.getUrlEncodedData().produce(ExecutionContext.empty()));
     }
 
-    @Disabled
     @Test
     void buildIdentityBodyPublisher() {
         BodyPublisherBuilder bodyPublisherBuilder = bodyPublisher();

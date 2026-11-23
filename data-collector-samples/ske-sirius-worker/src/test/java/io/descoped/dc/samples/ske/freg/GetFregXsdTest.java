@@ -36,7 +36,7 @@ public class GetFregXsdTest {
     static final AtomicReference<CertificateContext> sslContext = new AtomicReference<>();
     static final AtomicReference<String> authToken = new AtomicReference<>();
 
-    @Disabled
+    @Disabled("Developer tool: downloads FREG's XSD; needs the production certificate bundle and Maskinporten")
     @Test
     void getBrsvXsd() throws IOException {
         Map<String, String> providerConfig = Map.of(

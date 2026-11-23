@@ -75,7 +75,7 @@ public class ValidateSiriusDataTest {
     static final String TOPIC = "sirius-person-" + TARGET;
     static final String JDBC_URL = "jdbc:h2:file:/tmp/siriusDb";
 
-    @Disabled
+    @Disabled("Developer tool: validates a Sirius export in target/sirius that a collection run leaves")
     @Order(2)
     @Test
     void validate() throws Exception {

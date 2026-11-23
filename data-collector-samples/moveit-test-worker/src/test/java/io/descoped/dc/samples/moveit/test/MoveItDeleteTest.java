@@ -65,7 +65,7 @@ public class MoveItDeleteTest {
             .value("data.collector.http.followRedirects", Client.Redirect.ALWAYS.name())
             .build();
 
-    @Disabled
+    @Disabled("Needs a MoveIt account (moveIt.server.url, username and password in application-override.properties); deletes files on the server")
     @Test
     void purgeAndUploadMoveItFiles() throws IOException {
         purgeMoveItFiles();

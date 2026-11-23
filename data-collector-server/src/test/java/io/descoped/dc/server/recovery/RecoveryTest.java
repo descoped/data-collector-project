@@ -55,7 +55,7 @@ public class RecoveryTest {
         }
     }
 
-    @Disabled
+    @Disabled("Developer tool: reads a local integrity check index in certs/lmdb")
     @Test
     public void readIndex() {
         DynamicConfiguration configuration = DynamicConfiguration.builder()
@@ -86,7 +86,6 @@ public class RecoveryTest {
         );
     }
 
-    @Disabled
     @Test
     public void testController() throws InterruptedException {
         DynamicConfiguration configuration = DynamicConfiguration.builder()
@@ -156,7 +155,6 @@ public class RecoveryTest {
         server.stop();
     }
 
-    @Disabled
     @Test
     public void readIndexAndConsumerSourceAndProduceTarget() throws InterruptedException {
         DynamicConfiguration configuration = DynamicConfiguration.builder()

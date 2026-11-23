@@ -16,7 +16,7 @@ public class PrintUlidToDateTimeTest {
         return new Date(id.timestamp());
     }
 
-    @Disabled
+    @Disabled("Developer tool: prints the time of a few ids")
     @Test
     void convertTimestamps() {
         String[] ulidStrings = {"01726559-367d-0000-0000-000000000001", "01726566-4dd4-0000-0000-000000000001", "01726574-0a1f-0000-0000-000000000001"};

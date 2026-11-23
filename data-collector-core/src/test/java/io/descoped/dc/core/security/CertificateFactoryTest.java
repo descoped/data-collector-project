@@ -42,7 +42,7 @@ public class CertificateFactoryTest {
         LOG.trace("map: {}", scanner.getCertificateBundles());
     }
 
-    @Disabled
+    @Disabled("Needs the business certificate volume (/Volumes/SSB BusinessSSL/certs)")
     @Test
     void thatProvidedCertificateIsLoaded() throws IOException {
         Path certsDir = Paths.get("/Volumes/SSB BusinessSSL/certs").resolve("ske-p12-certs");
@@ -93,7 +93,7 @@ public class CertificateFactoryTest {
         assertFalse(factory.getBundleNames().isEmpty());
     }
 
-    @Disabled
+    @Disabled("Needs the ske-test-certs bundle in the working directory")
     @Test
     public void thatCertificateFactoryLoadLocalBundles() {
         Path currentDir = CommonUtils.currentPath();
@@ -101,7 +101,7 @@ public class CertificateFactoryTest {
         assertTrue(factory.getBundleNames().contains("ske-test-certs"));
     }
 
-    @Disabled
+    @Disabled("Needs the business certificate volume (/Volumes/SSB BusinessSSL/certs)")
     @Test
     public void thatCertificateFactoryLoadMountedBundles() {
         Path currentDir = Paths.get("/Volumes/SSB BusinessSSL/certs");
@@ -109,7 +109,7 @@ public class CertificateFactoryTest {
         assertTrue(factory.getBundleNames().contains("ske-p12-certs"));
     }
 
-    @Disabled
+    @Disabled("Needs the business certificate volume (/Volumes/SSB BusinessSSL/certs)")
     @Test
     public void thatProdCertificateFactoryLoadMountedBundles() {
         Path currentDir = Paths.get("/Volumes/SSB BusinessSSL/certs");

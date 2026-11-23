@@ -6,7 +6,6 @@ import io.descoped.dc.api.node.builder.GetBuilder;
 import io.descoped.dc.api.node.builder.NodeBuilder;
 import io.descoped.dc.api.node.builder.PaginateBuilder;
 import io.descoped.dc.api.node.builder.SpecificationBuilder;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static io.descoped.dc.api.Builders.addContent;
@@ -146,7 +145,6 @@ public class BuilderTest {
                     .pipe(process(Processor.class).output("event-id"))
             );
 
-    @Disabled
     @Test
     public void printExecutionPlan() {
         System.out.printf("Execution-plan:%n%n%s%n", SPECIFICATION_BUILDER.end().startFunction().toPrintableExecutionPlan());

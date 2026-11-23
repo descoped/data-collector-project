@@ -13,7 +13,6 @@ import io.descoped.dc.test.server.TestServerExtension;
 import io.descoped.dc.test.server.TestServerFactory;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -188,7 +187,6 @@ public class WorkerServiceLifecycleTest {
         }
     }
 
-    @Disabled
     @ParameterizedTest
     @MethodSource("specificationBuilderProvider")
     public void testSpecificationWorkerLifecycle(Task task) throws InterruptedException {

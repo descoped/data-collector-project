@@ -39,7 +39,7 @@ public class SimpleFregMaskinportenTest {
         }
     }
 
-    @Disabled
+    @Disabled("Needs SKE's Maskinporten client and the business certificate bundle")
     @Test
     public void collectFregHendelseliste() throws IOException {
         MaskinportenAuth auth = new MaskinportenAuth(MaskinportenAuth.TEST_MASKINPORTEN_NO, configuration.find("ssb.ske.freg.test.clientId").orElse(null), CommonUtils.currentPath().resolve("pkcs12-certs"), "ssb-test-certs");

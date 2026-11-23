@@ -2,7 +2,6 @@ package io.descoped.dc.api.el;
 
 import io.descoped.dc.api.ConfigurationMap;
 import io.descoped.dc.api.context.ExecutionContext;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -16,7 +15,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ExpressionLanguageTest {
 
-    @Disabled
     @Test
     public void testSimpleExpression() {
         String expr = "${a-b}";

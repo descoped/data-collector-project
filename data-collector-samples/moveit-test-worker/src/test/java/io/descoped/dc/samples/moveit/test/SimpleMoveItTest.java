@@ -122,7 +122,7 @@ public class SimpleMoveItTest {
         return jsonParser.toPrettyJSON(node);
     }
 
-    @Disabled
+    @Disabled("Needs a MoveIt account (moveIt.server.url, username and password in application-override.properties)")
     @Test
     void downloadFlow() {
         Response responseToken = POST("/api/v1/token", AUTHORIZATION_DATA);
@@ -167,7 +167,7 @@ public class SimpleMoveItTest {
         LOG.trace("fileDetailsInFolde {} -> {}", "674932103", new String(fileDetailsInFolder.body()));
     }
 
-    @Disabled
+    @Disabled("Needs a MoveIt account (moveIt.server.url, username and password in application-override.properties)")
     @Test
     void uploadFlow() {
         Response responseToken = POST("/api/v1/token", AUTHORIZATION_DATA);

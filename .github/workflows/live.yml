@@ -1,0 +1,45 @@
+name: Live
+
+# The tests tagged "live" run collections against real public APIs (brreg's Enhetsregisteret): a source that changes or
+# goes away fails here, not in a pull request. The normal build leaves them out (see the profile live in pom.xml).
+# Weekly, and by hand. It publishes nothing. The bulk download of Enhetsregisteret alone takes over an hour, and its log
+# runs to some 150 MB, so each test's output goes to a file under target/surefire-reports, kept for a week
+# when the run fails.
+on:
+  schedule:
+    - cron: '17 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  live:
+    name: Live tests (JDK 17)
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880  # v6.3.0
+        with:
+          java-version: '17'
+          distribution: temurin
+          cache: maven
+
+      - name: Live tests
+        run: ./mvnw --batch-mode --no-transfer-progress verify -P live -Dsurefire.redirectTestOutputToFile=true
+
+      - name: Keep the test reports
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: live-surefire-reports
+          path: '**/target/surefire-reports/'
+          retention-days: 7

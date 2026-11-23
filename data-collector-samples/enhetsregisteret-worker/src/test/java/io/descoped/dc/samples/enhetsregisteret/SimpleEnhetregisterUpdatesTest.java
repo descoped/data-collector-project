@@ -13,6 +13,7 @@ import io.descoped.dc.api.node.JqPath;
 import io.descoped.dc.api.node.builder.JqPathBuilder;
 import io.descoped.dc.api.util.JsonParser;
 import io.descoped.dc.core.handler.Queries;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -59,6 +60,7 @@ public class SimpleEnhetregisterUpdatesTest {
         );
     }
 
+    @Tag("live")
     @ParameterizedTest
     @MethodSource("jsonData")
     void thatQueryUpdateIdIsValid(String body) {

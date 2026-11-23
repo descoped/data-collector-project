@@ -144,7 +144,7 @@ public class MoveItDownloadTest {
                 );
     }
 
-    @Disabled
+    @Disabled("Needs a MoveIt account (moveIt.server.url, username and password in application-override.properties)")
     @Test
     void consumeMoveItFiles() {
         Worker.newBuilder()
@@ -154,7 +154,7 @@ public class MoveItDownloadTest {
                 .run();
     }
 
-    @Disabled
+    @Disabled("Round-trip equality fails: equals is broken on some builders (a known 2.x defect, see ROADMAP.md)")
     @Test
     void validateDeserializer() {
         SpecificationBuilder actualSpecificationBuilder = createSpecification(configuration.find("moveIt.server.url").orElse(null));
@@ -163,7 +163,7 @@ public class MoveItDownloadTest {
         assertEquals(actualSpecificationBuilder, expectedSpecificationBuilder);
     }
 
-    @Disabled
+    @Disabled("Generator, not a test: writes this sample's specification to examples/specs; run it by hand to regenerate the file")
     @Test
     public void writeTargetConsumerSpec() throws IOException {
         Path currentPath = CommonUtils.currentPath().getParent().getParent();

@@ -8,7 +8,6 @@ import io.descoped.dc.test.client.TestClient;
 import io.descoped.dc.test.server.TestServer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +59,6 @@ public class RawdataFileSystemServiceTest {
         }
     }
 
-    @Disabled
     @Test
     public void exportData() throws IOException {
         ContentStoreComponent contentStoreComponent = server.getApplication().unwrap(ContentStoreComponent.class);

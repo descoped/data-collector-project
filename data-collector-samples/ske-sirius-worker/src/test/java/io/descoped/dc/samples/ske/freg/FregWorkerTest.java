@@ -89,7 +89,7 @@ public class FregWorkerTest {
 //                    .pipe(console())
             );
 
-    @Disabled
+    @Disabled("Needs SKE's test certificate bundle (ske-test-certs) from the business certificate volume")
     @Test
     public void thatWorkerCollectFregData() {
         Worker.newBuilder()
@@ -124,7 +124,7 @@ public class FregWorkerTest {
 
     }
 
-    @Disabled
+    @Disabled("Generator, not a test: writes this sample's specification to examples/specs; run it by hand to regenerate the file")
     @Test
     public void writeTargetConsumerSpec() throws IOException {
         Path currentPath = CommonUtils.currentPath().getParent().getParent();

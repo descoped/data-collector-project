@@ -13,7 +13,6 @@ import io.descoped.dc.server.db.LmdbEnvironment;
 import io.descoped.dc.test.client.ResponseHelper;
 import io.descoped.dc.test.client.TestClient;
 import io.descoped.dc.test.server.TestServer;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +54,6 @@ public class IntegrityCheckTest {
         }
     }
 
-    @Disabled
     @Test
     void testIntegrityChecker() throws Exception {
         DynamicConfiguration configuration = DynamicConfiguration.builder()
@@ -106,7 +104,6 @@ public class IntegrityCheckTest {
         LOG.trace("summary: {}", json);
     }
 
-    @Disabled
     @Test
     void testIntegrityCheckerController() throws InterruptedException {
         DynamicConfiguration configuration = DynamicConfiguration.builder()
@@ -168,7 +165,6 @@ public class IntegrityCheckTest {
         server.stop();
     }
 
-    @Disabled
     @Test
     void writeJsonChunk() throws IOException {
         Path jsonExportPath = CommonUtils.currentPath().resolve("target").resolve("lmdb").resolve("export");

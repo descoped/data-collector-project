@@ -122,7 +122,7 @@ public class FregSvalbardWithMaskinportenWorkerTest {
                             .pipe(addContent("${position}", "person"))
             );
 
-    @Disabled
+    @Disabled("Needs SKE's Maskinporten client and the business certificate volume")
     @Test
     public void thatWorkerCollectFregData() {
         Path scanDirectory = CommonUtils.currentPath().resolve("certs");
