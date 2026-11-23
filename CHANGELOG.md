@@ -43,6 +43,10 @@ dependencies and Java 17. dc's own behaviour stays as in 2.x, except for the cha
   | encryption-util | 3.0.1 |
   | rawdata-client | 3.1.0-SNAPSHOT, 3.1.0 once released |
 
+  rawdata-client 3.1 makes a message id unique in its topic: the same message again is ignored, a different one
+  under a taken id is refused. A recovery run repeated over the same source no longer duplicates the target's
+  messages (on 3.0.1 the `filesystem` provider stored them twice and `postgres` failed on its key).
+
   Every other dependency is at its latest version except two:
   - classgraph stays on 4.8.200, because later versions need Java 25;
   - commons-jexl3 stays on 3.2.1, because later versions deny the class access that specification expressions use.

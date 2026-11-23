@@ -64,8 +64,8 @@ After a green build, the job `snapshot` publishes SNAPSHOTs to Descoped's AWS Co
 `https://maven.descoped.io/`:
 
 - on a push to `master`, as `X.Y.Z-SNAPSHOT`;
-- on a run by hand on another branch (`gh workflow run ci.yml --ref <branch>`), as `X.Y.Z-<branch>-SNAPSHOT`, so it
-  never replaces master's;
+- on a run by hand (`gh workflow run ci.yml --ref <branch>`): on `master` as a push does, on any other branch as
+  `X.Y.Z-<branch>-SNAPSHOT`, so it never replaces master's;
 - never on a pull request or a tag.
 
 It deploys with the profile `descoped-snapshots`, whose enforcer refuses a release version; the profile `central`

@@ -82,8 +82,8 @@ jobs:
         run: ./mvnw --batch-mode --no-transfer-progress -P sonar org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
 
   # SNAPSHOTs to Descoped's AWS CodeArtifact repository, read publicly at https://maven.descoped.io/, for development
-  # across repositories: on a push to master (X.Y.Z-SNAPSHOT) and on a run by hand (X.Y.Z-<branch>-SNAPSHOT on a
-  # branch other than master, so it never replaces master's). Never on a pull request or a tag. The role is taken
+  # across repositories: on a push to master (X.Y.Z-SNAPSHOT) and on a run by hand, on master as a push does and on
+  # any other branch as X.Y.Z-<branch>-SNAPSHOT, so it never replaces master's. Never on a pull request or a tag. The role is taken
   # through GitHub's OIDC token; its ARN is an organization secret. The profile descoped-snapshots refuses a release
   # version, and so does the guard below, before anything is uploaded. The samples are not published.
   snapshot:
@@ -138,6 +138,7 @@ jobs:
           role-to-assume: ${{ secrets.CODEARTIFACT_SNAPSHOTS_ROLE_ARN }}
           aws-region: eu-north-1
           role-duration-seconds: 900
+          mask-aws-account-id: true
           output-credentials: true
           output-env-credentials: false
 
