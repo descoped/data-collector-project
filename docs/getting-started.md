@@ -22,31 +22,23 @@ All commands below start from the root of the repository unless they say otherwi
 ## 1. Build the server
 
 The server image is built from the jars Maven puts in `data-collector-server/target`. Build the server module and the
-modules it depends on, and copy its dependencies:
+modules it depends on; `package` also copies the server's runtime dependencies to `target/dependency`:
 
 ```sh
-./mvnw -pl data-collector-server -am clean verify dependency:copy-dependencies -DskipTests
+./mvnw -pl data-collector-server -am clean package -DskipTests
 ```
 
-Then build an image in `data-collector-server`. There are two Dockerfiles:
-
-| Dockerfile | Typical tag | JMX remote on port 9992 |
-|---|---|---|
-| `Dockerfile` | the release image | off (`ENABLE_JMX_REMOTE_DEBUGGING=false`) |
-| `Dockerfile-dev` | `data-collector:dev` | on (`ENABLE_JMX_REMOTE_DEBUGGING=true`), for VisualVM |
-
-The `examples/` Makefile targets that end in `-dev` use the tag `data-collector:dev`, so build that one:
+Then build an image from `data-collector-server/Dockerfile`. It has three variants (regular, distroless and debug; see
+[Administration: the Docker image](administration.md#the-docker-image)). The `examples/` Makefile targets that end in
+`-dev` use the tag `data-collector:dev`, the debug image, so build that one:
 
 ```sh
-cd data-collector-server
-docker build -t data-collector:dev -f Dockerfile-dev .
+docker build -t data-collector:dev --target debug data-collector-server
 ```
 
-`data-collector-server/build-dev.sh` runs both steps (the Maven build and the `docker build` of `Dockerfile-dev`), and
-`make build-data-collector-dev-image` in `examples/` does the same.
-
-The dev image has JMX remote on, without authentication or TLS. See
-[Administration: metrics and profiling](administration.md#metrics-and-profiling).
+`data-collector-server/build-dev.sh` runs both steps, and `make build-data-collector-dev-image` in `examples/` does the
+same. No image turns JMX remote on; `data-collector-server/run-dev.sh` runs the dev image with it on, on this machine
+only. See [Administration: metrics and profiling](administration.md#metrics-and-profiling).
 
 ### Without Docker
 

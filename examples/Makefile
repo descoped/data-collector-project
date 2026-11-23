@@ -117,11 +117,11 @@ remove-filesystem: ## remove filesystem
 
 .PHONY: build-data-collector-dev-image
 build-data-collector-dev-image: ## Build data collector dev image
-	@cd .. && ./mvnw -pl data-collector-server -am clean verify dependency:copy-dependencies -DskipTests && cd data-collector-server && docker build -t ${DC_LOCAL_IMAGE} -f Dockerfile-dev .
+	@cd .. && ./mvnw -pl data-collector-server -am clean package -DskipTests && cd data-collector-server && docker build -t ${DC_LOCAL_IMAGE} --target debug .
 
 .PHONY: update-data-collector-dev-image
 update-data-collector-dev-image: ## Update data collector dev image
-	@cd ../data-collector-server && docker build -t ${DC_LOCAL_IMAGE} -f Dockerfile-dev .
+	@cd ../data-collector-server && docker build -t ${DC_LOCAL_IMAGE} --target debug .
 
 #
 # docker-compose postgres-dev

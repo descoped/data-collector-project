@@ -14,7 +14,7 @@ filesystem or Google Cloud Storage), optionally encrypted.
 You can use dc in two ways:
 - **As a server:** an HTTP server runs specifications as tasks (`PUT /tasks`). It also indexes a topic and reports its
   duplicate positions (the integrity check), and copies an indexed topic to a new topic (recovery). It ships as a
-  Docker image.
+  Docker image, `descoped/data-collector` on Docker Hub.
 - **As a library:** you build a specification with the Java DSL and run it with a `Worker` in your own application.
 
 ## Quick start
@@ -54,8 +54,9 @@ make stop-filesystem-dev
 
 ## Modules
 
-Every module is released together under the Maven group `io.descoped.dc`. Import `data-collector-bom` to align their
-versions.
+Every module has one version, under the Maven group `io.descoped.dc`. A release is the server image; the jars are
+published as SNAPSHOTs only, to `https://maven.descoped.io/` (see the [developer guide](docs/developer-guide.md)).
+Import `data-collector-bom` to align their versions.
 
 | Module | JPMS module | Role |
 |---|---|---|

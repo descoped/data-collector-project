@@ -13,7 +13,8 @@ Done:
 - The Descoped libraries on 3.x (rawdata-client, dynamic-configuration, secrets-client, encryption-util,
   service-provider-api) and every other dependency at its latest version.
 - CI on JDK 17 and 27.
-- The server image for amd64 and arm64, running as a non-root user.
+- The server image for amd64 and arm64, running as a non-root user, in three variants (regular, distroless, debug),
+  released by `release.yml` to Docker Hub (`descoped/data-collector`).
 - Documentation in `docs/` and the examples in `examples/`.
 - SNAPSHOTs published from CI to `https://maven.descoped.io/`.
 
@@ -33,8 +34,8 @@ Before the release:
   - encryption that fails closed when a key or secret is missing;
   - secrets and `Authorization` headers kept out of logs, exception messages and health output.
 - **Build:** test coverage for every module in SonarCloud.
-- **Release:** rawdata-client 3.1.0 released, in place of the 3.1.0-SNAPSHOT dc builds on now; where a dc release is
-  published (never Maven Central) is the owner's decision; the image from the release tag.
+- **Release:** rawdata-client 3.1.0 released, in place of the 3.1.0-SNAPSHOT dc builds on now (`release.yml` refuses a
+  SNAPSHOT dependency); then the images on Docker Hub, with the owner's go-ahead.
 
 ## After 3.0.0
 

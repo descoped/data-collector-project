@@ -76,6 +76,13 @@ this repository. The plan and its order of work are in the owner's notes; the wo
   configuration is removed, not carried along.
 - **Never to Maven Central.** Nothing in this repository publishes to Maven Central, by CI or by hand, and the POM
   has no profile for it (owner's decision, 2026-11-23). Releases only with the owner's go-ahead.
+- **A release is the server image on Docker Hub** (`descoped/data-collector`), and no jar is released (owner's
+  decision, 2026-11-23): dc is an application. `release.yml`, started by hand by the owner in the environment
+  `release`, checks the version, the dated `CHANGELOG.md` section, that no dependency is a SNAPSHOT and that CI passed,
+  then pushes the three variants (regular, distroless, debug; amd64 and arm64; SBOM, provenance, cosign) and makes the
+  tag and the GitHub release. The image follows LDS's scheme: one `Dockerfile`, a `jlink` runtime of Temurin 17 on
+  distroless Debian 13, every base pinned by digest, `java` as the container's process, no remote access on in any
+  variant (`JAVA_TOOL_OPTIONS` turns it on). CI builds and starts the three images on every build on JDK 17.
 - **SNAPSHOTs go to Descoped's AWS CodeArtifact repository** only (read publicly at `https://maven.descoped.io/`),
   from CI's job `snapshot`: on a push to `master`, and on a run by hand on a branch under `X.Y.Z-<branch>-SNAPSHOT`.
   The job names the target on its command line (`-DaltSnapshotDeploymentRepository`, which applies to SNAPSHOTs
@@ -83,7 +90,7 @@ this repository. The plan and its order of work are in the owner's notes; the wo
   deploy instead of reaching maven.descoped.io. Never add one. The AWS account and the publishing endpoint never go
   into the repository: CI takes the role from the organization secret `CODEARTIFACT_SNAPSHOTS_ROLE_ARN` and looks the
   endpoint up. The POM reads maven.descoped.io under the id `descoped-snapshots-public`, never `descoped-snapshots`,
-  so the publishing token is not sent there. Container images are pushed only from release tags.
+  so the publishing token is not sent there.
 - **SonarCloud**: one project, `descoped_data-collector-project`, for the whole reactor.
 
 ## Testing
