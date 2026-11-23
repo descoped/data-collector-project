@@ -58,7 +58,20 @@ after that zip is checked against the `.sha512` file Maven publishes next to it.
 on JDK 17 and JDK 27 (Temurin) with `./mvnw --batch-mode --no-transfer-progress verify javadoc:javadoc`. On JDK 17,
 for pushes and for pull requests from this repository, it adds the `coverage` profile and a SonarCloud analysis
 (project `descoped_data-collector-project`, profile `sonar`); the analysis does not fail the build. CI publishes
-nothing.
+nothing to Maven Central.
+
+After a green build, the job `snapshot` publishes SNAPSHOTs to Descoped's AWS CodeArtifact repository, read publicly at
+`https://maven.descoped.io/`:
+
+- on a push to `master`, as `X.Y.Z-SNAPSHOT`;
+- on a run by hand (`gh workflow run ci.yml --ref <branch>`): on `master` as a push does, on any other branch as
+  `X.Y.Z-<branch>-SNAPSHOT`, so it never replaces master's;
+- never on a pull request or a tag.
+
+It deploys with the profile `descoped-snapshots`, whose enforcer refuses a release version; the profile `central`
+refuses a SNAPSHOT. The job takes an AWS role through GitHub's OIDC token (the organization secret
+`CODEARTIFACT_SNAPSHOTS_ROLE_ARN`), looks up the publishing endpoint and passes it as `descoped.snapshots.url`, so
+neither the account nor the endpoint is in the repository. The samples are not published.
 
 ## Testing
 
@@ -195,8 +208,25 @@ certificate bundles, are developer tools, or name a known defect in their reason
 
 ### Dependencies
 
-Import the BOM and depend on core and the connectors you use. Releases are on Maven Central; SNAPSHOTs are not
-published.
+Import the BOM and depend on core and the connectors you use. Releases are on Maven Central. SNAPSHOTs are at
+`https://maven.descoped.io/`, which needs no credentials:
+
+```xml
+<repositories>
+    <repository>
+        <id>descoped-snapshots-public</id>
+        <url>https://maven.descoped.io/</url>
+        <releases>
+            <enabled>false</enabled>
+        </releases>
+        <snapshots>
+            <enabled>true</enabled>
+        </snapshots>
+    </repository>
+</repositories>
+```
+
+The BOM:
 
 ```xml
 <dependencyManagement>

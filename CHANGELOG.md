@@ -41,7 +41,11 @@ dependencies and Java 17. dc's own behaviour stays as in 2.x, except for the cha
   | dynamic-configuration | 3.0.1 |
   | secrets-client | 3.0.0 |
   | encryption-util | 3.0.1 |
-  | rawdata-client | 3.0.1 |
+  | rawdata-client | 3.1.0-SNAPSHOT, 3.1.0 once released |
+
+  rawdata-client 3.1 makes a message id unique in its topic: the same message again is ignored, a different one
+  under a taken id is refused. A recovery run repeated over the same source no longer duplicates the target's
+  messages (on 3.0.1 the `filesystem` provider stored them twice and `postgres` failed on its key).
 
   Every other dependency is at its latest version except two:
   - classgraph stays on 4.8.200, because later versions need Java 25;
@@ -62,6 +66,9 @@ dependencies and Java 17. dc's own behaviour stays as in 2.x, except for the cha
   - the release image is built from `Dockerfile`.
 - **PostgreSQL 18** in the compose setups. `init-db-and-user.sql` makes `rdc` the owner of its database, which
   PostgreSQL 15 and later require.
+- **SNAPSHOTs** are published from CI to `https://maven.descoped.io/` (Descoped's AWS CodeArtifact repository, no
+  credentials to read): `X.Y.Z-SNAPSHOT` from `master`, `X.Y.Z-<branch>-SNAPSHOT` from a branch run by hand. Releases
+  are on Maven Central only, and SNAPSHOTs never go there.
 - **Documentation** is Markdown in `docs/`, revised for 3.0. The examples (compose setups, profiles, specifications)
   are in `examples/`.
 

@@ -60,7 +60,7 @@
         <secrets-client-api.version>3.0.0</secrets-client-api.version>
         <secrets-provider.version>3.0.0</secrets-provider.version>
         <encryption-util.version>3.0.1</encryption-util.version>
-        <rawdata-client.version>3.0.1</rawdata-client.version>
+        <rawdata-client.version>3.1.0-SNAPSHOT</rawdata-client.version>
 
         <slf4j.version>2.0.20</slf4j.version>
         <log4j2.version>2.26.1</log4j2.version>
@@ -111,6 +111,22 @@
         <tag>HEAD</tag>
     </scm>
 
+    <!-- SNAPSHOTs of the Descoped libraries, read from Descoped's AWS CodeArtifact repository without credentials.
+         Releases come from Maven Central only. The id differs from the publishing server's (descoped-snapshots), so
+         Maven never sends the CodeArtifact token to maven.descoped.io. -->
+    <repositories>
+        <repository>
+            <id>descoped-snapshots-public</id>
+            <url>https://maven.descoped.io/</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
     <profiles>
         <!-- The tests tagged "live", against real public APIs, and only those: ./mvnw verify -P live. A module
              without any finds none, so -Dsurefire.failIfNoSpecifiedTests is not needed. -->
@@ -134,7 +150,8 @@
             </properties>
         </profile>
         <!-- Releases to Maven Central through the Central Portal, by central-publishing-maven-plugin. Only releases:
-             SNAPSHOTs are not published.
+             the enforcer fails a SNAPSHOT version before anything is uploaded. SNAPSHOTs go to maven.descoped.io
+             only (profile descoped-snapshots).
              Release (Ove approves each one): ./mvnw release:prepare release:perform
              Server `central` in ~/.m2/settings.xml holds the Portal user token and, for Maven 3.10, lists
              https://central.sonatype.com in repositoryOrigins. Releases are uploaded with autoPublish=false and
@@ -145,8 +162,29 @@
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>only-releases-to-central</id>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                                <configuration>
+                                    <rules>
+                                        <requireReleaseVersion>
+                                            <message>Only releases go to Maven Central; SNAPSHOTs go to maven.descoped.io (-P descoped-snapshots).</message>
+                                        </requireReleaseVersion>
+                                        <requireReleaseDeps>
+                                            <message>A release has no SNAPSHOT dependency.</message>
+                                        </requireReleaseDeps>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>3.4.0</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
@@ -179,6 +217,70 @@
                             <waitUntil>validated</waitUntil>
                             <!-- The samples are examples, never published. -->
                             <excludeArtifacts>data-collector-samples,data-collector-moveit-test-worker,data-collector-altinn3-test-worker,data-collector-ske-sirius-worker,data-collector-toll-tvinn-worker,enhetsregisteret-worker</excludeArtifacts>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- SNAPSHOTs to Descoped's AWS CodeArtifact repository, read publicly at https://maven.descoped.io/. CI's job
+             snapshot deploys with it; nothing else does. Only SNAPSHOTs: the enforcer fails a release version before
+             anything is uploaded. The publishing endpoint is not in the repository: CI looks it up and sets
+             descoped.snapshots.url in the settings.xml it writes. The samples are not published (maven.deploy.skip). -->
+        <profile>
+            <id>descoped-snapshots</id>
+            <distributionManagement>
+                <snapshotRepository>
+                    <id>descoped-snapshots</id>
+                    <url>${descoped.snapshots.url}</url>
+                </snapshotRepository>
+            </distributionManagement>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>only-snapshots-to-descoped</id>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                                <configuration>
+                                    <rules>
+                                        <requireSnapshotVersion>
+                                            <message>Only SNAPSHOTs go to maven.descoped.io; releases go to Maven Central (-P central,sign).</message>
+                                        </requireSnapshotVersion>
+                                        <requireProperty>
+                                            <property>descoped.snapshots.url</property>
+                                            <regex>https://\S+/</regex>
+                                            <message>descoped.snapshots.url is not set: define it in a settings.xml profile (CI writes one).</message>
+                                            <regexMessage>descoped.snapshots.url must be an https URL ending in /, not empty or an unexpanded ${env...}.</regexMessage>
+                                        </requireProperty>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <!-- Sources for IDEs that use a SNAPSHOT. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <!-- Every module is built before the first upload, so a failed build uploads nothing. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-deploy-plugin</artifactId>
+                        <configuration>
+                            <deployAtEnd>true</deployAtEnd>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -338,6 +440,25 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-deploy-plugin</artifactId>
                     <version>3.2.0</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>3.4.0</version>
+                </plugin>
+
+                <!-- help:evaluate and versions:set, used by CI's snapshot job -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-help-plugin</artifactId>
+                    <version>3.6.0</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>versions-maven-plugin</artifactId>
+                    <version>2.25.3</version>
                 </plugin>
 
                 <plugin>
