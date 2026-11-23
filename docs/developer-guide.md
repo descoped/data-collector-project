@@ -57,8 +57,8 @@ after that zip is checked against the `.sha512` file Maven publishes next to it.
 `.github/workflows/ci.yml` runs on pushes to `master`, release tags, pull requests to `master`, and by hand. It builds
 on JDK 17 and JDK 27 (Temurin) with `./mvnw --batch-mode --no-transfer-progress verify javadoc:javadoc`. On JDK 17,
 for pushes and for pull requests from this repository, it adds the `coverage` profile and a SonarCloud analysis
-(project `descoped_data-collector-project`, profile `sonar`); the analysis does not fail the build. CI publishes
-nothing to Maven Central.
+(project `descoped_data-collector-project`, profile `sonar`); the analysis does not fail the build. Nothing in this
+repository publishes to Maven Central.
 
 After a green build, the job `snapshot` publishes SNAPSHOTs to Descoped's AWS CodeArtifact repository, read publicly at
 `https://maven.descoped.io/`:
@@ -68,8 +68,7 @@ After a green build, the job `snapshot` publishes SNAPSHOTs to Descoped's AWS Co
   `X.Y.Z-<branch>-SNAPSHOT`, so it never replaces master's;
 - never on a pull request or a tag.
 
-It deploys with the profile `descoped-snapshots`, whose enforcer refuses a release version; the profile `central`
-refuses a SNAPSHOT. The job takes an AWS role through GitHub's OIDC token (the organization secret
+It deploys with the profile `descoped-snapshots`, whose enforcer refuses a release version. The job takes an AWS role through GitHub's OIDC token (the organization secret
 `CODEARTIFACT_SNAPSHOTS_ROLE_ARN`), looks up the publishing endpoint and passes it as `descoped.snapshots.url`, so
 neither the account nor the endpoint is in the repository. The samples are not published.
 
@@ -208,7 +207,7 @@ certificate bundles, are developer tools, or name a known defect in their reason
 
 ### Dependencies
 
-Import the BOM and depend on core and the connectors you use. Releases are on Maven Central. SNAPSHOTs are at
+Import the BOM and depend on core and the connectors you use. dc is not published to Maven Central. SNAPSHOTs are at
 `https://maven.descoped.io/`, which needs no credentials:
 
 ```xml

@@ -3,9 +3,9 @@ name: CI
 # Every build compiles with `release 17`, the baseline, so the bytecode does not depend on the JDK. It is built and tested
 # on JDK 17, the oldest runtime, and on JDK 27, the runtime the server is headed for. Every run: build, tests and Javadoc
 # of every module. Pushes to master and release tags, and pull requests from this repository, add coverage and the
-# SonarCloud analysis on JDK 17 (not gating; pull requests from forks get no token). CI publishes nothing to Maven
-# Central: releases are signed and uploaded by hand (see .claude/CLAUDE.md). After a green build, a push to master, or a
-# run by hand on a branch, publishes SNAPSHOTs to maven.descoped.io (job snapshot), never a release.
+# SonarCloud analysis on JDK 17 (not gating; pull requests from forks get no token). Nothing in this repository
+# publishes to Maven Central (see .claude/CLAUDE.md). After a green build, a push to master, or a run by hand on a
+# branch, publishes SNAPSHOTs to maven.descoped.io (job snapshot), never a release.
 on:
   push:
     branches: [master]
