@@ -78,7 +78,7 @@ this repository. The plan and its order of work are in the owner's notes; the wo
   (profiles `central,sign`); CI publishes nothing to Central. SNAPSHOTs go to Descoped's AWS CodeArtifact repository
   only (read publicly at `https://maven.descoped.io/`), from CI's job `snapshot` with the profile `descoped-snapshots`:
   on a push to `master`, and on a run by hand on a branch under `X.Y.Z-<branch>-SNAPSHOT`. Each profile's enforcer
-  refuses the other kind of version. The AWS account and the publishing endpoint never go into the repository: CI
+  refuses the other kind of version, and `central` refuses a SNAPSHOT dependency. The AWS account and the publishing endpoint never go into the repository: CI
   takes the role from the organization secret `CODEARTIFACT_SNAPSHOTS_ROLE_ARN` and looks the endpoint up. The POM
   reads maven.descoped.io under the id `descoped-snapshots-public`, never `descoped-snapshots`, so the publishing token
   is not sent there. Container images are pushed only

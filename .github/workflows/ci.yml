@@ -193,5 +193,5 @@ jobs:
             </activeProfiles>
           </settings>
           XML
-          ./mvnw --batch-mode --no-transfer-progress -P descoped-snapshots -DskipTests \
-            -Dmaven.repository.credentialScope=strict deploy
+          ./mvnw --batch-mode --no-transfer-progress -P descoped-snapshots -Dmaven.repository.credentialScope=strict \
+            -DskipTests -DskipITs deploy
