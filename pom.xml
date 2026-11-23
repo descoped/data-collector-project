@@ -112,8 +112,8 @@
     </scm>
 
     <!-- SNAPSHOTs of the Descoped libraries, read from Descoped's AWS CodeArtifact repository without credentials.
-         Releases come from Maven Central only. The id differs from the publishing server's (descoped-snapshots), so
-         Maven never sends the CodeArtifact token to maven.descoped.io. -->
+         Release dependencies are resolved from Maven Central. The id differs from the publishing server's
+         (descoped-snapshots), so Maven never sends the CodeArtifact token to maven.descoped.io. -->
     <repositories>
         <repository>
             <id>descoped-snapshots-public</id>
@@ -149,79 +149,6 @@
                 <lint.this-escape>,-this-escape</lint.this-escape>
             </properties>
         </profile>
-        <!-- Releases to Maven Central through the Central Portal, by central-publishing-maven-plugin. Only releases:
-             the enforcer fails a SNAPSHOT version before anything is uploaded. SNAPSHOTs go to maven.descoped.io
-             only (profile descoped-snapshots).
-             Release (Ove approves each one): ./mvnw release:prepare release:perform
-             Server `central` in ~/.m2/settings.xml holds the Portal user token and, for Maven 3.10, lists
-             https://central.sonatype.com in repositoryOrigins. Releases are uploaded with autoPublish=false and
-             published by hand in the Portal. -->
-        <profile>
-            <id>central</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-enforcer-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>only-releases-to-central</id>
-                                <goals>
-                                    <goal>enforce</goal>
-                                </goals>
-                                <configuration>
-                                    <rules>
-                                        <requireReleaseVersion>
-                                            <message>Only releases go to Maven Central; SNAPSHOTs go to maven.descoped.io (-P descoped-snapshots).</message>
-                                        </requireReleaseVersion>
-                                        <requireReleaseDeps>
-                                            <message>A release has no SNAPSHOT dependency.</message>
-                                        </requireReleaseDeps>
-                                    </rules>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>attach-sources</id>
-                                <goals>
-                                    <goal>jar-no-fork</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>attach-javadocs</id>
-                                <goals>
-                                    <goal>jar</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.sonatype.central</groupId>
-                        <artifactId>central-publishing-maven-plugin</artifactId>
-                        <version>0.12.0</version>
-                        <extensions>true</extensions>
-                        <configuration>
-                            <publishingServerId>central</publishingServerId>
-                            <autoPublish>false</autoPublish>
-                            <waitUntil>validated</waitUntil>
-                            <!-- The samples are examples, never published. -->
-                            <excludeArtifacts>data-collector-samples,data-collector-moveit-test-worker,data-collector-altinn3-test-worker,data-collector-ske-sirius-worker,data-collector-toll-tvinn-worker,enhetsregisteret-worker</excludeArtifacts>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
 
         <!-- SNAPSHOTs to Descoped's AWS CodeArtifact repository, read publicly at https://maven.descoped.io/. CI's job
              snapshot deploys with it; nothing else does. Only SNAPSHOTs: the enforcer fails a release version before
@@ -249,7 +176,7 @@
                                 <configuration>
                                     <rules>
                                         <requireSnapshotVersion>
-                                            <message>Only SNAPSHOTs go to maven.descoped.io; releases go to Maven Central (-P central,sign).</message>
+                                            <message>Only SNAPSHOTs go to maven.descoped.io.</message>
                                         </requireSnapshotVersion>
                                         <requireProperty>
                                             <property>descoped.snapshots.url</property>
@@ -282,29 +209,6 @@
                         <configuration>
                             <deployAtEnd>true</deployAtEnd>
                         </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <!-- Signing, required by Central for releases. gpg's default-key signs (see ~/.m2/NOTES.md). -->
-        <profile>
-            <id>sign</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <version>3.2.8</version>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                            </execution>
-                        </executions>
                     </plugin>
                 </plugins>
             </build>
@@ -468,7 +372,6 @@
                     <configuration>
                         <tagNameFormat>@{project.version}</tagNameFormat>
                         <autoVersionSubmodules>true</autoVersionSubmodules>
-                        <releaseProfiles>central,sign</releaseProfiles>
                         <goals>deploy</goals>
                     </configuration>
                 </plugin>
@@ -491,7 +394,7 @@
                                 <requireJavaVersion>
                                     <version>${java.version}</version>
                                 </requireJavaVersion>
-                                <!-- Sonatype's central-publishing-maven-plugin does not support Maven 4. -->
+                                <!-- Maven 3: the wrapper pins 3.10; Maven 4 is not tested. -->
                                 <requireMavenVersion>
                                     <version>[3.6.3,4)</version>
                                 </requireMavenVersion>
