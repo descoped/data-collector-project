@@ -123,11 +123,12 @@ public class EnhetsregisteretUpdatesWorkerTest {
             )
             .function(get("event-document")
                     .url("${eventURL}")
-                    .validate(status().success(200).fail(400).fail(404).fail(410).fail(500))
+                    // 410 Gone: the entity is deleted, and the body (organisasjonsnummer, slettedato) is the event
+                    .validate(status().success(200).success(410).fail(400).fail(404).fail(500))
                     .pipe(addContent("${position}", "event"))
             );
 
-    @Disabled("brreg answers 410 Gone, with the deletion date, for a deleted entity, and this specification fails on 410: the collection stops at the first deletion in the feed. Whether 410 is an event to store is the owner's decision")
+    @Tag("live")
     @Test
     public void thatWorkerCollectEnhetsregisteret() throws InterruptedException {
         Worker.newBuilder()
