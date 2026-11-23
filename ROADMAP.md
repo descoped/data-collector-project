@@ -15,6 +15,7 @@ Done:
 - CI on JDK 17 and 27.
 - The server image for amd64 and arm64, running as a non-root user.
 - Documentation in `docs/` and the examples in `examples/`.
+- SNAPSHOTs published from CI to `https://maven.descoped.io/`.
 
 Before the release:
 - **Correctness:** the defects found in the 2.x code while it was migrated and documented, decided one by one.
@@ -32,7 +33,8 @@ Before the release:
   - encryption that fails closed when a key or secret is missing;
   - secrets and `Authorization` headers kept out of logs, exception messages and health output.
 - **Build:** test coverage for every module in SonarCloud.
-- **Release:** the artifacts on Maven Central and the image from the release tag.
+- **Release:** rawdata-client 3.1.0 released, in place of the 3.1.0-SNAPSHOT dc builds on now; then the artifacts on
+  Maven Central and the image from the release tag.
 
 ## After 3.0.0
 

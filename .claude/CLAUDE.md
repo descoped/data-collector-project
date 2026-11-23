@@ -74,8 +74,14 @@ this repository. The plan and its order of work are in the owner's notes; the wo
 - **Always the latest stable version** of every library, plugin, action, base image and engine (PostgreSQL 18), except
   where a rule above or in `renovate.json` holds one back. Pre-releases only on request. Old and outdated code and
   configuration is removed, not carried along.
-- **Releases only with the owner's go-ahead.** Only releases are published, by hand, through the Central Portal
-  (profiles `central,sign`); no SNAPSHOTs, by CI or by hand. CI publishes nothing. Container images are pushed only
+- **Releases only with the owner's go-ahead.** Releases go to Maven Central only, by hand, through the Central Portal
+  (profiles `central,sign`); CI publishes nothing to Central. SNAPSHOTs go to Descoped's AWS CodeArtifact repository
+  only (read publicly at `https://maven.descoped.io/`), from CI's job `snapshot` with the profile `descoped-snapshots`:
+  on a push to `master`, and on a run by hand on a branch under `X.Y.Z-<branch>-SNAPSHOT`. Each profile's enforcer
+  refuses the other kind of version. The AWS account and the publishing endpoint never go into the repository: CI
+  takes the role from the organization secret `CODEARTIFACT_SNAPSHOTS_ROLE_ARN` and looks the endpoint up. The POM
+  reads maven.descoped.io under the id `descoped-snapshots-public`, never `descoped-snapshots`, so the publishing token
+  is not sent there. Container images are pushed only
   from release tags. Maven 3.10 sends a server's credentials only to the hosts it knows for that id, so the server
   `central` in `~/.m2/settings.xml` must list `https://central.sonatype.com` in `repositoryOrigins`.
 - **SonarCloud**: one project, `descoped_data-collector-project`, for the whole reactor.
