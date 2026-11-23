@@ -34,8 +34,7 @@ Before the release:
   - encryption that fails closed when a key or secret is missing;
   - secrets and `Authorization` headers kept out of logs, exception messages and health output.
 - **Build:** test coverage for every module in SonarCloud.
-- **Release:** rawdata-client 3.1.0 released, in place of the 3.1.0-SNAPSHOT dc builds on now (`release.yml` refuses a
-  SNAPSHOT dependency); then the images on Docker Hub, with the owner's go-ahead.
+- **Release:** the images on Docker Hub, with the owner's go-ahead.
 
 ## After 3.0.0
 
