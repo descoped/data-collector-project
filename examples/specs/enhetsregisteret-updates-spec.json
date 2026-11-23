@@ -146,7 +146,8 @@
       "responseValidators" : [ {
         "type" : "HttpStatusValidation",
         "success" : {
-          "200" : [ ]
+          "200" : [ ],
+          "410" : [ ]
         },
         "failed" : [ 400, 404, 500 ]
       } ],

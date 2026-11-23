@@ -69,6 +69,9 @@ dependencies and Java 17. dc's own behaviour stays as in 2.x, except for the cha
 - **SNAPSHOTs** are published from CI to `https://maven.descoped.io/` (Descoped's AWS CodeArtifact repository, no
   credentials to read): `X.Y.Z-SNAPSHOT` from `master`, `X.Y.Z-<branch>-SNAPSHOT` from a branch run by hand. Releases
   are on Maven Central only, and SNAPSHOTs never go there.
+- **brreg updates example** (`enhetsregisteret-updates-spec.json`): a deleted entity's 410 Gone is a success, and its
+  body (`organisasjonsnummer`, `slettedato`) is stored as the event. Before, the collection stopped at the first
+  deletion in the feed.
 - **Documentation** is Markdown in `docs/`, revised for 3.0. The examples (compose setups, profiles, specifications)
   are in `examples/`.
 
