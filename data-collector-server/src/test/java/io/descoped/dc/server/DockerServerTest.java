@@ -77,7 +77,7 @@ public class DockerServerTest {
         System.out.printf("health:%n%s%n", responseHelper.body());
     }
 
-    @Disabled
+    @Disabled("Not a test: builds a README example against example.com, which serves no feed")
     @Test
     public void ReadmeExample() {
         SpecificationBuilder feedBuilder = Specification.start("", "", "loop")

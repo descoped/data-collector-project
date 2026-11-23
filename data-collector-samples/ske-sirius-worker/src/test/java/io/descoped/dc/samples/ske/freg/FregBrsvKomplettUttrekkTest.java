@@ -133,7 +133,7 @@ public class FregBrsvKomplettUttrekkTest {
                     .pipe(addContent("${position}", "person"))
             );
 
-    @Disabled
+    @Disabled("Needs SKE's production certificate bundle (ske-prod-certs) and Google Secret Manager or the business certificate volume, and Maskinporten")
     @Test
     public void fregUttrekkBatch() {
         Worker.newBuilder()
@@ -162,7 +162,7 @@ public class FregBrsvKomplettUttrekkTest {
                 .run();
     }
 
-    @Disabled
+    @Disabled("Needs SKE's production certificate bundle (ske-prod-certs) and Google Secret Manager or the business certificate volume, and Maskinporten")
     @Test
     public void fregUttrekkBatchWithSecretManager() {
         DynamicConfiguration securityConfiguration = DynamicConfiguration.builder()
@@ -207,7 +207,7 @@ public class FregBrsvKomplettUttrekkTest {
                 .run();
     }
 
-    @Disabled
+    @Disabled("Generator, not a test: writes this sample's specification to examples/specs; run it by hand to regenerate the file")
     @Test
     public void writeTargetConsumerSpec() throws IOException {
         Path currentPath = CommonUtils.currentPath().getParent().getParent();

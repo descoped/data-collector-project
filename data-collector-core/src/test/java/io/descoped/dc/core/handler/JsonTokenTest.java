@@ -11,7 +11,7 @@ import io.descoped.dc.core.executor.Worker;
 import io.descoped.dc.test.client.TestClient;
 import io.descoped.dc.test.server.TestServer;
 import io.descoped.dc.test.server.TestServerExtension;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -112,7 +112,7 @@ public class JsonTokenTest {
         assertNotNull(output);
     }
 
-    @Disabled
+    @Tag("live")
     @Test
     public void brregJsonTokenSequentialParser() {
         ExecutionContext output = Worker.newBuilder()

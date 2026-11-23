@@ -20,6 +20,7 @@ import io.descoped.rawdata.api.RawdataClientInitializer;
 import io.descoped.rawdata.api.RawdataMessage;
 import io.descoped.service.provider.api.ProviderConfigurator;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -126,7 +127,7 @@ public class EnhetsregisteretUpdatesWorkerTest {
                     .pipe(addContent("${position}", "event"))
             );
 
-    @Disabled
+    @Disabled("brreg answers 410 Gone, with the deletion date, for a deleted entity, and this specification fails on 410: the collection stops at the first deletion in the feed. Whether 410 is an event to store is the owner's decision")
     @Test
     public void thatWorkerCollectEnhetsregisteret() throws InterruptedException {
         Worker.newBuilder()
@@ -138,7 +139,7 @@ public class EnhetsregisteretUpdatesWorkerTest {
                 .run();
     }
 
-    @Disabled
+    @Disabled("Reads the local store that thatWorkerCollectEnhetsregisteret writes; run it by hand after that test")
     @Test
     void consumeLocalRawdataStore() throws Exception {
         int pos = 0;
@@ -163,7 +164,7 @@ public class EnhetsregisteretUpdatesWorkerTest {
         System.out.println("Pos count: " + pos);
     }
 
-    @Disabled
+    @Tag("live")
     @Test
     void thatGetFetchOnePage() {
         Worker.newBuilder()
@@ -181,7 +182,7 @@ public class EnhetsregisteretUpdatesWorkerTest {
                 .run();
     }
 
-    @Disabled
+    @Tag("live")
     @Test
     void thatEndpointReturnsSomeStuff() {
         // fetch page document
@@ -212,7 +213,7 @@ public class EnhetsregisteretUpdatesWorkerTest {
         }
     }
 
-    @Disabled
+    @Disabled("Generator, not a test: writes this sample's specification to examples/specs; run it by hand to regenerate the file")
     @Test
     public void writeTargetConsumerSpec() throws IOException {
         Path currentPath = CommonUtils.currentPath().getParent().getParent();

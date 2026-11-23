@@ -3,7 +3,6 @@ package io.descoped.dc.server.db;
 import io.descoped.dc.api.ids.TimeOrderedIds;
 import io.descoped.dc.api.util.CommonUtils;
 import io.descoped.dc.server.integrity.IntegrityCheckIndex;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +26,6 @@ public class LmdbEnvironmentTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(LmdbEnvironmentTest.class);
 
-    @Disabled
     @Test
     public void testSequence() throws IOException {
         Path dbPath = CommonUtils.currentPath().resolve("target").resolve("lmdb");

@@ -6,6 +6,7 @@ import io.descoped.dc.api.node.builder.SpecificationBuilder;
 import io.descoped.dc.api.util.CommonUtils;
 import io.descoped.dc.core.executor.Worker;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -57,7 +58,7 @@ public class DownloadEnhetregisterWorkerTest {
                     )
             );
 
-    @Disabled
+    @Tag("live")
     @Test
     void downloadEnhetregister() {
         Worker.newBuilder()
@@ -67,7 +68,7 @@ public class DownloadEnhetregisterWorkerTest {
                 .run();
     }
 
-    @Disabled
+    @Disabled("Generator, not a test: writes this sample's specification to examples/specs; run it by hand to regenerate the file")
     @Test
     public void writeTargetConsumerSpec() throws IOException {
         Path currentPath = CommonUtils.currentPath().getParent().getParent();

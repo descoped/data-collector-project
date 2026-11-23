@@ -80,7 +80,7 @@ public class SimpleAltinn3Test {
         }
     }
 
-    @Disabled
+    @Disabled("Needs Maskinporten credentials for Altinn 3 (tt02) and the business certificate bundle")
     @Test
     void collectAltinnData() throws IOException {
         String jwtGrant = createMaskinportenJwtGrant(configuration.getInt("ssb.jwtGrant.expiration"));

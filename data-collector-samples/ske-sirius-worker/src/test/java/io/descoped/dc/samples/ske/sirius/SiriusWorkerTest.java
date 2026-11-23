@@ -92,7 +92,7 @@ public class SiriusWorkerTest {
                     .pipe(addContent("${position}", "skattemelding"))
             );
 
-    @Disabled
+    @Disabled("Needs the test certificate bundle from the business certificate volume")
     @Test
     public void thatWorkerCollectSiriusData() throws InterruptedException {
 //        Path scanDirectory = CommonUtils.currentPath().resolve("certs");
@@ -130,7 +130,7 @@ public class SiriusWorkerTest {
                 .run();
     }
 
-    @Disabled
+    @Disabled("Generator, not a test: writes this sample's specification to examples/specs; run it by hand to regenerate the file")
     @Test
     public void writeTargetConsumerSpec() throws IOException {
         Path currentPath = CommonUtils.currentPath().getParent().getParent();

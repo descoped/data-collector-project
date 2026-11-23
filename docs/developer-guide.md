@@ -26,6 +26,7 @@ in [Specification DSL](specification-dsl.md).
 ./mvnw verify                    # compile with -Xlint:all -Werror, run the tests
 ./mvnw verify javadoc:javadoc    # also build the Javadoc with doclint; warnings fail the build
 ./mvnw verify -P coverage        # also write a JaCoCo report per module, in <module>/target/site/jacoco
+./mvnw verify -P live            # only the tests tagged live, against real public APIs (brreg)
 ```
 
 To build one module and what it needs, use `-pl <module> -am`, for example
@@ -69,7 +70,12 @@ Tests are JUnit 6, run by Maven Surefire. In the named modules, the tests are co
 The core, server and samples modules run Surefire with `-XX:+EnableDynamicAgentLoading`, so that tests may install the
 ByteBuddy agent at run time (`MetricsAgent.premain(null, ByteBuddyAgent.install())`); core's metrics tests do. The
 server module also passes
-`--add-opens`, `--add-reads` and `--add-exports` switches; see its POM.
+`--add-opens`, `--add-reads` and `--add-exports` switches; see its POM. Two of them open `java.nio` to lmdbjava, which
+the integrity check and recovery tests need.
+
+A module that gives Surefire an `argLine` starts it with `@{argLine}`: the `coverage` profile puts the JaCoCo agent
+there, and without it the module's tests report no coverage. The root POM defines `argLine` empty, for builds without
+coverage.
 
 Most tests run a `Worker` against an embedded server from `data-collector-testutils` on localhost. A test chooses the
 content store with configuration, for example `Map.of("content.stream.connector", "discarding")` or
@@ -81,7 +87,25 @@ When a change switches on tests that never ran, run the suite about ten times be
 for n in $(seq 1 10); do ./mvnw -B -q verify || break; done
 ```
 
-A test is disabled only with its root cause in a comment.
+A test is disabled only with its reason: `@Disabled("…")` says what it needs or what is wrong, so the build output
+explains every skipped test.
+
+### Live tests
+
+A test tagged `@Tag("live")` calls a real public API. The default build leaves these tests out, so an outage at the
+source never fails a pull request; `./mvnw verify -P live` runs only them. The workflow `live.yml` runs them weekly
+and on demand. Today they are the brreg (Enhetsregisteret) tests: the feed and page tests in `enhetsregisteret-worker`,
+the bulk download, and the JSON token parser in core that reads the bulk file. The bulk download takes over an hour
+and logs some 150 MB. To run one live test, keep `-P live`, or the tag filter leaves it out and the build passes
+without running it:
+
+```sh
+./mvnw verify -P live -pl data-collector-core -am -Dtest=JsonTokenTest -Dsurefire.failIfNoSpecifiedTests=false
+```
+
+The tag filter is set by the properties `surefire.groups` and `surefire.excludedGroups` (the profile `live` sets both);
+Surefire's own `-Dgroups` and `-DexcludedGroups` do not override it. `-Dsurefire.excludedGroups=` runs every test,
+live ones included.
 
 ### The test harness (data-collector-testutils)
 
@@ -157,14 +181,15 @@ A module's tests can add controllers, services and components of their own: list
 `altinn3-test-worker`, `enhetsregisteret-worker`, `moveit-test-worker`, `ske-sirius-worker` and `toll-tvinn-worker`.
 The module is not published (`maven.deploy.skip`, `maven.install.skip`, and excluded from the Central upload).
 
-The samples that need real sources are `@Disabled`: they need Maskinporten, business certificates, or access to
-Skatteetaten, Altinn, Toll or MoveIt. Some read credentials from an `application-override.properties` that is not in
-the repository. The enabled ones:
+The samples that need closed sources are `@Disabled`, each with its reason: Maskinporten, business certificates, or
+access to Skatteetaten, Altinn, Toll or MoveIt. Some read credentials from an `application-override.properties` that is
+not in the repository. The `writeTargetConsumerSpec` methods are generators: run one by hand to write its sample's
+specification to `examples/specs`. The brreg samples are live tests (see above). The ones in the default build run
+locally: `SimpleEnhetregisterUpdatesTest` (except its live test), `SimpleFregKomplettUttrekkTest.match404ErrorMessage`
+and `ValidateSiriusDataTest.testDbRepository`.
 
-- `SimpleEnhetregisterUpdatesTest` calls the public `data.brreg.no` API, so it needs network access.
-- `SimpleFregKomplettUttrekkTest.match404ErrorMessage` and `ValidateSiriusDataTest.testDbRepository` run locally.
-
-Several tests in `data-collector-core` and `data-collector-server` are also `@Disabled`.
+The other disabled tests in `data-collector-core`, `data-collector-server` and `data-collector-testutils` need
+certificate bundles, are developer tools, or name a known defect in their reason.
 
 ## Using dc as a library
 

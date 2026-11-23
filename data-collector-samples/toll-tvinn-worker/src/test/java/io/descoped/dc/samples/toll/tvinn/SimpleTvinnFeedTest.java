@@ -51,7 +51,7 @@ curl -proxy "https://proxy.ssb.no:3128" -H "Authorization: Bearer ACCESS_TOKEN" 
         return client.send(request);
     }
 
-    @Disabled
+    @Disabled("Needs Toll's Maskinporten client and the business certificate bundle")
     @Test
     void testFeed() {
         Client client = Client.newClientBuilder().sslContext(getBusinessSSLContext()).build();

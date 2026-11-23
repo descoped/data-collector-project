@@ -84,12 +84,14 @@ this repository. The plan and its order of work are in the owner's notes; the wo
 
 - Tests are JUnit 6, compiled into their module (patch mode); test compilation relaxes only `-Xlint:exports` and
   `missing-explicit-ctor`, because test classes are not API.
-- Most tests run against embedded servers from data-collector-testutils on localhost. The samples that need real
-  sources (Maskinporten, business certificates, SKE, Altinn, Toll) are disabled; `SimpleEnhetregisterUpdatesTest`
-  calls the public data.brreg.no API.
+- Most tests run against embedded servers from data-collector-testutils on localhost. The samples that need closed
+  sources (Maskinporten, business certificates, SKE, Altinn, Toll, MoveIt) are disabled.
+- A test that calls a real public API (brreg) is tagged `@Tag("live")`: the default build leaves it out, `-P live`
+  runs only those, and `live.yml` runs them weekly. Never let a pull request depend on an outside service.
 - When a change switches on tests that never ran, run the suite about ten times before pushing
-  (`for n in $(seq 1 10); do ./mvnw -B -q verify || break; done`), and disable a test only with its root cause in a
-  comment.
+  (`for n in $(seq 1 10); do ./mvnw -B -q verify || break; done`), and disable a test only with its reason in
+  `@Disabled("…")`: what it needs, or the root cause.
+- A module that gives Surefire an `argLine` starts it with `@{argLine}`, or its tests report no coverage.
 
 ## Maven Wrapper
 
@@ -104,4 +106,5 @@ this repository. The plan and its order of work are in the owner's notes; the wo
 ./mvnw verify                    # compile with -Xlint:all -Werror, tests
 ./mvnw verify javadoc:javadoc    # plus Javadoc with doclint, warnings fail the build
 ./mvnw verify -P coverage        # JaCoCo report per module in <module>/target/site/jacoco
+./mvnw verify -P live            # only the live tests, against real public APIs
 ```

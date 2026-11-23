@@ -101,7 +101,7 @@ public class TvinnProdWorkerTest {
                     .returnVariables("nextMarker")
             );
 
-    @Disabled
+    @Disabled("Needs Toll's production Maskinporten client and the business certificate bundle")
     @Test
     public void testCollectTvinn() {
         Worker.newBuilder()

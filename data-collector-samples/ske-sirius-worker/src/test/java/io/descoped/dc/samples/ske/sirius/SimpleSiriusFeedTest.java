@@ -134,7 +134,7 @@ public class SimpleSiriusFeedTest {
         return CompletableFuture.supplyAsync(() -> new RequestAndResponse(request, client.sendAsync(request)));
     }
 
-    @Disabled
+    @Disabled("Needs SKE's test certificate bundle (ske-test-certs)")
     @ParameterizedTest
     @EnumSource(Hendelse.class)
     public void getHendelseListe(Hendelse hendelse) {

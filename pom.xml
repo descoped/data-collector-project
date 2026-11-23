@@ -42,6 +42,13 @@
         <lint.exclusions/>
         <lint.this-escape/>
         <doclint.exclusions/>
+        <!-- The JaCoCo agent: the coverage profile's prepare-agent sets it. Every module that gives surefire an
+             argLine starts it with @{argLine}, so coverage reaches its tests; empty when coverage is off. -->
+        <argLine/>
+        <!-- Tests tagged "live" call real public APIs (brreg). The default build leaves them out; -P live runs only
+             them. -->
+        <surefire.groups/>
+        <surefire.excludedGroups>live</surefire.excludedGroups>
 
         <!-- Dependency versions. Kept as properties, not in dependencyManagement, so that importing
              data-collector-bom (which inherits this POM) manages the data collector modules only. -->
@@ -105,6 +112,15 @@
     </scm>
 
     <profiles>
+        <!-- The tests tagged "live", against real public APIs, and only those: ./mvnw verify -P live. A module
+             without any finds none, so -Dsurefire.failIfNoSpecifiedTests is not needed. -->
+        <profile>
+            <id>live</id>
+            <properties>
+                <surefire.groups>live</surefire.groups>
+                <surefire.excludedGroups/>
+            </properties>
+        </profile>
         <!-- javac 21 added the lint category this-escape, and javac 17 rejects its name. The 2.x classes call
              overridable methods from constructors; to keep them as they are (not final), the category is turned off
              where javac knows it. -->
@@ -290,6 +306,10 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.6.1</version>
+                    <configuration>
+                        <groups>${surefire.groups}</groups>
+                        <excludedGroups>${surefire.excludedGroups}</excludedGroups>
+                    </configuration>
                 </plugin>
 
                 <plugin>

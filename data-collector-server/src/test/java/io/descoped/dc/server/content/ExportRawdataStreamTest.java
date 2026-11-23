@@ -40,7 +40,7 @@ public class ExportRawdataStreamTest {
             .environment("DC_")
             .build();
 
-    @Disabled
+    @Disabled("Developer tool: prints a topic from a local PostgreSQL on port 15432")
     @Test
     void export() {
         RawdataClient rawdataClient = ProviderConfigurator.configure(RawdataClientInitializer.class, configuration.find("rawdata.client.provider").orElse(null), configuration.asMap());

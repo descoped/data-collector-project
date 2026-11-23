@@ -53,7 +53,7 @@ class TestServerExtensionRegisterTest {
      */
 
 
-    @Disabled
+    @Disabled("The check it tests is commented out in TestServerExtension.compareAndIfInjectionPointExistsSetFieldValue (a 2.x TODO)")
     @Test
     void thatInjectFieldIsIllegalWhenExpectedFieldStateIfAlreadySet() {
         assertThrows(IllegalArgumentException.class, () -> {

@@ -176,6 +176,7 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <configuration>
                         <argLine>
+                            @{argLine}
                             -XX:+EnableDynamicAgentLoading
                             -Xmx1500m
                         </argLine>

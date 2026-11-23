@@ -17,7 +17,7 @@ public class GoogleSecretManagerIntegrationTest {
 
     static final Logger LOG = LoggerFactory.getLogger(GoogleSecretManagerIntegrationTest.class);
 
-    @Disabled
+    @Disabled("Needs Google Cloud credentials for Secret Manager")
     @Test
     public void loadSecrets() {
         DynamicConfiguration configuration = DynamicConfiguration.builder()

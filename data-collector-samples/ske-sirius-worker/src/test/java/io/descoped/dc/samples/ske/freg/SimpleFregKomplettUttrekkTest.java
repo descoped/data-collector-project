@@ -35,7 +35,7 @@ public class SimpleFregKomplettUttrekkTest {
     static final AtomicReference<SSLContext> certificateContext = new AtomicReference<>();
     static final AtomicReference<String> authToken = new AtomicReference<>(null);
 
-    @Disabled
+    @Disabled("Needs SKE's production certificate bundle (ske-prod-certs) and Google Secret Manager or the business certificate volume, and Maskinporten")
     @Test
     void getUttrekkKomplett() throws InterruptedException {
 //        String jobId = createJobIdForUttrekkKomplett();

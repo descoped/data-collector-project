@@ -158,7 +158,7 @@ public class AltinnProdWorkerTest {
                     )
             );
 
-    @Disabled
+    @Disabled("Needs Maskinporten credentials for Altinn 3 (tt02), the business certificate bundle and Google Secret Manager")
     @Test
     void collect() {
         String serialized = specificationBuilder.serialize();
@@ -172,7 +172,7 @@ public class AltinnProdWorkerTest {
                 .run();
     }
 
-    @Disabled
+    @Disabled("Needs Maskinporten credentials for Altinn 3 (tt02), the business certificate bundle and Google Secret Manager")
     @Test
     void jwtGrant() {
         JwtIdentityBuilder jwtIdentityBuilder = Builders.jwt("test",
@@ -205,7 +205,7 @@ public class AltinnProdWorkerTest {
         handler.execute(context);
     }
 
-    @Disabled
+    @Disabled("Needs Maskinporten credentials for Altinn 3 (tt02), the business certificate bundle and Google Secret Manager")
     @Test
     void collectAndWriteToOutput() throws InterruptedException {
         TestServer testServer = TestServer.create(configuration);
@@ -225,7 +225,7 @@ public class AltinnProdWorkerTest {
         testServer.stop();
     }
 
-    @Disabled
+    @Disabled("Generator, not a test: writes this sample's specification to examples/specs; run it by hand to regenerate the file")
     @Test
     public void writeTargetConsumerSpec() throws IOException {
         Path currentPath = CommonUtils.currentPath().getParent().getParent();
