@@ -7,6 +7,8 @@ import io.descoped.dc.api.node.builder.NodeBuilder;
 import io.descoped.dc.api.node.builder.PaginateBuilder;
 import io.descoped.dc.api.node.builder.SpecificationBuilder;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static io.descoped.dc.api.Builders.addContent;
 import static io.descoped.dc.api.Builders.body;
@@ -38,8 +40,9 @@ import static io.descoped.dc.api.Builders.whenVariableIsNull;
 import static io.descoped.dc.api.Builders.xpath;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class BuilderTest {
+class BuilderTest {
 
     static final SpecificationBuilder SPECIFICATION_BUILDER = Specification.start("test", "name of flow", "getstartposition")
             .configure(context()
@@ -146,12 +149,14 @@ public class BuilderTest {
             );
 
     @Test
-    public void printExecutionPlan() {
-        System.out.printf("Execution-plan:%n%n%s%n", SPECIFICATION_BUILDER.end().startFunction().toPrintableExecutionPlan());
+    void printExecutionPlan() {
+        String plan = SPECIFICATION_BUILDER.end().startFunction().toPrintableExecutionPlan();
+        System.out.printf("Execution-plan:%n%n%s%n", plan);
+        assertTrue(plan.contains("get(getstartposition)"), plan);
     }
 
     @Test
-    public void thatFlowBuilderIsSerializedThenDeserialized() {
+    void thatFlowBuilderIsSerializedThenDeserialized() {
         SpecificationBuilder actual = SPECIFICATION_BUILDER;
         FlowContext actualFlowContext = actual.end().configurations.flowContext();
         String serialized = actual.serialize();
@@ -160,19 +165,18 @@ public class BuilderTest {
 
         SpecificationBuilder deserialized = Specification.deserialize(serialized, SpecificationBuilder.class);
         assertNotNull(deserialized);
-        //System.out.printf("deserialized:%n%s%n", deserialized.serialize());
 
         assertEquals(serialized, deserialized.serialize());
         assertEquals(actual, deserialized);
 
-        Specification end = deserialized.end();
-        FlowContext derserializedFlowContext = actual.end().configurations.flowContext();
-        assertEquals(actualFlowContext, derserializedFlowContext);
+        FlowContext deserializedFlowContext = deserialized.end().configurations.flowContext();
+        assertEquals(actualFlowContext, deserializedFlowContext);
     }
 
-    @Test
-    public void thatGettingStartedBuilderIsSerializedThenDeserialized() {
-        NodeBuilder actual = SPECIFICATION_BUILDER.get("getstartposition");
+    @ParameterizedTest
+    @ValueSource(strings = {"getstartposition", "page", "person-doc", "event-doc"})
+    void thatGetBuilderIsSerializedThenDeserialized(String nodeId) {
+        NodeBuilder actual = SPECIFICATION_BUILDER.get(nodeId);
         String serialized = actual.serialize();
         assertNotNull(serialized);
 
@@ -183,48 +187,12 @@ public class BuilderTest {
     }
 
     @Test
-    public void thatPageLoopBuilderIsSerializedThenDeserialized() {
+    void thatPageLoopBuilderIsSerializedThenDeserialized() {
         NodeBuilder actual = SPECIFICATION_BUILDER.get("page-loop");
         String serialized = actual.serialize();
         assertNotNull(serialized);
 
         PaginateBuilder deserialized = Specification.deserialize(serialized, PaginateBuilder.class);
-        assertNotNull(deserialized);
-
-        assertEquals(actual, deserialized);
-    }
-
-    @Test
-    public void thatPageGetBuilderIsSerializedThenDeserialized() {
-        NodeBuilder actual = SPECIFICATION_BUILDER.get("page");
-        String serialized = actual.serialize();
-        assertNotNull(serialized);
-
-        GetBuilder deserialized = Specification.deserialize(serialized, GetBuilder.class);
-        assertNotNull(deserialized);
-
-        assertEquals(actual, deserialized);
-    }
-
-    @Test
-    public void thatPersonDocGetBuilderIsSerializedThenDeserialized() {
-        NodeBuilder actual = SPECIFICATION_BUILDER.get("person-doc");
-        String serialized = actual.serialize();
-        assertNotNull(serialized);
-
-        GetBuilder deserialized = Specification.deserialize(serialized, GetBuilder.class);
-        assertNotNull(deserialized);
-
-        assertEquals(actual, deserialized);
-    }
-
-    @Test
-    public void thatEventDocGetBuilderIsSerializedThenDeserialized() {
-        NodeBuilder actual = SPECIFICATION_BUILDER.get("event-doc");
-        String serialized = actual.serialize();
-        assertNotNull(serialized);
-
-        GetBuilder deserialized = Specification.deserialize(serialized, GetBuilder.class);
         assertNotNull(deserialized);
 
         assertEquals(actual, deserialized);

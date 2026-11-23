@@ -12,6 +12,7 @@ import io.descoped.dc.api.node.Node;
 import io.descoped.dc.api.node.Validator;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -72,17 +73,15 @@ public class GetBuilder extends OperationBuilder {
     }
 
     public GetBuilder returnVariables(String... variableKeys) {
-        for (String variableKey : variableKeys) {
-            returnVariables.add(variableKey);
-        }
+        Collections.addAll(returnVariables, variableKeys);
         return this;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     <R extends Base> R build(BuildContext buildContext) {
-        List<HttpStatusRetryWhile> retryWhileList = new ArrayList<>();
-        List<Validator> validators = new ArrayList<>();
+        List<HttpStatusRetryWhile> retryWhileNodes = new ArrayList<>();
+        List<Validator> validatorNodes = new ArrayList<>();
 
         // add default http status validator if unassigned
         if (this.validators.isEmpty()) {
@@ -91,12 +90,12 @@ public class GetBuilder extends OperationBuilder {
 
         for (LeafNodeBuilder retryWhileBuilder : this.retryWhileList) {
             Validator retryWhile = retryWhileBuilder.build(buildContext);
-            retryWhileList.add((HttpStatusRetryWhile) retryWhile);
+            retryWhileNodes.add((HttpStatusRetryWhile) retryWhile);
         }
 
         for (LeafNodeBuilder validatorBuilder : this.validators) {
             Validator validator = validatorBuilder.build(buildContext);
-            validators.add(validator);
+            validatorNodes.add(validator);
         }
 
         List<Node> stepNodeList = new ArrayList<>();
@@ -105,7 +104,7 @@ public class GetBuilder extends OperationBuilder {
             stepNodeList.add(stepNode);
         }
 
-        return (R) new GetNode(getId(), buildContext.getInstance(SpecificationBuilder.GLOBAL_CONFIGURATION), url, requestHeaders, retryWhileList, validators, stepNodeList, returnVariables);
+        return (R) new GetNode(getId(), buildContext.getInstance(SpecificationBuilder.GLOBAL_CONFIGURATION), url, requestHeaders, retryWhileNodes, validatorNodes, stepNodeList, returnVariables);
     }
 
     @Override

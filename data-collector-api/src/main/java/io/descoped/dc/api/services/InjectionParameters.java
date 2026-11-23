@@ -10,6 +10,7 @@ public class InjectionParameters implements Services {
     private final Map<Class<?>, AtomicReference<Object>> instanceMap = new ConcurrentHashMap<>();
 
     public InjectionParameters() {
+        // no parameters until they are put
     }
 
     @Override

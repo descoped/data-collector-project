@@ -40,13 +40,7 @@ public class HttpStatusRetryWhileBuilder extends LeafNodeBuilder {
         return this;
     }
 
-    /*
-    TODO: implement regex predicate support
-    public HttpStatusRetryWhileBuilder bodyContains(QueryBuilder equalToQuery) {
-        this.bodyContainsBuilder = Builders.bodyContains(equalToQuery);
-        return this;
-    }
-    */
+    // TODO: implement regex predicate support
 
     @Override
     public <R extends Base> R build(BuildContext buildContext) {

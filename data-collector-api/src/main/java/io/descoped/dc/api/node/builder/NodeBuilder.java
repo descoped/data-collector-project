@@ -49,7 +49,7 @@ public abstract class NodeBuilder extends AbstractBuilder {
 
         final Configurations configurations;
 
-        public FlowNode(Configurations configurations) {
+        protected FlowNode(Configurations configurations) {
             this.configurations = configurations;
         }
 

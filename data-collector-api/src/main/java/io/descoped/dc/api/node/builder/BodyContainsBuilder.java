@@ -51,7 +51,7 @@ public class BodyContainsBuilder extends ResponsePredicateBuilder {
                 '}';
     }
 
-    class BodyContainsNode extends LeafNode implements BodyContains {
+    static class BodyContainsNode extends LeafNode implements BodyContains {
 
         private final Query query;
         private final String equalToStringLiteral;

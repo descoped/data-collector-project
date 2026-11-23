@@ -24,6 +24,7 @@ public class JsonTokenBuilder extends QueryBuilder {
     static class JsonTokenNode extends QueryBuilder.QueryNode implements JsonToken {
 
         public JsonTokenNode() {
+            // no state: the query returns the response body unaltered
         }
 
         // NOP expression - the body query returns unaltered response body

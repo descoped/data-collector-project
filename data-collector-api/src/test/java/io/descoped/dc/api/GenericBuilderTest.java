@@ -10,19 +10,22 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class GenericBuilderTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+class GenericBuilderTest {
 
     @Test
-    public void spec() {
+    void spec() {
         Class<? extends AbstractBuilder> clazz = BuilderType.Specification.builderClass;
         System.out.printf("%s%n", clazz);
         List.of(clazz.getDeclaredFields()).forEach(field -> System.out.printf("%s%n", field.getName()));
 
         ReflectionTarget reflectionTarget = new ReflectionTarget(clazz);
+        assertEquals(clazz.getDeclaredFields().length, reflectionTarget.fieldTargets.size());
     }
 
     @Test
-    public void specContext() {
+    void specContext() {
         Class<? extends AbstractBuilder> clazz = BuilderType.SpecificationContext.builderClass;
         System.out.printf("%s%n", clazz);
         List.of(clazz.getDeclaredFields()).forEach(field -> System.out.printf("%s%n", field.getName()));
@@ -32,6 +35,7 @@ public class GenericBuilderTest {
         reflectionTarget.fieldTargets.forEach((k, v) -> System.out.printf("%s=%s%n", k, v));
         System.out.println();
         reflectionTarget.methodTargets.forEach((k, v) -> System.out.printf("%s=%s%n", k, v));
+        assertEquals(clazz.getDeclaredFields().length, reflectionTarget.fieldTargets.size());
     }
 
     public static class ReflectionTarget {
@@ -80,7 +84,6 @@ public class GenericBuilderTest {
             this.methodName = method.getName();
             this.method = method;
             this.mappingName = method.isAnnotationPresent(ConfigSetter.class) ? method.getAnnotation(ConfigSetter.class).toString() : method.getName();
-            ;
         }
 
         @Override

@@ -14,7 +14,7 @@ import static java.util.Optional.ofNullable;
 
 public class ExecutionContext {
 
-    private final static Logger LOG = LoggerFactory.getLogger(ExecutionContext.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ExecutionContext.class);
 
     final Services services;
     final Map<Object, Object> globalState;

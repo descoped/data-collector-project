@@ -3,12 +3,8 @@ package io.descoped.dc.api.content;
 import io.descoped.dc.api.context.ExecutionContext;
 import io.descoped.dc.api.el.EvaluationException;
 import io.descoped.dc.api.health.HealthResourceUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class EvaluateLastContentStreamPosition {
-
-    private static final Logger LOG = LoggerFactory.getLogger(EvaluateLastContentStreamPosition.class);
 
     private final ExecutionContext context;
 
@@ -52,7 +48,7 @@ public class EvaluateLastContentStreamPosition {
 
             return lastPosition;
 
-        } catch (RuntimeException | Error e) {
+        } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
             throw new EvaluationException(e);

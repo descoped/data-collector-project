@@ -1,6 +1,6 @@
 package io.descoped.dc.api.node.builder;
 
-abstract public class IdentityTokenBodyPublisherProducerBuilder extends BodyPublisherProducerBuilder {
+public abstract class IdentityTokenBodyPublisherProducerBuilder extends BodyPublisherProducerBuilder {
 
     IdentityTokenBodyPublisherProducerBuilder(BuilderType type) {
         super(type);

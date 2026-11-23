@@ -45,6 +45,7 @@ public class TimeOrderedIdsTest {
 
     @Test
     void thatTimestampRefusesOtherUuids() {
-        assertThrows(IllegalArgumentException.class, () -> TimeOrderedIds.timestamp(UUID.randomUUID()));
+        UUID random = UUID.randomUUID();
+        assertThrows(IllegalArgumentException.class, () -> TimeOrderedIds.timestamp(random));
     }
 }

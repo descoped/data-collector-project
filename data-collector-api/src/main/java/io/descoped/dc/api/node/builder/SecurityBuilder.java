@@ -64,7 +64,7 @@ public class SecurityBuilder extends ConfigurationBuilder {
 
     public static class SecurityNode extends LeafNode implements Security {
 
-        private String sslBundleName;
+        private final String sslBundleName;
         private final List<Identity> identities;
 
         public SecurityNode(String sslBundleName, List<Identity> identities) {

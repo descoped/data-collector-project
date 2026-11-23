@@ -11,7 +11,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 public class PageContext {
 
@@ -56,7 +55,7 @@ public class PageContext {
     }
 
     public List<CompletableFuture<ExecutionContext>> parallelFutures() {
-        return parallelFutures.stream().map(Entry::future).collect(Collectors.toList());
+        return parallelFutures.stream().map(Entry::future).toList();
     }
 
     public CompletionInfo completionInfo() {
@@ -97,7 +96,7 @@ public class PageContext {
     }
 
     public static class Entry {
-        private CompletableFuture<ExecutionContext> future;
+        private final CompletableFuture<ExecutionContext> future;
 
         public Entry(CompletableFuture<ExecutionContext> future) {
             this.future = future;
@@ -123,7 +122,7 @@ public class PageContext {
 
     public static class Builder {
         private List<String> expectedPositions;
-        private Map<String, String> nextPositionMap = new LinkedHashMap<>();
+        private final Map<String, String> nextPositionMap = new LinkedHashMap<>();
         private List<String> nextPositionVariableNames;
 
         public Builder expectedPositions(List<String> expectedPositions) {

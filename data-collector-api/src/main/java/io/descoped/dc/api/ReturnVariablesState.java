@@ -10,6 +10,7 @@ public class ReturnVariablesState {
     private final Map<String, Object> variableMap = new LinkedHashMap<>();
 
     public ReturnVariablesState() {
+        // no variables until they are added
     }
 
     public void add(String name) {
