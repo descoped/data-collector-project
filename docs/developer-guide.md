@@ -96,7 +96,16 @@ A test tagged `@Tag("live")` calls a real public API. The default build leaves t
 source never fails a pull request; `./mvnw verify -P live` runs only them. The workflow `live.yml` runs them weekly
 and on demand. Today they are the brreg (Enhetsregisteret) tests: the feed and page tests in `enhetsregisteret-worker`,
 the bulk download, and the JSON token parser in core that reads the bulk file. The bulk download takes over an hour
-and logs some 150 MB; run a single test with `-Dtest=…` and `-Dsurefire.failIfNoSpecifiedTests=false`.
+and logs some 150 MB. To run one live test, keep `-P live`, or the tag filter leaves it out and the build passes
+without running it:
+
+```sh
+./mvnw verify -P live -pl data-collector-core -am -Dtest=JsonTokenTest -Dsurefire.failIfNoSpecifiedTests=false
+```
+
+The tag filter is set by the properties `surefire.groups` and `surefire.excludedGroups` (the profile `live` sets both);
+Surefire's own `-Dgroups` and `-DexcludedGroups` do not override it. `-Dsurefire.excludedGroups=` runs every test,
+live ones included.
 
 ### The test harness (data-collector-testutils)
 
