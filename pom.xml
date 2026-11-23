@@ -127,6 +127,10 @@
         </repository>
     </repositories>
 
+    <!-- No <distributionManagement>, here or in a profile: CI's job snapshot names maven.descoped.io on its command
+         line (altSnapshotDeploymentRepository), which applies to SNAPSHOTs only, so a release version has no
+         repository to deploy to. The samples are not published (maven.deploy.skip). -->
+
     <profiles>
         <!-- The tests tagged "live", against real public APIs, and only those: ./mvnw verify -P live. A module
              without any finds none, so -Dsurefire.failIfNoSpecifiedTests is not needed. -->
@@ -148,70 +152,6 @@
             <properties>
                 <lint.this-escape>,-this-escape</lint.this-escape>
             </properties>
-        </profile>
-
-        <!-- SNAPSHOTs to Descoped's AWS CodeArtifact repository, read publicly at https://maven.descoped.io/. CI's job
-             snapshot deploys with it; nothing else does. Only SNAPSHOTs: the enforcer fails a release version before
-             anything is uploaded. The publishing endpoint is not in the repository: CI looks it up and sets
-             descoped.snapshots.url in the settings.xml it writes. The samples are not published (maven.deploy.skip). -->
-        <profile>
-            <id>descoped-snapshots</id>
-            <distributionManagement>
-                <snapshotRepository>
-                    <id>descoped-snapshots</id>
-                    <url>${descoped.snapshots.url}</url>
-                </snapshotRepository>
-            </distributionManagement>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-enforcer-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>only-snapshots-to-descoped</id>
-                                <goals>
-                                    <goal>enforce</goal>
-                                </goals>
-                                <configuration>
-                                    <rules>
-                                        <requireSnapshotVersion>
-                                            <message>Only SNAPSHOTs go to maven.descoped.io.</message>
-                                        </requireSnapshotVersion>
-                                        <requireProperty>
-                                            <property>descoped.snapshots.url</property>
-                                            <regex>https://\S+/</regex>
-                                            <message>descoped.snapshots.url is not set: define it in a settings.xml profile (CI writes one).</message>
-                                            <regexMessage>descoped.snapshots.url must be an https URL ending in /, not empty or an unexpanded ${env...}.</regexMessage>
-                                        </requireProperty>
-                                    </rules>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <!-- Sources for IDEs that use a SNAPSHOT. -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>attach-sources</id>
-                                <goals>
-                                    <goal>jar-no-fork</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <!-- Every module is built before the first upload, so a failed build uploads nothing. -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-deploy-plugin</artifactId>
-                        <configuration>
-                            <deployAtEnd>true</deployAtEnd>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
         </profile>
 
         <profile>

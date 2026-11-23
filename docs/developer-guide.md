@@ -68,10 +68,11 @@ After a green build, the job `snapshot` publishes SNAPSHOTs to Descoped's AWS Co
   `X.Y.Z-<branch>-SNAPSHOT`, so it never replaces master's;
 - never on a pull request or a tag.
 
-It deploys with the profile `descoped-snapshots`, whose enforcer refuses a release version. The job takes an AWS role
-through GitHub's OIDC token (the organization secret `CODEARTIFACT_SNAPSHOTS_ROLE_ARN`), looks up the publishing
-endpoint and passes it as `descoped.snapshots.url`, so neither the account nor the endpoint is in the repository. The
-samples are not published.
+The job takes an AWS role through GitHub's OIDC token (the organization secret `CODEARTIFACT_SNAPSHOTS_ROLE_ARN`),
+looks up the publishing endpoint and names it on the deploy command line
+(`-DaltSnapshotDeploymentRepository=descoped-snapshots::<endpoint>`), so neither the account nor the endpoint is in
+the repository. That option applies to SNAPSHOTs only, and the POM has no `<distributionManagement>`, so a release
+version has no repository to deploy to and fails. The samples are not published.
 
 ## Testing
 
