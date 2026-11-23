@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -512,31 +513,7 @@ public class NodeBuilderDeserializer extends StdDeserializer<AbstractBuilder> {
         PostBuilder builder = new PostBuilder(currentNode.get("id").textValue());
 
         builder.url(currentNode.get("url").textValue());
-
-        JsonNode bodyPublisherNode = currentNode.get("bodyPublisher");
-        if (bodyPublisherNode != null) {
-            BodyPublisherBuilder bodyPublisherBuilder = (BodyPublisherBuilder) handleNodeBuilder(depth + 1, context, ancestors, currentNode, bodyPublisherNode);
-            builder.data(bodyPublisherBuilder);
-        }
-
-        JsonNode validateResponseNode = currentNode.get(RESPONSE_VALIDATORS);
-        if (validateResponseNode != null) {
-            validateResponseNode.forEach(validatorNode -> {
-                LeafNodeBuilder validatorBuilder = (LeafNodeBuilder) handleNodeBuilder(depth + 1, context, ancestors, currentNode, validatorNode);
-                builder.validate(validatorBuilder);
-            });
-        }
-
-        ArrayNode returnVariablesNode = (ArrayNode) currentNode.get(RETURN_VARIABLES);
-        if (returnVariablesNode != null) {
-            returnVariablesNode.forEach(node -> builder.returnVariables(node.textValue()));
-        }
-
-        JsonNode stepsNode = currentNode.get(PIPES);
-        if (stepsNode != null) {
-            stepsNode.forEach(stepNode -> builder.pipe((NodeBuilder) handleNodeBuilder(depth + 1, context, ancestors, currentNode, stepNode)));
-        }
-
+        readBodyOperation(depth, context, ancestors, currentNode, builder::data, builder::validate, builder::returnVariables, builder::pipe);
         return builder;
     }
 
@@ -544,32 +521,33 @@ public class NodeBuilderDeserializer extends StdDeserializer<AbstractBuilder> {
         PutBuilder builder = new PutBuilder(currentNode.get("id").textValue());
 
         builder.url(currentNode.get("url").textValue());
+        readBodyOperation(depth, context, ancestors, currentNode, builder::data, builder::validate, builder::returnVariables, builder::pipe);
+        return builder;
+    }
 
+    // the body publisher, validators, return variables and pipes of a post or a put
+    private void readBodyOperation(int depth, DeserializationContext context, Deque<JsonNode> ancestors, JsonNode currentNode,
+                                   Consumer<BodyPublisherBuilder> data, Consumer<LeafNodeBuilder> validate,
+                                   Consumer<String> returnVariable, Consumer<NodeBuilder> pipe) {
         JsonNode bodyPublisherNode = currentNode.get("bodyPublisher");
         if (bodyPublisherNode != null) {
-            BodyPublisherBuilder bodyPublisherBuilder = (BodyPublisherBuilder) handleNodeBuilder(depth + 1, context, ancestors, currentNode, bodyPublisherNode);
-            builder.data(bodyPublisherBuilder);
+            data.accept((BodyPublisherBuilder) handleNodeBuilder(depth + 1, context, ancestors, currentNode, bodyPublisherNode));
         }
 
         JsonNode validateResponseNode = currentNode.get(RESPONSE_VALIDATORS);
         if (validateResponseNode != null) {
-            validateResponseNode.forEach(validatorNode -> {
-                LeafNodeBuilder validatorBuilder = (LeafNodeBuilder) handleNodeBuilder(depth + 1, context, ancestors, currentNode, validatorNode);
-                builder.validate(validatorBuilder);
-            });
+            validateResponseNode.forEach(validatorNode -> validate.accept((LeafNodeBuilder) handleNodeBuilder(depth + 1, context, ancestors, currentNode, validatorNode)));
         }
 
         ArrayNode returnVariablesNode = (ArrayNode) currentNode.get(RETURN_VARIABLES);
         if (returnVariablesNode != null) {
-            returnVariablesNode.forEach(node -> builder.returnVariables(node.textValue()));
+            returnVariablesNode.forEach(node -> returnVariable.accept(node.textValue()));
         }
 
         JsonNode stepsNode = currentNode.get(PIPES);
         if (stepsNode != null) {
-            stepsNode.forEach(stepNode -> builder.pipe((NodeBuilder) handleNodeBuilder(depth + 1, context, ancestors, currentNode, stepNode)));
+            stepsNode.forEach(stepNode -> pipe.accept((NodeBuilder) handleNodeBuilder(depth + 1, context, ancestors, currentNode, stepNode)));
         }
-
-        return builder;
     }
 
     private AbstractBuilder buildDelete(int depth, DeserializationContext context, Deque<JsonNode> ancestors, JsonNode currentNode) {
@@ -618,30 +596,30 @@ public class NodeBuilderDeserializer extends StdDeserializer<AbstractBuilder> {
         // TODO add MultiPartFormData
         JsonNode partsData = currentNode.get("partsData");
         if (partsData != null) {
-            partsData.forEach(partNode -> {
-                String name = partNode.get("name").textValue();
-                String filename = Optional.ofNullable(partNode.get("filename")).map(JsonNode::textValue).orElse(null);
-                Charset charset = Optional.ofNullable(partNode.get("charset")).map(node -> Charset.forName(node.textValue())).orElse(StandardCharsets.UTF_8); // TODO add bodypart charset methods
-
-                JsonNode valueNode = partNode.get("value");
-                if (filename == null) {
-                    builder.textPart(name, valueNode.textValue());
-                } else {
-                    if (valueNode.isTextual()) {
-                        builder.formPart(name, filename, valueNode.textValue());
-                    } else {
-                        try {
-                            byte[] bytes = valueNode.binaryValue();
-                            builder.formPart(name, filename, bytes);
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                }
-            });
+            partsData.forEach(partNode -> readPart(builder, partNode));
         }
 
         return builder;
+    }
+
+    private void readPart(BodyPublisherBuilder builder, JsonNode partNode) {
+        String name = partNode.get("name").textValue();
+        String filename = Optional.ofNullable(partNode.get("filename")).map(JsonNode::textValue).orElse(null);
+        Charset charset = Optional.ofNullable(partNode.get("charset")).map(node -> Charset.forName(node.textValue())).orElse(StandardCharsets.UTF_8); // TODO add bodypart charset methods
+
+        JsonNode valueNode = partNode.get("value");
+        if (filename == null) {
+            builder.textPart(name, valueNode.textValue());
+        } else if (valueNode.isTextual()) {
+            builder.formPart(name, filename, valueNode.textValue());
+        } else {
+            try {
+                byte[] bytes = valueNode.binaryValue();
+                builder.formPart(name, filename, bytes);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     private AbstractBuilder buildJwtIdentityTokenBodyPublisherProducer(JsonNode currentNode) {
@@ -670,7 +648,8 @@ public class NodeBuilderDeserializer extends StdDeserializer<AbstractBuilder> {
         HttpStatusValidationBuilder builder = new HttpStatusValidationBuilder();
 
         JsonNode successNode = currentNode.get("success");
-        // {"type":"HttpStatusValidation","success":{"200":[],"404":[{"type":"HttpResponseBodyContains","queryBuilder":{"type":"QueryJqPath",EXPRESSION:".kode"},"equalToStringLiteral":"SP-002"}]}}
+        // "success" maps each status code to the response predicates it must meet, an empty list for none: for
+        // example 200 to none, and 404 to an HttpResponseBodyContains of a QueryJqPath ".kode" equal to "SP-002"
         for (Iterator<Map.Entry<String, JsonNode>> it = successNode.fields(); it.hasNext(); ) {
             Map.Entry<String, JsonNode> elementNode = it.next();
 

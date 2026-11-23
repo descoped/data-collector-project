@@ -29,6 +29,6 @@ class CommonUtilsTest {
 
     @Test
     void thatTheStackTraceIsPrinted() {
-        assertDoesNotThrow(() -> CommonUtils.printStackTrace());
+        assertDoesNotThrow(CommonUtils::printStackTrace);
     }
 }
