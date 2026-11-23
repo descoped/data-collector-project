@@ -143,9 +143,10 @@ jobs:
 
       # The CodeArtifact token lives 15 minutes and only in this step's shell; settings.xml reads it from there. The
       # account is the role's own and the publishing endpoint is looked up here, so neither is in a public file. The
-      # log masks the endpoint, its origin, its host and the account, since Maven may print any of them. The server
-      # descoped-snapshots lists the endpoint's origin in repositoryOrigins, so Maven 3.10 sends the token there and
-      # nowhere else; the POM reads maven.descoped.io under another id.
+      # account is masked first, so the log hides it in any line that contains it; the endpoint and its origin too. The server
+      # descoped-snapshots lists the endpoint's origin in repositoryOrigins, and credentialScope=strict refuses
+      # credentials for any repository they are not bound to, so the token goes there and nowhere else; the POM reads
+      # maven.descoped.io under another id.
       - name: Deploy
         env:
           AWS_ACCESS_KEY_ID: ${{ steps.aws.outputs.aws-access-key-id }}
@@ -153,19 +154,17 @@ jobs:
           AWS_SESSION_TOKEN: ${{ steps.aws.outputs.aws-session-token }}
           AWS_REGION: eu-north-1
         run: |
+          account=$(aws sts get-caller-identity --query Account --output text)
+          echo "::add-mask::$account"
           token=$(aws codeartifact get-authorization-token --domain descoped \
             --duration-seconds 900 --query authorizationToken --output text)
           echo "::add-mask::$token"
           export CODEARTIFACT_AUTH_TOKEN="$token"
           url=$(aws codeartifact get-repository-endpoint --domain descoped --repository maven-snapshots \
             --format maven --query repositoryEndpoint --output text)
-          origin=$(printf '%s' "$url" | sed -E 's#^(https://[^/]+).*#\1#')
-          host=${origin#https://}
-          account=$(printf '%s' "$host" | sed -E 's#^[^.]*-([0-9]{12})\..*#\1#')
+          origin="${url%%/maven/*}"
           echo "::add-mask::$url"
           echo "::add-mask::$origin"
-          echo "::add-mask::$host"
-          echo "::add-mask::$account"
           export SNAPSHOTS_URL="$url" SNAPSHOTS_ORIGIN="$origin"
           mkdir -p ~/.m2
           cat > ~/.m2/settings.xml <<'XML'
@@ -193,4 +192,5 @@ jobs:
             </activeProfiles>
           </settings>
           XML
-          ./mvnw --batch-mode --no-transfer-progress -P descoped-snapshots -DskipTests deploy
+          ./mvnw --batch-mode --no-transfer-progress -P descoped-snapshots -DskipTests \
+            -Dmaven.repository.credentialScope=strict deploy
