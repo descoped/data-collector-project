@@ -33,9 +33,8 @@ Before the release:
   - encryption that fails closed when a key or secret is missing;
   - secrets and `Authorization` headers kept out of logs, exception messages and health output.
 - **Build:** test coverage for every module in SonarCloud.
-- **Release:** rawdata-client 3.1.0 released, in place of the 3.1.0-SNAPSHOT dc builds on now; then a decision on
-  the root POM's maven.descoped.io repository, which every released POM would carry (drop it, or keep it in a profile
-  the release leaves out); then the artifacts on Maven Central and the image from the release tag.
+- **Release:** rawdata-client 3.1.0 released, in place of the 3.1.0-SNAPSHOT dc builds on now (a release has no
+  SNAPSHOT dependency); then the artifacts on Maven Central and the image from the release tag.
 
 ## After 3.0.0
 
