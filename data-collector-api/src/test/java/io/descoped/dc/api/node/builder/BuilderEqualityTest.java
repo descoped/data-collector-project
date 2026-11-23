@@ -14,34 +14,40 @@ class BuilderEqualityTest {
     @Test
     void thatOperationBuildersCompareTheirUrl() {
         GetBuilder builder = get("id").url("http://a");
-        assertEquals(builder, builder);
+        Object same = builder;
+        assertEquals(same, builder);
         assertEquals(get("id").url("http://a"), builder);
         assertEquals(get("id").url("http://a").hashCode(), builder.hashCode());
         assertNotEquals(get("id").url("http://b"), builder);
         assertNotEquals(get("other").url("http://a"), builder);
         assertNotEquals(null, builder);
-        assertNotEquals(new PostBuilder("id").url("http://a"), builder);
+        Object otherType = new PostBuilder("id").url("http://a");
+        assertNotEquals(otherType, builder);
     }
 
     @Test
     void thatIdentityBuildersCompareTheirId() {
         IdentityBuilder builder = jwt("id", headerClaims().alg("RS256"), claims().issuer("issuer"));
-        assertEquals(builder, builder);
+        Object same = builder;
+        assertEquals(same, builder);
         assertEquals(jwt("id", headerClaims().alg("RS256"), claims().issuer("issuer")), builder);
         assertEquals(jwt("id", headerClaims().alg("RS256"), claims().issuer("issuer")).hashCode(), builder.hashCode());
         assertNotEquals(jwt("other", headerClaims().alg("RS256"), claims().issuer("issuer")), builder);
         assertNotEquals(null, builder);
-        assertNotEquals(new StringBodyPublisherProducerBuilder("id"), builder);
+        Object otherType = new StringBodyPublisherProducerBuilder("id");
+        assertNotEquals(otherType, builder);
     }
 
     @Test
     void thatStringBodyBuildersCompareTheirData() {
         StringBodyPublisherProducerBuilder builder = new StringBodyPublisherProducerBuilder("a");
-        assertEquals(builder, builder);
+        Object same = builder;
+        assertEquals(same, builder);
         assertEquals(new StringBodyPublisherProducerBuilder("a"), builder);
         assertEquals(new StringBodyPublisherProducerBuilder("a").hashCode(), builder.hashCode());
         assertNotEquals(new StringBodyPublisherProducerBuilder("b"), builder);
         assertNotEquals(null, builder);
-        assertNotEquals(new JsonTokenBuilder(), builder);
+        Object otherType = new JsonTokenBuilder();
+        assertNotEquals(otherType, builder);
     }
 }
