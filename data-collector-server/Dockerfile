@@ -18,8 +18,8 @@
 #
 # The JDK is 17, the baseline of dc (see .claude/CLAUDE.md), and is raised by hand. The bases are Google's distroless
 # images of Debian 13 (glibc, which the native libraries of jffi and lmdbjava need; CA certificates, time zones). Every
-# image the build starts from is named by its digest, so a build of the same commit gives the same image (with
-# SOURCE_DATE_EPOCH and rewrite-timestamp, as the release does); Renovate moves the digests.
+# image the build starts from is named by its digest, so a build of the same commit starts from the same images;
+# Renovate moves the digests.
 
 # No shell, no package manager, no program.
 FROM gcr.io/distroless/base-nossl-debian13:latest@sha256:3a2dbf10c2fdafe5865e2b03a4a3b9b23f2e280229a81730415379b76dc70592 AS base-distroless

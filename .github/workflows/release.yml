@@ -7,9 +7,10 @@ name: Release
 #
 #   gh workflow run release.yml -f version=3.0.0
 #
-# A run is safe to repeat until the tag is made: the jars (project.build.outputTimestamp) and the images
-# (SOURCE_DATE_EPOCH, base images by digest) of one commit are the same in every run, so a run again after a failure
-# pushes the same images again.
+# A run is safe to repeat until the tag is made: it builds the same commit again, from the same base images (by digest),
+# with the time of the commit in every jar (project.build.outputTimestamp) and every file and layer of the images
+# (SOURCE_DATE_EPOCH), and moves the tags to the images it pushes and signs. Their digests differ from the run before:
+# the SBOM and the provenance are made anew on every run.
 #
 # What is released is master as it is: its POMs must already have the version, CHANGELOG.md a section for it with its
 # date (## [3.0.0] - 2026-12-01), and CI must have passed on the commit on JDK 17 and 27 (the release builds the jars
@@ -78,8 +79,8 @@ jobs:
           ./mvnw --batch-mode --quiet enforcer:enforce -Denforcer.rules=requireReleaseDeps \
             || { echo "::error::A release has no SNAPSHOT dependency"; exit 1; }
           for java in 17 27; do
-            ci="$(gh api "repos/$GITHUB_REPOSITORY/commits/$(git rev-parse HEAD)/check-runs" \
-                --jq "[.check_runs[] | select(.name == \"Build (JDK $java)\") | .conclusion] | first")"
+            ci="$(gh api "repos/$GITHUB_REPOSITORY/commits/$(git rev-parse HEAD)/check-runs?check_name=Build%20(JDK%20$java)" \
+                --jq '.check_runs[0].conclusion')"
             [ "$ci" = "success" ] || { echo "::error::CI (JDK $java) on $(git rev-parse HEAD) is '$ci', not success"; exit 1; }
           done
           {
@@ -108,8 +109,7 @@ jobs:
           context: data-collector-server
           target: regular
           platforms: linux/amd64,linux/arm64
-          # Pushed with the time of every file and layer set to the time of the commit (SOURCE_DATE_EPOCH), so a run
-          # again for the same commit pushes the same images.
+          # Pushed with the time of every file and layer set to the time of the commit (SOURCE_DATE_EPOCH).
           outputs: type=image,push=true,rewrite-timestamp=true
           sbom: true
           provenance: mode=max
@@ -136,8 +136,7 @@ jobs:
           context: data-collector-server
           target: distroless
           platforms: linux/amd64,linux/arm64
-          # Pushed with the time of every file and layer set to the time of the commit (SOURCE_DATE_EPOCH), so a run
-          # again for the same commit pushes the same images.
+          # Pushed with the time of every file and layer set to the time of the commit (SOURCE_DATE_EPOCH).
           outputs: type=image,push=true,rewrite-timestamp=true
           sbom: true
           provenance: mode=max
@@ -155,8 +154,7 @@ jobs:
           context: data-collector-server
           target: debug
           platforms: linux/amd64,linux/arm64
-          # Pushed with the time of every file and layer set to the time of the commit (SOURCE_DATE_EPOCH), so a run
-          # again for the same commit pushes the same images.
+          # Pushed with the time of every file and layer set to the time of the commit (SOURCE_DATE_EPOCH).
           outputs: type=image,push=true,rewrite-timestamp=true
           sbom: true
           provenance: mode=max
