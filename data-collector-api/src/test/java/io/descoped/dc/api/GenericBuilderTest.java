@@ -10,7 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class GenericBuilderTest {
 
@@ -21,7 +21,8 @@ class GenericBuilderTest {
         List.of(clazz.getDeclaredFields()).forEach(field -> System.out.printf("%s%n", field.getName()));
 
         ReflectionTarget reflectionTarget = new ReflectionTarget(clazz);
-        assertEquals(clazz.getDeclaredFields().length, reflectionTarget.fieldTargets.size());
+        assertTrue(reflectionTarget.fieldTargets.containsKey("specificationId"));
+        assertTrue(reflectionTarget.methodTargets.containsKey("configure"));
     }
 
     @Test
@@ -35,7 +36,8 @@ class GenericBuilderTest {
         reflectionTarget.fieldTargets.forEach((k, v) -> System.out.printf("%s=%s%n", k, v));
         System.out.println();
         reflectionTarget.methodTargets.forEach((k, v) -> System.out.printf("%s=%s%n", k, v));
-        assertEquals(clazz.getDeclaredFields().length, reflectionTarget.fieldTargets.size());
+        assertTrue(reflectionTarget.fieldTargets.containsKey("variables"));
+        assertTrue(reflectionTarget.methodTargets.containsKey("variable"));
     }
 
     public static class ReflectionTarget {

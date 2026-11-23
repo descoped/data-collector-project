@@ -9,6 +9,7 @@ import io.descoped.dc.api.Processor;
 import io.descoped.dc.api.Specification;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Deque;
@@ -420,7 +421,7 @@ public class NodeBuilderDeserializer extends StdDeserializer<AbstractBuilder> {
             currentNode.get("requiredOutputs").forEach(output -> builder.output(output.textValue()));
             return builder;
         } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
+            throw new IllegalArgumentException(e);
         }
     }
 
@@ -617,7 +618,7 @@ public class NodeBuilderDeserializer extends StdDeserializer<AbstractBuilder> {
                 byte[] bytes = valueNode.binaryValue();
                 builder.formPart(name, filename, bytes);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new UncheckedIOException(e);
             }
         }
     }
