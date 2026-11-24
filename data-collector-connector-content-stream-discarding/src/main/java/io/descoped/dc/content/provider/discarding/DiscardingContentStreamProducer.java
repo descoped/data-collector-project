@@ -2,6 +2,7 @@ package io.descoped.dc.content.provider.discarding;
 
 import io.descoped.dc.api.content.ContentStreamBuffer;
 import io.descoped.dc.api.content.ContentStreamProducer;
+
 public class DiscardingContentStreamProducer implements ContentStreamProducer {
 
     @Override

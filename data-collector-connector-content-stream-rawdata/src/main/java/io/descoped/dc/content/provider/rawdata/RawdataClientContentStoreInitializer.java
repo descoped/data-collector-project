@@ -24,6 +24,8 @@ public class RawdataClientContentStoreInitializer implements ContentStoreInitial
     private static final String ENCRYPTION_SALT = "rawdata.encryption.salt";
     private static final String SECRETS_PROVIDER = "secrets.provider";
     private static final String DYNAMIC_CONFIGURATION = "dynamic-configuration";
+    private static final String DYNAMIC = "dynamic-secret-configuration";
+    private static final String GOOGLE = "google-secret-manager";
 
     @Override
     public Set<String> configurationKeys() {
@@ -82,9 +84,6 @@ public class RawdataClientContentStoreInitializer implements ContentStoreInitial
             if (encryptionSalt != null) Arrays.fill(encryptionSalt, (byte) 0);
         }
     }
-
-    private static final String DYNAMIC = "dynamic-secret-configuration";
-    private static final String GOOGLE = "google-secret-manager";
 
     static Map<String, String> secretsConfiguration(String encryptionProvider, Map<String, String> configuration) {
         Map<String, String> secrets = new LinkedHashMap<>();
