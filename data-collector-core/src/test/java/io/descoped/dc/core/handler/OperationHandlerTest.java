@@ -21,6 +21,7 @@ class OperationHandlerTest {
                         .function(get("page").url("http://127.0.0.1:1/")))
                 .configuration(Map.of(
                         "data.collector.http.request.retryCount", "1",
+                        // read from retryCount (see the PR's "Found"), so the nap is 1 ms
                         "data.collector.http.request.napOnRetryInMillis", "10"))
                 .build();
 

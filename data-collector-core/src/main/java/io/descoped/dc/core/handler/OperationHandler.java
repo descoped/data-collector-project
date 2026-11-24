@@ -256,11 +256,9 @@ public abstract class OperationHandler<T extends Operation> extends AbstractNode
 
             if (!inRetryWhileState) validateResponse(context, request, response);
 
-            if (failureCause.get() != null) {
-                // TODO should exception be rethrown
-                if (LOG.isErrorEnabled()) {
-                    LOG.error("Captured completable exception: {}", CommonUtils.captureStackTrace(failureCause.get()));
-                }
+            // TODO should exception be rethrown
+            if (failureCause.get() != null && LOG.isErrorEnabled()) {
+                LOG.error("Captured completable exception: {}", CommonUtils.captureStackTrace(failureCause.get()));
             }
 
             return response;

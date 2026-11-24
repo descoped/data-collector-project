@@ -2,6 +2,7 @@ package io.descoped.dc.core.health;
 
 import io.descoped.dc.api.content.HealthContentStreamMonitor;
 import io.descoped.dc.core.executor.WorkerException;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -12,6 +13,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HealthWorkerHistoryResourceTest {
+
+    // a failed assertion must not leave the flag set for the next test
+    @AfterEach
+    void clearInterrupt() {
+        Thread.interrupted();
+    }
 
     @Test
     void thatAddedWorkerIsInTheHistory() {

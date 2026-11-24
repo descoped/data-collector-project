@@ -1,5 +1,6 @@
 package io.descoped.dc.core.executor;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CountDownLatch;
@@ -9,6 +10,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FixedThreadPoolTest {
+
+    // a failed assertion must not leave the flag set for the next test
+    @AfterEach
+    void clearInterrupt() {
+        Thread.interrupted();
+    }
 
     @Test
     void thatPoolInfoHasItsSizes() {

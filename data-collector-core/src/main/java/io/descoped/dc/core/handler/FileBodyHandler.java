@@ -5,6 +5,7 @@ import io.descoped.dc.api.util.CompressUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -139,13 +140,13 @@ public class FileBodyHandler implements BodyHandler<Path> {
 
     /*
      * A temporary file readable and writable by its owner only. A file system without POSIX permissions (Windows) gets
-     * the default temporary file, as in 2.x: its temporary directory is the user's own.
+     * the default temporary file, as in 2.x (the same directory and name): its temporary directory is the user's own.
      */
     static Path createOwnerOnlyTempFile() throws IOException {
         String prefix = UUID.randomUUID().toString();
         if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
             return Files.createTempFile(prefix, null, OWNER_ONLY);
         }
-        return Files.createTempFile(prefix, null);
+        return File.createTempFile(prefix, null).toPath();
     }
 }

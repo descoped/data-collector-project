@@ -29,8 +29,8 @@ import java.util.function.Consumer;
 @SupportHandler(forClass = XPath.class, selectorClass = DocumentParserFeature.class)
 public class XPathParser implements DocumentParserFeature {
 
-
     public XPathParser() {
+        // the parser keeps no state
     }
 
     static XMLReader createSAXFactory() {

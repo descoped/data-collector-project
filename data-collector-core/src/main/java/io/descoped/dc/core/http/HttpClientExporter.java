@@ -36,7 +36,7 @@ class HttpClientExporter {
     static final Counter requestCompletedCount = Counter.build("request_completed", "Completed requests")
             .namespace("dc")
             .subsystem(SUBSYSTEM)
-            .labelNames("location", "statusCode", "emptyResponse")
+            .labelNames(LOCATION, "statusCode", "emptyResponse")
             .register();
 
     static final Counter requestFailureCount = Counter.build("request_failure", "Failed requests")
