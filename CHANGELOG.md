@@ -45,7 +45,7 @@ dependencies and Java 17. dc's own behaviour stays as in 2.x, except for the cha
   | dynamic-configuration | 3.0.1 |
   | secrets-client | 3.0.0 |
   | encryption-util | 3.0.1 |
-  | rawdata-client | 3.1.0-SNAPSHOT, 3.1.0 once released |
+  | rawdata-client | 3.1.0 |
 
   rawdata-client 3.1 makes a message id unique in its topic: the same message again is ignored, a different one
   under a taken id is refused. A recovery run repeated over the same source no longer duplicates the target's
