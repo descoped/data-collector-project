@@ -67,6 +67,7 @@ public class CorrelationIds {
             return Collections.emptyList();
 
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
     }

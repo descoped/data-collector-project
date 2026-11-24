@@ -2,7 +2,6 @@ package io.descoped.dc.api.content;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public interface ContentStreamProducer extends AutoCloseable {
 
@@ -16,7 +15,7 @@ public interface ContentStreamProducer extends AutoCloseable {
         for (ContentStreamBuffer.Builder builder : builders) {
             produce(builder);
         }
-        publish(Arrays.stream(builders).map(ContentStreamBuffer.Builder::position).collect(Collectors.toList()));
+        publish(Arrays.stream(builders).map(ContentStreamBuffer.Builder::position).toList());
     }
 
     default void publish(List<String> positions) throws ClosedContentStreamException {

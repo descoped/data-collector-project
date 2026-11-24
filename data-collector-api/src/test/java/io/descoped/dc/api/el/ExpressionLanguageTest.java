@@ -13,21 +13,23 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class ExpressionLanguageTest {
+class ExpressionLanguageTest {
 
     @Test
-    public void testSimpleExpression() {
+    void testSimpleExpression() {
         String expr = "${a-b}";
 
         Map<String, Object> variables = new LinkedHashMap<>();
         variables.put("a", "1");
         variables.put("b", "2");
         ExpressionLanguage el = new ExpressionLanguage(new ExecutionContext.Builder().variables(variables).build());
-        System.out.printf("%s%n", el.evaluateExpression(expr));
+        Object result = el.evaluateExpression(expr);
+        System.out.printf("%s%n", result);
+        assertEquals(-1, ((Number) result).intValue());
     }
 
     @Test
-    public void testCustomContext() {
+    void testCustomContext() {
         ExecutionContext context = ExecutionContext.empty();
         Map<String, String> map = new LinkedHashMap<>();
         map.put("foo.bar", "bar");
@@ -40,7 +42,7 @@ public class ExpressionLanguageTest {
     }
 
     @Test
-    public void testConvertDateToEpoc() {
+    void testConvertDateToEpoc() {
         TemporalAccessor ta = DateTimeFormatter.ISO_DATE_TIME.parse("2020-10-05T00:00:00.000Z");
         long epochSecond = LocalDateTime.from(ta).toEpochSecond(ZoneOffset.UTC);
 

@@ -111,7 +111,7 @@ public class SpecificationContextBuilder extends ConfigurationBuilder {
         public String topic() {
             String topic = context.state("global.topic");
             if (topic == null) {
-                throw new RuntimeException("Topic is NOT configured!");
+                throw new IllegalStateException("Topic is NOT configured!");
             }
             return topic;
         }

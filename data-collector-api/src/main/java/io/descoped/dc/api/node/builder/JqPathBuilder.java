@@ -44,7 +44,7 @@ public class JqPathBuilder extends QueryBuilder {
                 '}';
     }
 
-    class JqPathNode extends QueryNode implements JqPath {
+    static class JqPathNode extends QueryNode implements JqPath {
 
         final String expression;
 

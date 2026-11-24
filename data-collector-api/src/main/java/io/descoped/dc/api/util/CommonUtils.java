@@ -1,9 +1,13 @@
 package io.descoped.dc.api.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.UncheckedIOException;
 import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -11,10 +15,16 @@ import java.nio.charset.Charset;
 import java.nio.charset.CoderResult;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class CommonUtils {
+
+    private static final Logger LOG = LoggerFactory.getLogger(CommonUtils.class);
+
+    private CommonUtils() {
+    }
 
     public static Path currentPath() {
         return Paths.get(".").toAbsolutePath().normalize();
@@ -61,7 +71,7 @@ public class CommonUtils {
         try {
             Path path = Paths.get(pathStr);
             if (Files.notExists(path)) {
-                throw new RuntimeException("File not found: " + pathStr);
+                throw new UncheckedIOException("File not found: " + pathStr, new NoSuchFileException(pathStr));
             }
             byte[] bytes = Files.readAllBytes(path);
             CharBuffer cbuf = CharBuffer.allocate(bytes.length);
@@ -96,7 +106,7 @@ public class CommonUtils {
             }
             pw.println("    " + ste.toString());
         }
-        System.out.printf("StackTrace:%n%s%n", sw.toString());
+        LOG.info("StackTrace:\n{}", sw);
     }
 
 }

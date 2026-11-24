@@ -24,6 +24,7 @@ public class XmlTokenBuilder extends QueryBuilder {
     static class XmlTokenNode extends QueryNode implements XmlToken {
 
         public XmlTokenNode() {
+            // no state: the query returns the response body unaltered
         }
 
         // NOP expression - the body query returns unaltered response body

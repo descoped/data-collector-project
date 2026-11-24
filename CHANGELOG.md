@@ -82,6 +82,12 @@ dependencies and Java 17. dc's own behaviour stays as in 2.x, except for the cha
   deletion in the feed.
 - **Documentation** is Markdown in `docs/`, revised for 3.0. The examples (compose setups, profiles, specifications)
   are in `examples/`.
+- **SonarCloud findings** (bugs, vulnerabilities and code smells), module by module:
+  - a thread interrupted while it waits keeps its interrupt flag when the wait ends in an exception;
+  - errors that were a plain `RuntimeException` are a subclass of it (`IllegalStateException`,
+    `IllegalArgumentException`, `UncheckedIOException`), so a caller that catches `RuntimeException` still does;
+  - two specification builders are equal only when their URL (`get`, `post`, `put`, `delete`), identity id or string
+    body is equal too.
 
 ### Removed
 
@@ -90,6 +96,7 @@ dependencies and Java 17. dc's own behaviour stays as in 2.x, except for the cha
 - The production variants of the example specifications, and the scripts tied to one organisation's infrastructure.
 - The AsciiDoc documentation and its PlantUML build.
 - The unused `docker/entrypoint.sh`, which the image never copied.
+- `CryptoUtils` (data-collector-api), an MD5 helper that nothing called.
 
 ### Fixed
 

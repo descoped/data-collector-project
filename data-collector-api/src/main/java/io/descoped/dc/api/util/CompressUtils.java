@@ -12,6 +12,9 @@ import java.util.zip.GZIPOutputStream;
 
 public class CompressUtils {
 
+    private CompressUtils() {
+    }
+
     private static final int BUFFER_SIZE = 4 * 1024;
 
     public static boolean isGzipCompressed(Path file) {

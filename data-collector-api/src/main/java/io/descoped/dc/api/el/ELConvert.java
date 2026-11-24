@@ -14,7 +14,7 @@ public class ELConvert {
             TemporalAccessor ta = DateTimeFormatter.ISO_DATE_TIME.parse("2020-10-05T00:00:00.000Z");
             long epochSecond = LocalDateTime.from(ta).toEpochSecond(ZoneOffset.UTC);
             return Long.valueOf(epochSecond);
-        } catch (RuntimeException | Error e) {
+        } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
             throw new EvaluationException("Error convert utc date '" + value + "' to Epoc (long)!\n" + CommonUtils.captureStackTrace(e));

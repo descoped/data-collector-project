@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.descoped.dc.api.node.Base;
 import io.descoped.dc.api.node.StringBodyPublisherProducer;
 
+import java.util.Objects;
+
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class StringBodyPublisherProducerBuilder extends BodyPublisherProducerBuilder {
 
@@ -19,6 +21,20 @@ public class StringBodyPublisherProducerBuilder extends BodyPublisherProducerBui
     @Override
     public <R extends Base> R build(BuildContext buildContext) {
         return (R) new StringBodyPublisherProducerNode(data);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        StringBodyPublisherProducerBuilder that = (StringBodyPublisherProducerBuilder) o;
+        return Objects.equals(data, that.data);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), data);
     }
 
     public class StringBodyPublisherProducerNode extends LeafNode implements StringBodyPublisherProducer {

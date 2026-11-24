@@ -36,6 +36,9 @@ import io.descoped.dc.api.node.builder.XPathBuilder;
 
 public class Builders {
 
+    private Builders() {
+    }
+
     public static SpecificationContextBuilder context() {
         return new SpecificationContextBuilder();
     }

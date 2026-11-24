@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 // TODO https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
 public enum HttpStatus {
@@ -103,55 +102,55 @@ public enum HttpStatus {
         }
     }
 
-    static public List<HttpStatus> okCodes() {
+    public static List<HttpStatus> okCodes() {
         buildOkMap();
         return (List<HttpStatus>) okMap.values();
     }
 
-    static public boolean isOk(int statusCode) {
+    public static boolean isOk(int statusCode) {
         buildOkMap();
         return okMap.containsKey(statusCode);
     }
 
-    static public List<HttpStatus> redirectionCodes() {
+    public static List<HttpStatus> redirectionCodes() {
         buildRedirectionMap();
         return (List<HttpStatus>) redirectionMap.values();
     }
 
-    static public boolean isRedirection(int statusCode) {
+    public static boolean isRedirection(int statusCode) {
         buildRedirectionMap();
         return redirectionMap.containsKey(statusCode);
     }
 
-    static public List<HttpStatus> clientErrorList() {
+    public static List<HttpStatus> clientErrorList() {
         buildClientErrorMap();
         return (List<HttpStatus>) clientErrorMap.values();
     }
 
-    static public Integer[] clientErrorCodes() {
-        return clientErrorList().stream().map(code -> code.statusCode).collect(Collectors.toList()).toArray(new Integer[clientErrorList().size()]);
+    public static Integer[] clientErrorCodes() {
+        return clientErrorList().stream().map(code -> code.statusCode).toArray(Integer[]::new);
     }
 
-    static public boolean isClientError(int statusCode) {
+    public static boolean isClientError(int statusCode) {
         buildClientErrorMap();
         return clientErrorMap.containsKey(statusCode);
     }
 
-    static public List<HttpStatus> serverErrorCodes() {
+    public static List<HttpStatus> serverErrorCodes() {
         buildServerErrorMap();
         return (List<HttpStatus>) serverErrorMap.values();
     }
 
-    static public boolean isServerError(int statusCode) {
+    public static boolean isServerError(int statusCode) {
         buildServerErrorMap();
         return serverErrorMap.containsKey(statusCode);
     }
 
-    static public List<HttpStatus> range(int fromStatusCodeInclusive, int toStatusCodeInclusive) {
+    public static List<HttpStatus> range(int fromStatusCodeInclusive, int toStatusCodeInclusive) {
         return new ArrayList<>(rangeMap(fromStatusCodeInclusive, toStatusCodeInclusive).values());
     }
 
-    static public HttpStatus valueOf(int statusCode) {
+    public static HttpStatus valueOf(int statusCode) {
         for (HttpStatus value : values()) {
             if (value.statusCode == statusCode) {
                 return value;

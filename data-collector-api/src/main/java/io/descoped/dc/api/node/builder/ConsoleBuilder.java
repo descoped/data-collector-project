@@ -33,7 +33,7 @@ public class ConsoleBuilder extends NodeBuilder {
 
         @Override
         public void log() {
-
+            // nothing to do: ConsoleHandler (core) logs the state when the node is executed
         }
 
         @Override

@@ -12,6 +12,7 @@ import io.descoped.dc.api.node.Put;
 import io.descoped.dc.api.node.Validator;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -72,9 +73,7 @@ public class PutBuilder extends OperationBuilder {
     }
 
     public PutBuilder returnVariables(String... variableKeys) {
-        for (String variableKey : variableKeys) {
-            returnVariables.add(variableKey);
-        }
+        Collections.addAll(returnVariables, variableKeys);
         return this;
     }
 
@@ -83,7 +82,7 @@ public class PutBuilder extends OperationBuilder {
     <R extends Base> R build(BuildContext buildContext) {
         BodyPublisher bodyPublisher = bodyPublisherBuilder == null ? null : bodyPublisherBuilder.build(buildContext);
 
-        List<Validator> validators = new ArrayList<>();
+        List<Validator> validatorNodes = new ArrayList<>();
 
         // add default http status validator if unassigned
         if (this.validators.isEmpty()) {
@@ -92,7 +91,7 @@ public class PutBuilder extends OperationBuilder {
 
         for (LeafNodeBuilder validatorBuilder : this.validators) {
             Validator validator = validatorBuilder.build(buildContext);
-            validators.add(validator);
+            validatorNodes.add(validator);
         }
 
         List<Node> stepNodeList = new ArrayList<>();
@@ -101,7 +100,7 @@ public class PutBuilder extends OperationBuilder {
             stepNodeList.add(stepNode);
         }
 
-        return (R) new PutBuilder.PutNode(getId(), buildContext.getInstance(SpecificationBuilder.GLOBAL_CONFIGURATION), url, requestHeaders, bodyPublisher, validators, stepNodeList, returnVariables);
+        return (R) new PutBuilder.PutNode(getId(), buildContext.getInstance(SpecificationBuilder.GLOBAL_CONFIGURATION), url, requestHeaders, bodyPublisher, validatorNodes, stepNodeList, returnVariables);
     }
 
     @Override

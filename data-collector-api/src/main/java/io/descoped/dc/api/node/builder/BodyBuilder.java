@@ -24,6 +24,7 @@ public class BodyBuilder extends QueryBuilder {
     class BodyNode extends QueryNode implements Body {
 
         public BodyNode() {
+            // no state: the query returns the response body unaltered
         }
 
         // NOP expression - the body query returns unaltered response body

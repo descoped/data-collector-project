@@ -37,11 +37,11 @@ public class MetadataContent {
 
     public static class Builder {
 
-        private ObjectNode metadataNode = JsonParser.createJsonParser().createObjectNode();
-        private ObjectNode requestHeaderNode = JsonParser.createJsonParser().createObjectNode();
-        private ObjectNode responseHeaderNode = JsonParser.createJsonParser().createObjectNode();
-        private ObjectNode httpInfoNode = JsonParser.createJsonParser().createObjectNode();
-        private ObjectNode stateNode = JsonParser.createJsonParser().createObjectNode();
+        private final ObjectNode metadataNode = JsonParser.createJsonParser().createObjectNode();
+        private final ObjectNode requestHeaderNode = JsonParser.createJsonParser().createObjectNode();
+        private final ObjectNode responseHeaderNode = JsonParser.createJsonParser().createObjectNode();
+        private final ObjectNode httpInfoNode = JsonParser.createJsonParser().createObjectNode();
+        private final ObjectNode stateNode = JsonParser.createJsonParser().createObjectNode();
 
         public Builder correlationId(CorrelationIds correlationIds) {
             metadataNode.put("correlation-id", (correlationIds == null ? null : correlationIds.get().stream().map(UUID::toString).collect(Collectors.joining(","))));
@@ -110,14 +110,14 @@ public class MetadataContent {
             stateMap.entrySet().forEach(entry -> {
                 Object value = entry.getValue();
                 ValueNode valueNode;
-                if (value instanceof String) {
-                    valueNode = new TextNode((String) value);
+                if (value instanceof String string) {
+                    valueNode = new TextNode(string);
 
-                } else if (value instanceof Integer) {
-                    valueNode = new IntNode((Integer) value);
+                } else if (value instanceof Integer integer) {
+                    valueNode = new IntNode(integer);
 
-                } else if (value instanceof Boolean) {
-                    valueNode = BooleanNode.valueOf((Boolean) value);
+                } else if (value instanceof Boolean bool) {
+                    valueNode = BooleanNode.valueOf(bool);
 
                 } else {
                     throw new IllegalStateException("Unsupported state type!");

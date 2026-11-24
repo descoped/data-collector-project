@@ -45,7 +45,7 @@ public class XPathBuilder extends QueryBuilder {
                 '}';
     }
 
-    class XPathNode extends QueryNode implements XPath {
+    static class XPathNode extends QueryNode implements XPath {
 
         final String expression;
 

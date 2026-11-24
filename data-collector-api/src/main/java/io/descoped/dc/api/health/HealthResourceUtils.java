@@ -7,6 +7,9 @@ import java.lang.reflect.Method;
 
 public class HealthResourceUtils {
 
+    private HealthResourceUtils() {
+    }
+
     public static float divide(long numerator, long denominator) {
         return denominator == 0 ? 0 : (float) (((double) numerator) / ((double) denominator));
     }

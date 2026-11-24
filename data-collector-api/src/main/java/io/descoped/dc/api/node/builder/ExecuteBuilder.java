@@ -49,7 +49,7 @@ public class ExecuteBuilder extends NodeBuilder {
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> (QueryBuilder.QueryNode) e.getValue().build(buildContext), (x, y) -> y, LinkedHashMap::new));
 
         if (!buildContext.containsBuilder(executeId)) {
-            throw new RuntimeException("Builder" + this.getClass() + " points to an undefined node: " + this.executeId);
+            throw new IllegalStateException("Builder" + this.getClass() + " points to an undefined node: " + this.executeId);
         }
 
         NodeWithIdBuilder.FlowNodeWithId targetExecuteNode = (buildContext.containsInstance(executeId) ?
@@ -107,7 +107,7 @@ public class ExecuteBuilder extends NodeBuilder {
 
         @Override
         public Map<String, Query> inputVariable() {
-            return inputVariables.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (x, y) -> (Query) y, LinkedHashMap::new));
+            return inputVariables.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (x, y) -> y, LinkedHashMap::new));
         }
 
         @Override

@@ -70,7 +70,7 @@ public class NextPageBuilder extends NodeBuilder {
 
         @Override
         public Map<String, Query> outputs() {
-            return queryNodeMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (x, y) -> (Query) y, LinkedHashMap::new));
+            return queryNodeMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (x, y) -> y, LinkedHashMap::new));
         }
 
         @Override
