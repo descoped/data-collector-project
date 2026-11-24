@@ -20,6 +20,11 @@ public class RawdataClientContentStoreInitializer implements ContentStoreInitial
 
     private static final Logger LOG = LoggerFactory.getLogger(RawdataClientContentStoreInitializer.class);
 
+    private static final String ENCRYPTION_KEY = "rawdata.encryption.key";
+    private static final String ENCRYPTION_SALT = "rawdata.encryption.salt";
+    private static final String SECRETS_PROVIDER = "secrets.provider";
+    private static final String DYNAMIC_CONFIGURATION = "dynamic-configuration";
+
     @Override
     public Set<String> configurationKeys() {
         return Set.of("rawdata.client.provider");
@@ -42,10 +47,12 @@ public class RawdataClientContentStoreInitializer implements ContentStoreInitial
 
     @Override
     public ContentStore initialize(Map<String, String> configuration) {
-        LOG.info("Content stream connector: {}", configuration.get("content.stream.connector"));
+        if (LOG.isInfoEnabled()) {
+            LOG.info("Content stream connector: {}", configuration.get("content.stream.connector"));
 
-        LOG.info("Rawdata client provider: {}", configuration.get("rawdata.client.provider"));
-        LOG.info("Rawdata encryption enabled: {}", configuration.containsKey("rawdata.encryption.key"));
+            LOG.info("Rawdata client provider: {}", configuration.get("rawdata.client.provider"));
+            LOG.info("Rawdata encryption enabled: {}", configuration.containsKey(ENCRYPTION_KEY));
+        }
 
         String encryptionProvider = configuration.get("rawdata.encryption.provider");
         Map<String, String> secretsConfiguration = secretsConfiguration(encryptionProvider, configuration);
@@ -61,8 +68,8 @@ public class RawdataClientContentStoreInitializer implements ContentStoreInitial
 
         LOG.debug("Load encryption credentials from: {}", encryptionProvider == null ? "application configuration" : encryptionProvider);
         boolean google = GOOGLE.equals(encryptionProvider);
-        String keySecretName = google ? Optional.ofNullable(configuration.get("rawdata.encryption.key")).orElseThrow() : "rawdata.encryption.key";
-        String saltSecretName = google ? Optional.ofNullable(configuration.get("rawdata.encryption.salt")).orElseThrow() : "rawdata.encryption.salt";
+        String keySecretName = google ? Optional.ofNullable(configuration.get(ENCRYPTION_KEY)).orElseThrow() : ENCRYPTION_KEY;
+        String saltSecretName = google ? Optional.ofNullable(configuration.get(ENCRYPTION_SALT)).orElseThrow() : ENCRYPTION_SALT;
         char[] encryptionKey = null;
         byte[] encryptionSalt = null;
         try (SecretManagerClient secretManagerClient = SecretManagerClient.create(secretsConfiguration)) {
@@ -82,9 +89,9 @@ public class RawdataClientContentStoreInitializer implements ContentStoreInitial
     static Map<String, String> secretsConfiguration(String encryptionProvider, Map<String, String> configuration) {
         Map<String, String> secrets = new LinkedHashMap<>();
         String keyPath = configuration.get("rawdata.encryption.gcp.serviceAccountKeyPath");
-        if (DYNAMIC.equals(encryptionProvider) || "dynamic-configuration".equals(encryptionProvider)) {
+        if (DYNAMIC.equals(encryptionProvider) || DYNAMIC_CONFIGURATION.equals(encryptionProvider)) {
             // secrets-client 3 names this provider dynamic-configuration
-            secrets.put("secrets.provider", "dynamic-configuration");
+            secrets.put(SECRETS_PROVIDER, DYNAMIC_CONFIGURATION);
             // the log lines are as in 2.x
             if (keyPath == null) {
                 LOG.info("Use custom encryption credentials configuration: {}", keyPath);
@@ -95,15 +102,15 @@ public class RawdataClientContentStoreInitializer implements ContentStoreInitial
             }
         } else if (GOOGLE.equals(encryptionProvider)) {
             LOG.info("Use Google Secret Manager for encryption credentials");
-            secrets.put("secrets.provider", encryptionProvider);
+            secrets.put(SECRETS_PROVIDER, encryptionProvider);
             secrets.put("secrets.project-id", Optional.ofNullable(configuration.get("rawdata.encryption.gcp.projectId")).orElseThrow());
             // Application Default Credentials (2.x: Compute Engine) when no service account key is set
             if (keyPath != null) {
                 secrets.put("secrets.service-account-key-path", keyPath);
             }
-        } else if (configuration.containsKey("rawdata.encryption.key") && configuration.containsKey("rawdata.encryption.salt")) {
+        } else if (configuration.containsKey(ENCRYPTION_KEY) && configuration.containsKey(ENCRYPTION_SALT)) {
             LOG.info("Fallback application configuration for encryption credentials");
-            secrets.put("secrets.provider", "dynamic-configuration");
+            secrets.put(SECRETS_PROVIDER, DYNAMIC_CONFIGURATION);
             putInline(secrets, configuration);
         }
         return secrets;
@@ -112,7 +119,7 @@ public class RawdataClientContentStoreInitializer implements ContentStoreInitial
     // The provider reads the secrets it is given; with 2.x it read them from the whole application configuration.
     // Only these two are ever read.
     private static void putInline(Map<String, String> secrets, Map<String, String> configuration) {
-        for (String key : new String[]{"rawdata.encryption.key", "rawdata.encryption.salt"}) {
+        for (String key : new String[]{ENCRYPTION_KEY, ENCRYPTION_SALT}) {
             String value = configuration.get(key);
             if (value != null) {
                 secrets.put("secrets.values." + key, value);

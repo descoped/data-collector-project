@@ -10,24 +10,24 @@ import io.descoped.dc.api.content.ContentStreamProducer;
 import io.descoped.dc.api.content.HttpRequestInfo;
 import io.descoped.dc.api.context.ExecutionContext;
 import io.descoped.dc.api.http.Headers;
-import io.descoped.encryption.client.Algorithm;
-import io.descoped.encryption.client.EncryptionClient;
 import io.descoped.rawdata.api.RawdataClient;
 import io.descoped.rawdata.api.RawdataClientInitializer;
+import io.descoped.rawdata.api.RawdataMessage;
 import io.descoped.service.provider.api.ProviderConfigurator;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class ContentStreamTest {
+class ContentStreamTest {
 
     @Test
-    public void thatContentStoreInitializer() {
+    void thatContentStoreInitializer() {
         ContentStore contentStore = ProviderConfigurator.configure(ContentStoreInitializer.class, "rawdata", Map.of(
                         "rawdata.client.provider", "memory",
                         "rawdata.encryption.key", "password",
@@ -40,9 +40,8 @@ public class ContentStreamTest {
     }
 
     @Test
-    public void thatRawdataClientProducesContent() {
+    void thatRawdataClientProducesContent() {
         RawdataClient client = ProviderConfigurator.configure(RawdataClientInitializer.class, "memory", Map.of());
-        EncryptionClient encryptionClient = new EncryptionClient(Algorithm.AES256);
         ContentStream contentStream = new RawdataClientContentStream(client);
         ContentStreamProducer producer = contentStream.producer("ns");
 
@@ -54,6 +53,10 @@ public class ContentStreamTest {
         producer.produce(builder);
 
         producer.publish("1");
+
+        RawdataMessage message = client.lastMessage("ns");
+        assertEquals("1", message.position());
+        assertEquals(Set.of("a", "b", "manifest.json"), message.data().keySet());
     }
 
     static void consumeMessages(ContentStream client) {
@@ -85,7 +88,7 @@ public class ContentStreamTest {
     }
 
     @Test
-    public void contentStreamConsumer() throws Exception {
+    void contentStreamConsumer() throws Exception {
         Map<String, String> configuration = Map.of(
                 "content.stream.connector", "rawdata",
                 "rawdata.client.provider", "memory"
@@ -99,5 +102,7 @@ public class ContentStreamTest {
         produceMessages(contentStream);
 
         consumerThread.join();
+
+        assertEquals("582AACB30", contentStream.lastPosition("my-rawdata-stream"));
     }
 }
