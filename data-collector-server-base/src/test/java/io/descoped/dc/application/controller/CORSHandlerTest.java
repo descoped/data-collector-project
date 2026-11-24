@@ -20,10 +20,10 @@ import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class CORSHandlerTest {
+class CORSHandlerTest {
 
-    volatile private HttpServerExchange httpServerExchange;
-    volatile private HttpHandler customHandler;
+    private volatile HttpServerExchange httpServerExchange;
+    private volatile HttpHandler customHandler;
     private HttpClient client;
     private Undertow server;
     private URI uri;
@@ -34,29 +34,22 @@ public class CORSHandlerTest {
     static int findFree() {
         int port = 0;
         while (port == 0) {
-            ServerSocket socket = null;
-            try {
-                socket = new ServerSocket(0);
+            try (ServerSocket socket = new ServerSocket(0)) {
                 port = socket.getLocalPort();
             } catch (IOException e) {
                 throw new RuntimeException("Failed finding free port", e);
-            } finally {
-                try {
-                    if (socket != null) socket.close();
-                } catch (IOException ignore) {
-                }
             }
         }
         return port;
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         server.stop();
     }
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
 
         httpServerExchange = null;
         customHandler = null;
@@ -103,7 +96,7 @@ public class CORSHandlerTest {
     }
 
     @Test
-    public void testThatExchangeIsForwarded() throws IOException {
+    void testThatExchangeIsForwarded() throws IOException {
         HttpResponse<Void> response = send("GET", "http://foo");
         assertThat(response.statusCode()).isEqualTo(222);
         assertThat(header(response, CORSHandler.ACCESS_CONTROL_ALLOW_ORIGIN)).isEqualTo("http://foo");
@@ -113,7 +106,7 @@ public class CORSHandlerTest {
     }
 
     @Test
-    public void testThatPreflightShortCircuitsHandler() throws IOException {
+    void testThatPreflightShortCircuitsHandler() throws IOException {
         HttpResponse<Void> response = send("OPTIONS", "http://foo", "Access-Control-Request-Method", "PUT");
         assertThat(response.statusCode()).isEqualTo(444);
         assertThat(header(response, CORSHandler.ACCESS_CONTROL_ALLOW_METHODS))
@@ -127,14 +120,14 @@ public class CORSHandlerTest {
     }
 
     @Test
-    public void testThatItIncludesVary() throws IOException {
+    void testThatItIncludesVary() throws IOException {
         HttpResponse<Void> response = send("GET", "http://foo");
         assertThat(header(response, Headers.VARY_STRING)).isEqualTo("Origin");
         assertThat(httpServerExchange).isNotNull();
     }
 
     @Test
-    public void testThatItAppendsVary() throws IOException {
+    void testThatItAppendsVary() throws IOException {
         customHandler = exchange -> exchange.getResponseHeaders().add(Headers.VARY, "Foo");
         HttpResponse<Void> response = send("GET", "http://foo");
         assertThat(response.headers().allValues(Headers.VARY_STRING)).containsExactlyInAnyOrder("Origin", "Foo");
@@ -142,7 +135,7 @@ public class CORSHandlerTest {
     }
 
     @Test
-    public void testMatchesRegex() throws IOException {
+    void testMatchesRegex() throws IOException {
         HttpResponse<Void> response1 = send("GET", "http://regexp");
         assertThat(header(response1, CORSHandler.ACCESS_CONTROL_ALLOW_ORIGIN)).isEqualTo("http://regexp");
         assertThat(httpServerExchange).isNotNull();

@@ -102,14 +102,12 @@ public class CORSHandler implements HttpHandler {
                 log.debug("Preflight check: {}", exchange);
                 handlePreflight(exchange);
             } else {
-                //log.debug("Simple check: {}", exchange);
                 String origin = checkOrigin(exchange);
                 addAllowOrigin(exchange, origin);
                 addExposeHeaders(exchange);
                 next.handleRequest(exchange);
             }
         } catch (OutOfScopeException oose) {
-            //log.trace("Request out of scope: {}", oose.getMessage());
             fail.handleRequest(exchange);
         }
     }
@@ -146,8 +144,8 @@ public class CORSHandler implements HttpHandler {
         // Request headers can be comma separated
         requestHeaders = requestHeaders.stream()
                 .flatMap(value -> Stream.of(value.split(",")))
-                .map(value -> value.trim())
-                .collect(Collectors.toList());
+                .map(String::trim)
+                .toList();
 
         // If any of the header field-names is not a ASCII case-insensitive match for any of the values in
         // list of headers do not set any additional headers and terminate this set of steps.
@@ -196,7 +194,7 @@ public class CORSHandler implements HttpHandler {
         return headers;
     }
 
-    private List<String> getHeaderOrEmpty(HttpServerExchange exchange, HttpString header) throws OutOfScopeException {
+    private List<String> getHeaderOrEmpty(HttpServerExchange exchange, HttpString header) {
         HeaderValues headers = getHeader(exchange, header);
         return headers == null ? Collections.emptyList() : headers;
     }

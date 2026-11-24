@@ -9,16 +9,16 @@ import java.util.TreeMap;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
-public class PathPredicateAndTreeMapTest {
+class PathPredicateAndTreeMapTest {
 
     @Test
-    public void thatUniqueEntriesAreAddedToTreeMap() {
+    void thatUniqueEntriesAreAddedToTreeMap() {
         PathPredicate key0 = PathPredicate.of(0, "/foo", Request.Method.GET);
         PathPredicate key1 = PathPredicate.of(1, "/foo/{bar}", Request.Method.PUT);
         PathPredicate key2 = PathPredicate.of(1, "/foo/{bar}", Request.Method.GET);
 
-        assertEquals(key1, key1);
-        assertEquals(key2, key2);
+        assertEquals(PathPredicate.of(1, "/foo/{bar}", Request.Method.PUT), key1);
+        assertEquals(PathPredicate.of(1, "/foo/{bar}", Request.Method.GET), key2);
         assertNotEquals(key1, key2);
 
         NavigableMap<PathPredicate, PathAction> sortedMap = new TreeMap<>();

@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.io.StringWriter;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 public class MetricsResourcesTest {
 
     @Test
@@ -17,6 +19,7 @@ public class MetricsResourcesTest {
         applicationResource.trackUptime();
         StringWriter sw = new StringWriter();
         TextFormat.write004(sw, CollectorRegistry.defaultRegistry.metricFamilySamples());
-        System.out.printf("%s%n", sw.toString());
+        System.out.printf("%s%n", sw);
+        assertTrue(sw.toString().contains("dc_application_uptime"));
     }
 }

@@ -14,12 +14,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class PathParserTest {
+class PathParserTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(PathParserTest.class);
 
     @Test
-    public void parsePath() {
+    void parsePath() {
         String template = "/a/{b}/c";
 
         PathParser pathParser = PathParser.create(template);
@@ -51,7 +51,7 @@ public class PathParserTest {
     }
 
     @Test
-    public void thatPathBindingsSatisfiesRequest() {
+    void thatPathBindingsSatisfiesRequest() {
         String template = "/check-integrity/{topic}/full";
 
         PathParser pathParser = PathParser.create(template);
@@ -88,7 +88,7 @@ public class PathParserTest {
     }
 
     @Test
-    public void pathDispatcher() {
+    void pathDispatcher() {
         PathDispatcher pathDispatcher = PathDispatcher.create();
 
         pathDispatcher.bind("/check-integrity", Request.Method.GET, this::handleCheckIntegrity);
@@ -96,7 +96,7 @@ public class PathParserTest {
         pathDispatcher.bind("/check-integrity/{topic}", Request.Method.GET, this::handleCheckIntegrityTopic);
         pathDispatcher.bind("/check-integrity/{foo}", Request.Method.PUT, this::handleCheckIntegrityTopic);
         pathDispatcher.bind("/check-integrity/{topic}", Request.Method.DELETE, this::handleDeleteCheckIntegrityTopic);
-        pathDispatcher.dispatchHandlers().forEach((key, value) -> LOG.trace("{}", key.toString()));
+        pathDispatcher.dispatchHandlers().forEach((key, value) -> LOG.trace("{}", key));
 
         HttpServerExchange mockExchange = new HttpServerExchange(null);
         assertEquals(true, pathDispatcher.dispatch("/check-integrity", Request.Method.GET, mockExchange).outcome().get("INVOKED"));

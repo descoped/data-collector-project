@@ -130,7 +130,10 @@ public class HealthResourceFactory {
             int o1Priority = o1.getClass().getAnnotation(HealthRenderPriority.class).priority();
             int o2Priority = o2.getClass().getAnnotation(HealthRenderPriority.class).priority();
 
-            return o1Priority == o2Priority ? 1 : o1Priority < o2Priority ? -1 : 1;
+            if (o1Priority == o2Priority) {
+                return 1;
+            }
+            return o1Priority < o2Priority ? -1 : 1;
         }
     }
 

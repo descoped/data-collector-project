@@ -106,22 +106,22 @@ public class PathDispatcher {
 
         Map.Entry<PathPredicate, PathAction> actionEntry = ceilingEntry(PathPredicate.of(lastRequestPathElementIndex, lastRequestPathElement, method));
         if (actionEntry == null) {
-            throw new RuntimeException("Unable to resolve action-handler for: " + requestPath);
+            throw new IllegalStateException("Unable to resolve action-handler for: " + requestPath);
         }
 
         PathPredicate templatePathPredicate = actionEntry.getKey();
         if (!method.equals(templatePathPredicate.method)) {
-            throw new RuntimeException("Found non-matching verb action-handler for: " + method + " " + requestPath + " -> Found: " + actionEntry);
+            throw new IllegalStateException("Found non-matching verb action-handler for: " + method + " " + requestPath + " -> Found: " + actionEntry);
         }
 
         PathParser templateParser = actionEntry.getValue().templateParser;
         if (templateParser == null || lastRequestPathElementIndex != templateParser.elements().size() - 1) {
-            throw new RuntimeException("Panic! The action-handler for: " + requestPath + " is incorrect! Found: " + actionEntry);
+            throw new IllegalStateException("Panic! The action-handler for: " + requestPath + " is incorrect! Found: " + actionEntry);
         }
 
         PathBindings bindings = templateParser.path(requestPath);
         if (!bindings.isSatisfied()) {
-            throw new RuntimeException(String.format("RequestPath: %s DID NOT satisfy templatePath: %s", requestPath, bindings.template().path()));
+            throw new IllegalStateException(String.format("RequestPath: %s DID NOT satisfy templatePath: %s", requestPath, bindings.template().path()));
         }
         Map<String, String> variables = bindings.extractVariables();
 

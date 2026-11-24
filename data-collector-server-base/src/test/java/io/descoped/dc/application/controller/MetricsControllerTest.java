@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -23,7 +22,7 @@ import static io.descoped.dc.api.util.CommonUtils.captureStackTrace;
 import static io.descoped.dc.application.controller.CORSHandlerTest.findFree;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class MetricsControllerTest {
+class MetricsControllerTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(MetricsControllerTest.class);
 
@@ -31,7 +30,7 @@ public class MetricsControllerTest {
     private static UndertowApplication server;
 
     @BeforeAll
-    public static void beforeAll() {
+    static void beforeAll() {
         DynamicConfiguration configuration = DynamicConfiguration.builder()
                 .value("prometheus.defaultExports.disabled", "true")
                 .build();
@@ -40,11 +39,11 @@ public class MetricsControllerTest {
     }
 
     @AfterAll
-    public static void afterAll() {
+    static void afterAll() {
         server.stop();
     }
 
-    static public HttpResponse GET(String uri, String... headers) {
+    public static HttpResponse GET(String uri, String... headers) {
         try {
             HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(
                     URI.create("http://" + server.getHost() + ":" + server.getPort() + uri)).GET();
@@ -61,34 +60,34 @@ public class MetricsControllerTest {
     }
 
     @Test
-    public void thatMetricsAreHealth() {
+    void thatMetricsAreHealth() {
         HttpResponse response = GET("/metrics/-/healthy");
         assertEquals(200, response.statusCode);
         assertEquals("Exporter is Healthy.", response.body);
     }
 
     @Test
-    public void thatMetricsAreReported() throws IOException, InterruptedException {
+    void thatMetricsAreReported() {
         HttpResponse response = GET("/metrics");
         assertEquals(200, response.statusCode);
         LOG.trace("body:\n{}", response.body);
     }
 
     @Test
-    public void experiment() throws InterruptedException {
+    void experiment() throws InterruptedException {
         Counter requests = Counter.build("requests_total", "Total requests").namespace("ns").subsystem("foo").register();
         requests.inc();
 
-        Counter request_count = Counter.build("requests_count", "Count requests").namespace("ns").subsystem("foo").labelNames("url").register();
+        Counter requestCount = Counter.build("requests_count", "Count requests").namespace("ns").subsystem("foo").labelNames("url").register();
         requests.inc();
 
         Gauge gauge = Gauge.build("currentTime", "Current Time").namespace("ns").subsystem("foo").register();
-        gauge.set(Instant.now().toEpochMilli());
+        gauge.set((double) Instant.now().toEpochMilli());
 
         {
             // null value causes NPE
             Optional<String> emptyString = Optional.empty();
-            request_count.labels(emptyString.orElse("")).inc();
+            requestCount.labels(emptyString.orElse("")).inc();
         }
 
         {
@@ -117,7 +116,8 @@ public class MetricsControllerTest {
             timer.observeDuration();
         }
 
-
+        // the second inc() above is on requests too
+        assertEquals(2.0, requests.get());
     }
 
     static class HttpResponse {
