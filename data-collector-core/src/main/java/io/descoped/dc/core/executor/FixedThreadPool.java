@@ -12,12 +12,12 @@ import java.util.concurrent.TimeUnit;
 
 public class FixedThreadPool {
 
-    private final static Logger LOG = LoggerFactory.getLogger(FixedThreadPool.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FixedThreadPool.class);
 
-    private final ExecutorService fixedThreadPool;
+    private final ExecutorService executorService;
 
     private FixedThreadPool(int numberOfThreads) {
-        this.fixedThreadPool = createFixedThreadPool(numberOfThreads);
+        this.executorService = createFixedThreadPool(numberOfThreads);
     }
 
     public static FixedThreadPool newInstance() {
@@ -39,36 +39,31 @@ public class FixedThreadPool {
     }
 
     public ExecutorService getExecutor() {
-        return fixedThreadPool;
+        return executorService;
     }
 
     public Map<String, Object> asThreadPoolInfo() {
         Map<String, Object> threadPoolInfoMap = new LinkedHashMap<>();
-        ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) fixedThreadPool;
-        //threadPoolInfoMap.put("task-count", threadPoolExecutor.getTaskCount());
-        //threadPoolInfoMap.put("active-count", threadPoolExecutor.getActiveCount());
-        //threadPoolInfoMap.put("completed-task-count", threadPoolExecutor.getCompletedTaskCount());
-        //threadPoolInfoMap.put("pool-size", threadPoolExecutor.getPoolSize());
+        ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) executorService;
         threadPoolInfoMap.put("core-pool-size", threadPoolExecutor.getCorePoolSize());
-        //threadPoolInfoMap.put("largest-pool-size", threadPoolExecutor.getLargestPoolSize());
         threadPoolInfoMap.put("maximum-pool-size", threadPoolExecutor.getMaximumPoolSize());
         return threadPoolInfoMap;
     }
 
     public void shutdownAndAwaitTermination() {
         LOG.debug("Shutdown thread pool..");
-        fixedThreadPool.shutdown(); // Disable new tasks from being submitted
+        executorService.shutdown(); // Disable new tasks from being submitted
         try {
             // Wait a while for existing tasks to terminate
-            if (!fixedThreadPool.awaitTermination(5, TimeUnit.SECONDS)) {
-                fixedThreadPool.shutdownNow(); // Cancel currently executing tasks
+            if (!executorService.awaitTermination(5, TimeUnit.SECONDS)) {
+                executorService.shutdownNow(); // Cancel currently executing tasks
                 // Wait a while for tasks to respond to being cancelled
-                if (!fixedThreadPool.awaitTermination(60, TimeUnit.SECONDS))
+                if (!executorService.awaitTermination(60, TimeUnit.SECONDS))
                     LOG.error("Pool did not terminate");
             }
         } catch (InterruptedException ie) {
             // (Re-)Cancel if current thread also interrupted
-            fixedThreadPool.shutdownNow();
+            executorService.shutdownNow();
             // Preserve interrupt status
             Thread.currentThread().interrupt();
         }

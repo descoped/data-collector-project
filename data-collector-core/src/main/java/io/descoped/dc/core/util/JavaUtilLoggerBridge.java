@@ -6,6 +6,9 @@ import java.util.logging.LogManager;
 
 public class JavaUtilLoggerBridge {
 
+    private JavaUtilLoggerBridge() {
+    }
+
     private static class Initializer {
         static {
             LogManager.getLogManager().reset();
@@ -20,6 +23,5 @@ public class JavaUtilLoggerBridge {
 
     public static final void installJavaUtilLoggerBridgeHandler() {
         Initializer.configure();
-        //LogManager.getLogManager().getLogger("").setLevel(level);
     }
 }

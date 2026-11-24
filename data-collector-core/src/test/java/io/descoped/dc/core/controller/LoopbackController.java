@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.descoped.dc.api.http.Request;
 import io.descoped.dc.api.util.JsonParser;
 import io.descoped.dc.application.spi.Controller;
-import io.undertow.io.Receiver;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 
@@ -52,7 +51,6 @@ public class LoopbackController implements Controller {
             childObjectNode.put("statusCode", String.valueOf(exchange.getStatusCode()));
             childObjectNode.put("isSecure", Boolean.valueOf(exchange.isSecure()).toString());
             childObjectNode.put("sourceAddress", exchange.getSourceAddress().toString());
-//            childObjectNode.put("destinationAddress", exchange.getDestinationAddress().toString());
             objectNode.set("request-info", childObjectNode);
         }
 
@@ -66,7 +64,7 @@ public class LoopbackController implements Controller {
 
         {
             ObjectNode childObjectNode = jsonParser.createObjectNode();
-            exchange.getPathParameters().entrySet().forEach((e) -> {
+            exchange.getPathParameters().entrySet().forEach(e -> {
                 childObjectNode.put(e.getKey(), e.getValue().element());
             });
             objectNode.set("path-parameters", childObjectNode);
@@ -75,7 +73,7 @@ public class LoopbackController implements Controller {
         {
             objectNode.put("queryString", exchange.getQueryString());
             ObjectNode childObjectNode = jsonParser.createObjectNode();
-            exchange.getQueryParameters().entrySet().forEach((e) -> {
+            exchange.getQueryParameters().entrySet().forEach(e -> {
                 childObjectNode.put(e.getKey(), e.getValue().element());
             });
             objectNode.set("query-parameters", childObjectNode);
@@ -84,12 +82,7 @@ public class LoopbackController implements Controller {
         {
             objectNode.put("contentLength", String.valueOf(exchange.getRequestContentLength()));
             ObjectNode childObjectNode = jsonParser.createObjectNode();
-            exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
-                @Override
-                public void handle(HttpServerExchange httpServerExchange, byte[] bytes) {
-                    childObjectNode.put("payload", new String(bytes));
-                }
-            });
+            exchange.getRequestReceiver().receiveFullBytes((httpServerExchange, bytes) -> childObjectNode.put("payload", new String(bytes)));
             objectNode.set("request-body", childObjectNode);
         }
 

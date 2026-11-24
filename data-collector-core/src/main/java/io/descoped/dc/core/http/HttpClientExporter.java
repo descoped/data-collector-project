@@ -21,31 +21,41 @@ import java.util.concurrent.CompletableFuture;
  */
 class HttpClientExporter {
 
+    private static final String SUBSYSTEM = "client";
+    private static final String LOCATION = "location";
+
+    private HttpClientExporter() {
+    }
+
     static final Counter requestStartedCount = Counter.build("request_started", "Started requests")
             .namespace("dc")
-            .subsystem("client")
-            .labelNames("location")
+            .subsystem(SUBSYSTEM)
+            .labelNames(LOCATION)
             .register();
 
     static final Counter requestCompletedCount = Counter.build("request_completed", "Completed requests")
             .namespace("dc")
-            .subsystem("client")
+            .subsystem(SUBSYSTEM)
             .labelNames("location", "statusCode", "emptyResponse")
             .register();
 
     static final Counter requestFailureCount = Counter.build("request_failure", "Failed requests")
             .namespace("dc")
-            .subsystem("client")
-            .labelNames("location")
+            .subsystem(SUBSYSTEM)
+            .labelNames(LOCATION)
             .register();
 
     static final Histogram requestDurationHistogram = Histogram.build("request_duration", "Request duration")
             .namespace("dc")
-            .subsystem("client")
-            .labelNames("location")
+            .subsystem(SUBSYSTEM)
+            .labelNames(LOCATION)
             .register();
 
     static class Send {
+
+        private Send() {
+        }
+
         static Response intercept(@SuperCall Callable<Response> zuper, @Argument(0) Request request) throws Exception {
             URLInfo urlInfo = new URLInfo(request.url());
             // prometheus: default to empty location so it doesn't throw NPE
@@ -67,6 +77,10 @@ class HttpClientExporter {
     }
 
     static class SendAsync {
+
+        private SendAsync() {
+        }
+
         static CompletableFuture<Response> intercept(@SuperCall Callable<CompletableFuture<Response>> zuper, @Argument(0) Request request) throws Exception {
             URLInfo urlInfo = new URLInfo(request.url());
             // prometheus: default to empty location so it doesn't throw NPE
@@ -84,11 +98,11 @@ class HttpClientExporter {
                         if (throwable != null) {
                             requestFailureCount.labels(urlInfo.getLocation().orElse("")).inc();
                             timer.observeDuration();
-                            if (throwable instanceof RuntimeException) {
-                                throw (RuntimeException) throwable;
+                            if (throwable instanceof RuntimeException runtimeException) {
+                                throw runtimeException;
                             }
-                            if (throwable instanceof Error) {
-                                throw (Error) throwable;
+                            if (throwable instanceof Error error) {
+                                throw error;
                             }
                             throw new RuntimeException(throwable);
                         }
@@ -98,6 +112,10 @@ class HttpClientExporter {
     }
 
     public static class GetHandlerInterceptor {
+
+        private GetHandlerInterceptor() {
+        }
+
         public static ExecutionContext intercept(@SuperCall Callable<ExecutionContext> zuper, @Argument(0) ExecutionContext context) throws Exception {
             try {
                 return zuper.call();

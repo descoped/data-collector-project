@@ -38,7 +38,6 @@ public class ExecuteHandler extends AbstractNodeHandler<Execute> {
             }
 
             if (content != null) {
-                // String inputVariableValue = Queries.from(input, inputVariableQuery).evaluateStringLiteral(content);
                 // TODO inputVariable state aggregation needs to be verified wrt side effects
                 String inputVariableValue = Queries.from(executeTargetInput, inputVariableQuery).evaluateStringLiteral(content);
                 executeTargetInput.variables().put(inputVariableName, inputVariableValue);
@@ -53,7 +52,6 @@ public class ExecuteHandler extends AbstractNodeHandler<Execute> {
         }
 
         // execute node
-        ExecutionContext output = Executor.execute(node.target(), executeTargetInput);
-        return output;
+        return Executor.execute(node.target(), executeTargetInput);
     }
 }

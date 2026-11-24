@@ -38,12 +38,14 @@ public class GetHandler extends OperationHandler<Get> {
             final Query bodyHandlerQuery = sequenceNode.get().splitToListQuery();
             if (bodyHandlerQuery instanceof JsonToken || bodyHandlerQuery instanceof XmlToken) {
                 final TempFileBodyHandler bodyHandler = TempFileBodyHandler.ofFile();
-                LOG.trace("Use BodyHandler: {} => {}", node.id(), bodyHandler.getClass().getSimpleName());
+                if (LOG.isTraceEnabled()) {
+                    LOG.trace("Use BodyHandler: {} => {}", node.id(), bodyHandler.getClass().getSimpleName());
+                }
                 input.state(io.descoped.dc.api.http.BodyHandler.class, bodyHandler);
             }
         }
 
-        Request.Builder requestBuilder = Request.newRequestBuilder().GET(); // . timeout(Duration.ofSeconds(requestTimeout));
+        Request.Builder requestBuilder = Request.newRequestBuilder().GET();
 
         // TODO needs to be fixed. RetryWhile is limited to one rule only.
         if (!node.retryWhile().isEmpty()) {
@@ -57,8 +59,8 @@ public class GetHandler extends OperationHandler<Get> {
 
     private Sequence findSequenceNode() {
         for (Node node : node.steps()) {
-            if (node instanceof Sequence) {
-                return (Sequence) node;
+            if (node instanceof Sequence sequence) {
+                return sequence;
             }
         }
         return null;

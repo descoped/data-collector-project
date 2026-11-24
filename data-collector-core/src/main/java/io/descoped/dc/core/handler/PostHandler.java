@@ -8,8 +8,6 @@ import io.descoped.dc.api.node.BodyPublisher;
 import io.descoped.dc.api.node.Identity;
 import io.descoped.dc.api.node.Post;
 import io.descoped.dc.core.executor.Executor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.http.HttpRequest;
 import java.nio.ByteBuffer;
@@ -19,8 +17,6 @@ import java.util.concurrent.Flow;
 @SuppressWarnings("unchecked")
 @Handler(forClass = Post.class)
 public class PostHandler extends OperationHandler<Post> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(PostHandler.class);
 
     public PostHandler(Post node) {
         super(node);

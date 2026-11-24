@@ -1,28 +1,23 @@
 package io.descoped.dc.core;
 
-import io.descoped.config.DynamicConfiguration;
 import io.descoped.dc.core.executor.FixedThreadPool;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 
-public class CompletableTest {
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class CompletableTest {
 
     final Supplier<String> currentThreadName = () -> Thread.currentThread().getName();
 
     @Test
-    public void testCompletables() throws ExecutionException, InterruptedException {
-        DynamicConfiguration configuration = DynamicConfiguration.builder()
-                .build();
-
+    void testCompletables() throws InterruptedException {
         FixedThreadPool threadPool = FixedThreadPool.newInstance();
 
-        Supplier<String> nestedFuture = () -> {
-            String msg = currentThreadName.get();
-            return msg;
-        };
+        Supplier<String> nestedFuture = currentThreadName;
 
         CompletableFuture<String> nestedFutureWithExecutor = CompletableFuture.supplyAsync(() -> {
                     String msg = currentThreadName.get();
@@ -41,10 +36,6 @@ public class CompletableTest {
 
         Thread.sleep(1500);
 
-//        if (true) return;
-
-        //nestedFutureWithExecutor.get();
-
         CompletableFuture<Void> future = CompletableFuture.supplyAsync(() -> {
                     String msg = currentThreadName.get();
                     System.out.printf("supplyAsync: origin: %s -- nested: %s%n", msg, nestedFuture.get());
@@ -55,10 +46,6 @@ public class CompletableTest {
                     nestedFuture.get();
                     return msg;
 
-//        }).thenCombineAsync(nestedFuture, (msg, nestedFutureResult) -> {
-//            String nestedMsg = nestedFuture.get();
-//            System.out.printf("combineAsync: origin: %s -- combine: %s -> %s%n", msg, nestedMsg, nestedFutureResult);
-//            return msg;
                 }).thenApply(msg -> {
                     System.out.printf("apply: origin: %s -- this: %s -- nested: %s%n", msg, currentThreadName.get(), nestedFuture.get());
                     nestedFuture.get();
@@ -73,5 +60,7 @@ public class CompletableTest {
                 });
 
         future.join();
+        assertTrue(future.isDone());
+        assertNotNull(nestedFutureWithExecutor.join());
     }
 }

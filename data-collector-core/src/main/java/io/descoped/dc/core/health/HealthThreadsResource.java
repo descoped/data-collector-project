@@ -14,7 +14,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
 
 @HealthRenderPriority(priority = 50)
 public class HealthThreadsResource implements HealthResource {
@@ -52,7 +51,7 @@ public class HealthThreadsResource implements HealthResource {
             Thread.State state = thread.getState();
             int priority = thread.getPriority();
             String type = thread.isDaemon() ? "Daemon" : "Normal";
-            List<String> stackTraceList = List.of(thread.getStackTrace()).stream().map(StackTraceElement::toString).collect(Collectors.toList());
+            List<String> stackTraceList = List.of(thread.getStackTrace()).stream().map(StackTraceElement::toString).toList();
             threadInfoList.add(new ThreadInfo(
                     thread.getId(),
                     name,

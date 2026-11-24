@@ -26,7 +26,7 @@ in [Specification DSL](specification-dsl.md).
 ./mvnw verify                    # compile with -Xlint:all -Werror, run the tests
 ./mvnw verify javadoc:javadoc    # also build the Javadoc with doclint; warnings fail the build
 ./mvnw verify -P coverage        # also write a JaCoCo report per module, in <module>/target/site/jacoco
-./mvnw verify -P live            # only the tests tagged live, against real public APIs (brreg)
+./mvnw verify -P live            # only the tests tagged live, against real public APIs (brreg, google.com)
 ```
 
 To build one module and what it needs, use `-pl <module> -am`, for example
@@ -113,7 +113,8 @@ explains every skipped test.
 A test tagged `@Tag("live")` calls a real public API. The default build leaves these tests out, so an outage at the
 source never fails a pull request; `./mvnw verify -P live` runs only them. The workflow `live.yml` runs them weekly
 and on demand. Today they are the brreg (Enhetsregisteret) tests: the feed and page tests in `enhetsregisteret-worker`,
-the bulk download, and the JSON token parser in core that reads the bulk file. The bulk download takes over an hour
+the bulk download, and the JSON token parser in core that reads the bulk file; and `HttpClientExporterTest` in core,
+which sends two requests to www.google.com through the metrics agent. The bulk download takes over an hour
 and logs some 150 MB. To run one live test, keep `-P live`, or the tag filter leaves it out and the build passes
 without running it:
 

@@ -20,7 +20,6 @@ public class BodyHandler extends AbstractHandler<Body> {
         Response response = context.state(Response.class);
         String body = new String(response.body(), StandardCharsets.UTF_8);
         QueryResult<String> queryResult = new QueryResult<>(body);
-        ExecutionContext output = ExecutionContext.empty().state(QueryResult.class, queryResult);
-        return output;
+        return ExecutionContext.empty().state(QueryResult.class, queryResult);
     }
 }

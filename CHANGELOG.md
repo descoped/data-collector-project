@@ -87,7 +87,10 @@ dependencies and Java 17. dc's own behaviour stays as in 2.x, except for the cha
   - errors that were a plain `RuntimeException` are a subclass of it (`IllegalStateException`,
     `IllegalArgumentException`, `UncheckedIOException`), so a caller that catches `RuntimeException` still does;
   - two specification builders are equal only when their URL (`get`, `post`, `put`, `delete`), identity id or string
-    body is equal too.
+    body is equal too;
+  - a temporary file for a response body is readable and writable by its owner only, on a file system with POSIX
+    permissions;
+  - `HttpClientExporterTest`, which calls www.google.com, is a `live` test.
 
 ### Removed
 

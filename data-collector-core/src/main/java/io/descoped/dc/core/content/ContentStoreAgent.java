@@ -11,6 +11,9 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 
 public class ContentStoreAgent {
 
+    private ContentStoreAgent() {
+    }
+
     public static void install(Instrumentation inst) {
         new AgentBuilder.Default()
                 .type(hasSuperType(named(ContentStore.class.getName())))

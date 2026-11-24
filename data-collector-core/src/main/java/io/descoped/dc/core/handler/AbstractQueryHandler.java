@@ -13,7 +13,7 @@ public abstract class AbstractQueryHandler<N extends Base> extends AbstractHandl
 
     private ExecutionContext context;
 
-    public AbstractQueryHandler(N node) {
+    protected AbstractQueryHandler(N node) {
         super(node);
     }
 

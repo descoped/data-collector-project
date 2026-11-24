@@ -25,7 +25,7 @@ public class ProcessHandler extends AbstractNodeHandler<Process> {
         ExecutionContext processorOutput = processInstance.process(processInput);
 
         if (node.requiredOutputs().stream().noneMatch(key -> processorOutput.variables().containsKey(key))) {
-            throw new RuntimeException("A variable is missing!");
+            throw new IllegalStateException("A variable is missing!");
         }
 
         return processorOutput;

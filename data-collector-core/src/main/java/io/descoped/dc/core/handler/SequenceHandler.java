@@ -19,12 +19,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 @Handler(forClass = Sequence.class)
 public class SequenceHandler extends AbstractNodeHandler<Sequence> {
 
-    private final Logger LOG = LoggerFactory.getLogger(SequenceHandler.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SequenceHandler.class);
 
     public SequenceHandler(Sequence node) {
         super(node);
@@ -50,7 +49,7 @@ public class SequenceHandler extends AbstractNodeHandler<Sequence> {
         }
 
         if (positionList.isEmpty()) {
-            LOG.warn("Reached end of stream! No more elements from position: {}", pageContextBuilder.nextPositionVariableNames().stream().map(name -> name + "=" + input.variable(name)).collect(Collectors.toList()));
+            LOG.warn("Reached end of stream! No more elements from position: {}", pageContextBuilder.nextPositionVariableNames().stream().map(name -> name + "=" + input.variable(name)).toList());
             throw new EndOfStreamException();
         }
 

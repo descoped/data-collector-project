@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @ExtendWith(TestServerExtension.class)
-public class MockDataTest {
+class MockDataTest {
 
     @Inject
     TestServer server;
@@ -33,7 +33,7 @@ public class MockDataTest {
     }
 
     @Test
-    public void thatAcceptXmlContent() {
+    void thatAcceptXmlContent() {
         Response response = get("/api/events?position=1&pageSize=10");
 
         DocumentParserFeature parser = Queries.parserFor(XPath.class);

@@ -55,6 +55,7 @@ public class HealthWorkerHistoryResource implements HealthResource {
         try {
             lock.lockInterruptibly();
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new WorkerException(e);
         }
         try {

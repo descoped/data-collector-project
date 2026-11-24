@@ -7,8 +7,6 @@ import io.descoped.dc.api.http.Response;
 import io.descoped.dc.api.node.BodyPublisher;
 import io.descoped.dc.api.node.Put;
 import io.descoped.dc.core.executor.Executor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.http.HttpRequest;
 import java.nio.ByteBuffer;
@@ -17,8 +15,6 @@ import java.util.concurrent.Flow;
 @SuppressWarnings("unchecked")
 @Handler(forClass = Put.class)
 public class PutHandler extends OperationHandler<Put> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(PutHandler.class);
 
     public PutHandler(Put node) {
         super(node);

@@ -25,7 +25,7 @@ import static net.bytebuddy.matcher.ElementMatchers.returns;
 
 public class Handlers {
 
-    private static final boolean useByteBuddy = false;
+    private static final boolean USE_BYTE_BUDDY = false;
     private final Map<Class<? extends Base>, Class<? extends AbstractHandler>> handlerFactory = new ConcurrentHashMap<>();
     private final Map<String, Class<?>> supportHandlerFactory = new ConcurrentHashMap<>();
     private final Map<String, Class<? extends AbstractHandler>> compositionHandlerFactory = new ConcurrentHashMap<>();
@@ -42,12 +42,11 @@ public class Handlers {
                 throw new IllegalStateException("unable to resolve handler for: " + nodeClass);
             }
 
-            if (useByteBuddy) {
+            if (USE_BYTE_BUDDY) {
                 Class<? extends AbstractHandler> unloadedType = new ByteBuddy()
                         .subclass(handlerClass)
-//                    .implement(Execution.class)
                         .method(named("execute").and(isDeclaredBy(ExecutionContext.class).and(returns(ExecutionContext.class))))
-                        .intercept(to(new ExecutionWrapper()))
+                        .intercept(to(ExecutionWrapper.class))
                         .make()
                         .load(handlerClass.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                         .getLoaded();
@@ -79,8 +78,8 @@ public class Handlers {
             /*
              * Create new node handler
              */
-            Constructor<?> constructor = supportHandlerClass.getDeclaredConstructor(new Class[0]);
-            return (R) constructor.newInstance(new Object[0]);
+            Constructor<?> constructor = supportHandlerClass.getDeclaredConstructor();
+            return (R) constructor.newInstance();
 
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
                  InvocationTargetException e) {
@@ -134,7 +133,7 @@ public class Handlers {
         static {
             nodeHandlerDiscovery(Handlers.class.getPackageName()).forEach(nodeHandlerClass -> {
                 if (!(nodeHandlerClass.isAnnotationPresent(Handler.class) || nodeHandlerClass.isAnnotationPresent(SupportHandler.class) || nodeHandlerClass.isAnnotationPresent(CompositionHandler.class))) {
-                    throw new RuntimeException("Handler is not declared for clazz: " + nodeHandlerClass);
+                    throw new IllegalStateException("Handler is not declared for clazz: " + nodeHandlerClass);
                 }
 
                 if (nodeHandlerClass.isAnnotationPresent(Handler.class)) {

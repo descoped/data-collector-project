@@ -18,12 +18,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class CertificateFactoryTest {
+class CertificateFactoryTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(CertificateFactoryTest.class);
 
     @Test
-    public void thatCertificatesAreDiscoveredAndLoaded() {
+    void thatCertificatesAreDiscoveredAndLoaded() {
         Path currentDir = CommonUtils.currentPath();
         CertificateScanner scanner = new CertificateScanner(currentDir);
         scanner.scan();
@@ -86,7 +86,7 @@ public class CertificateFactoryTest {
 
             @Override
             public void close() {
-
+                // nothing to release: the properties are in memory
             }
         };
         CertificateFactory factory = CertificateFactory.create(sslBundle);
@@ -95,7 +95,7 @@ public class CertificateFactoryTest {
 
     @Disabled("Needs the ske-test-certs bundle in the working directory")
     @Test
-    public void thatCertificateFactoryLoadLocalBundles() {
+    void thatCertificateFactoryLoadLocalBundles() {
         Path currentDir = CommonUtils.currentPath();
         CertificateFactory factory = CertificateFactory.scanAndCreate(currentDir);
         assertTrue(factory.getBundleNames().contains("ske-test-certs"));
@@ -103,7 +103,7 @@ public class CertificateFactoryTest {
 
     @Disabled("Needs the business certificate volume (/Volumes/SSB BusinessSSL/certs)")
     @Test
-    public void thatCertificateFactoryLoadMountedBundles() {
+    void thatCertificateFactoryLoadMountedBundles() {
         Path currentDir = Paths.get("/Volumes/SSB BusinessSSL/certs");
         CertificateFactory factory = CertificateFactory.scanAndCreate(currentDir);
         assertTrue(factory.getBundleNames().contains("ske-p12-certs"));
@@ -111,7 +111,7 @@ public class CertificateFactoryTest {
 
     @Disabled("Needs the business certificate volume (/Volumes/SSB BusinessSSL/certs)")
     @Test
-    public void thatProdCertificateFactoryLoadMountedBundles() {
+    void thatProdCertificateFactoryLoadMountedBundles() {
         Path currentDir = Paths.get("/Volumes/SSB BusinessSSL/certs");
         CertificateFactory factory = CertificateFactory.scanAndCreate(currentDir);
         assertTrue(factory.getBundleNames().contains("ske-prod-certs"));

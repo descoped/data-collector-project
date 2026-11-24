@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class XPathTest {
+class XPathTest {
 
     final String xml = "<?xml version=\"1.0\"?>" +
             "<feed>" +
@@ -50,7 +50,7 @@ public class XPathTest {
             "</feil>";
 
     @Test
-    public void testXpathHandler() {
+    void testXpathHandler() {
         DocumentParserFeature parser = Queries.parserFor(XPath.class);
         assertNotNull(parser);
         Document document = (Document) parser.deserialize(xml.getBytes());
@@ -68,6 +68,6 @@ public class XPathTest {
         XPath xPath = Builders.xpath("/feil/kode").build();
         QueryFeature qf = Queries.from(xPath);
         String result = qf.evaluateStringLiteral(xml404withResponseError);
-        assertEquals(result, "SM-002");
+        assertEquals("SM-002", result);
     }
 }

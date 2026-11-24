@@ -20,6 +20,10 @@ import java.util.Objects;
 class CertificateScanner {
 
     private static final Logger LOG = LoggerFactory.getLogger(CertificateScanner.class);
+    private static final String PRIVATE_KEY = "private.key";
+    private static final String PUBLIC_CERTIFICATE = "public.certificate";
+    private static final String ARCHIVE_CERTIFICATE = "archive.certificate";
+    private static final String SECRET_PASSPHRASE = "secret.passphrase";
 
     final Path scanDir;
     Map<String, CertificateBundle> bundles;
@@ -55,65 +59,86 @@ class CertificateScanner {
                             "secrets.provider", "safe-configuration",
                             "secrets.property-resource-path", fileNamePath.toString()
                     ))) {
-                        CertificateBundle.Builder builder = new CertificateBundle.Builder();
-
-                        builder.secretFileNamePath(fileNamePath);
-
-                        String bundleName = file.getParent().getName(file.getParent().getNameCount() - 1).toString();
-
-                        if (certificateBundles.containsKey(bundleName)) {
-                            LOG.warn("The certificate bundle '{}' is already discovered and loaded from: {}", bundleName, certificateBundles.get(bundleName).secretPropertiesPath().orElseThrow());
-                            return FileVisitResult.TERMINATE;
-                        }
-
-                        boolean isPEMBundle = hasSecret(secretsClient, "private.key") && hasSecret(secretsClient, "public.certificate");
-                        boolean isP12Bundle = hasSecret(secretsClient, "archive.certificate");
-
-                        if (isPEMBundle) {
-                            if (validateSecretProperties(secretsClient, file, "secret.passphrase", "private.key", "public.certificate")) {
-                                return FileVisitResult.TERMINATE;
-                            }
-
-                            Path privateKeyFile = file.getParent().resolve(secretsClient.readString("private.key"));
-                            if (!privateKeyFile.toFile().exists()) {
-                                LOG.warn("Skipping bundle '{}'. Could not find privateKeyFile: {}", bundleName, privateKeyFile.toAbsolutePath());
-                                return FileVisitResult.TERMINATE;
-                            }
-                            builder.privateKey(readFileToCharArray(privateKeyFile));
-
-                            Path publicCertFile = file.getParent().resolve(secretsClient.readString("public.certificate"));
-                            if (!publicCertFile.toFile().exists()) {
-                                LOG.warn("Skipping bundle '{}'. Could not find publicCertFile: {}", bundleName, publicCertFile.toAbsolutePath());
-                                return FileVisitResult.TERMINATE;
-                            }
-                            builder.publicCert(readFileToCharArray(publicCertFile));
-
-                        } else if (isP12Bundle) {
-                            if (validateSecretProperties(secretsClient, file, "secret.passphrase", "archive.certificate")) {
-                                return FileVisitResult.TERMINATE;
-                            }
-
-                            Path archiveCertFile = file.getParent().resolve(secretsClient.readString("archive.certificate"));
-                            if (!archiveCertFile.toFile().exists()) {
-                                LOG.warn("Skipping bundle '{}'. Could not find archiveCertFile: {}", bundleName, archiveCertFile.toAbsolutePath());
-                                return FileVisitResult.TERMINATE;
-                            }
-                            builder.archiveCert(Files.readAllBytes(archiveCertFile));
-
-                        } else {
-                            LOG.warn("Skipping bundle '{}'. Error with configuration!", bundleName);
-                        }
-
-                        // secrets-client 2 read a missing passphrase as empty; 3 throws
-                        builder.passphrase(hasSecret(secretsClient, "secret.passphrase") ? secretsClient.readChars("secret.passphrase") : new char[0]);
-
-                        certificateBundles.put(bundleName, builder.build());
+                        return loadBundle(file, secretsClient, certificateBundles);
                     }
                 }
                 return FileVisitResult.CONTINUE;
             }
         });
         return certificateBundles;
+    }
+
+    private FileVisitResult loadBundle(Path file, SecretManagerClient secretsClient, Map<String, CertificateBundle> certificateBundles) throws IOException {
+        CertificateBundle.Builder builder = new CertificateBundle.Builder();
+
+        builder.secretFileNamePath(file.toAbsolutePath());
+
+        String bundleName = file.getParent().getName(file.getParent().getNameCount() - 1).toString();
+
+        if (certificateBundles.containsKey(bundleName)) {
+            LOG.warn("The certificate bundle '{}' is already discovered and loaded from: {}", bundleName, certificateBundles.get(bundleName).secretPropertiesPath().orElseThrow());
+            return FileVisitResult.TERMINATE;
+        }
+
+        boolean isPEMBundle = hasSecret(secretsClient, PRIVATE_KEY) && hasSecret(secretsClient, PUBLIC_CERTIFICATE);
+        boolean isP12Bundle = hasSecret(secretsClient, ARCHIVE_CERTIFICATE);
+
+        if (isPEMBundle) {
+            if (!readPemBundle(file, secretsClient, bundleName, builder)) {
+                return FileVisitResult.TERMINATE;
+            }
+
+        } else if (isP12Bundle) {
+            if (!readP12Bundle(file, secretsClient, bundleName, builder)) {
+                return FileVisitResult.TERMINATE;
+            }
+
+        } else {
+            LOG.warn("Skipping bundle '{}'. Error with configuration!", bundleName);
+        }
+
+        // secrets-client 2 read a missing passphrase as empty; 3 throws
+        builder.passphrase(hasSecret(secretsClient, SECRET_PASSPHRASE) ? secretsClient.readChars(SECRET_PASSPHRASE) : new char[0]);
+
+        certificateBundles.put(bundleName, builder.build());
+        return FileVisitResult.CONTINUE;
+    }
+
+    // false when the bundle is incomplete, which ends the scan
+    private boolean readPemBundle(Path file, SecretManagerClient secretsClient, String bundleName, CertificateBundle.Builder builder) throws IOException {
+        if (validateSecretProperties(secretsClient, file, SECRET_PASSPHRASE, PRIVATE_KEY, PUBLIC_CERTIFICATE)) {
+            return false;
+        }
+
+        Path privateKeyFile = file.getParent().resolve(secretsClient.readString(PRIVATE_KEY));
+        if (!privateKeyFile.toFile().exists()) {
+            LOG.warn("Skipping bundle '{}'. Could not find privateKeyFile: {}", bundleName, privateKeyFile.toAbsolutePath());
+            return false;
+        }
+        builder.privateKey(readFileToCharArray(privateKeyFile));
+
+        Path publicCertFile = file.getParent().resolve(secretsClient.readString(PUBLIC_CERTIFICATE));
+        if (!publicCertFile.toFile().exists()) {
+            LOG.warn("Skipping bundle '{}'. Could not find publicCertFile: {}", bundleName, publicCertFile.toAbsolutePath());
+            return false;
+        }
+        builder.publicCert(readFileToCharArray(publicCertFile));
+        return true;
+    }
+
+    // false when the bundle is incomplete, which ends the scan
+    private boolean readP12Bundle(Path file, SecretManagerClient secretsClient, String bundleName, CertificateBundle.Builder builder) throws IOException {
+        if (validateSecretProperties(secretsClient, file, SECRET_PASSPHRASE, ARCHIVE_CERTIFICATE)) {
+            return false;
+        }
+
+        Path archiveCertFile = file.getParent().resolve(secretsClient.readString(ARCHIVE_CERTIFICATE));
+        if (!archiveCertFile.toFile().exists()) {
+            LOG.warn("Skipping bundle '{}'. Could not find archiveCertFile: {}", bundleName, archiveCertFile.toAbsolutePath());
+            return false;
+        }
+        builder.archiveCert(Files.readAllBytes(archiveCertFile));
+        return true;
     }
 
     private boolean validateSecretProperties(SecretManagerClient secretsClient, Path file, String... secretProperties) {
@@ -127,14 +152,15 @@ class CertificateScanner {
     }
 
     private char[] readFileToCharArray(Path file) throws IOException {
-        FileReader fr = new FileReader(file.toAbsolutePath().toString());
-        int count;
-        int size = (int) file.toFile().length();
-        char[] buffer = new char[size];
-        do {
-            count = fr.read(buffer);
-        } while (count != -1);
-        return buffer;
+        try (FileReader fr = new FileReader(file.toAbsolutePath().toString())) {
+            int count;
+            int size = (int) file.toFile().length();
+            char[] buffer = new char[size];
+            do {
+                count = fr.read(buffer);
+            } while (count != -1);
+            return buffer;
+        }
     }
 
     @Override

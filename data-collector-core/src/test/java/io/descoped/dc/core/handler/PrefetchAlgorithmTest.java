@@ -21,12 +21,12 @@ import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class PrefetchAlgorithmTest {
+class PrefetchAlgorithmTest {
 
     static final Logger LOG = LoggerFactory.getLogger(PrefetchAlgorithmTest.class);
 
     @Test
-    public void thatPrefetchAlgorithWorks() throws InterruptedException {
+    void thatPrefetchAlgorithWorks() throws InterruptedException {
         final BlockingDeque<CompletableFuture<Integer>> pageCompletedFutures = new LinkedBlockingDeque<>();
         final CountDownLatch completedSignal = new CountDownLatch(1);
         final ExecutorService executor = Executors.newFixedThreadPool(10);
@@ -77,7 +77,7 @@ public class PrefetchAlgorithmTest {
             pageCompletedFuture = pageCompletedFutures.poll(2, TimeUnit.SECONDS);
         }
 
-        assertEquals(pagesCompleted, 11); // 10 pages + 1 end-of-stream marker page
+        assertEquals(11, pagesCompleted); // 10 pages + 1 end-of-stream marker page
     }
 
 }

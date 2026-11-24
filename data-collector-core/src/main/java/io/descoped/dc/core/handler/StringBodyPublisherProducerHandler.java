@@ -6,6 +6,8 @@ import io.descoped.dc.api.handler.Handler;
 import io.descoped.dc.api.node.BodyPublisherProducer;
 import io.descoped.dc.api.node.StringBodyPublisherProducer;
 
+import java.util.Objects;
+
 @Handler(forClass = StringBodyPublisherProducer.class)
 public class StringBodyPublisherProducerHandler extends AbstractHandler<StringBodyPublisherProducer> {
 
@@ -15,7 +17,7 @@ public class StringBodyPublisherProducerHandler extends AbstractHandler<StringBo
 
     @Override
     public ExecutionContext execute(ExecutionContext context) {
-        String text = evaluateExpression(context, node.text());
+        String text = evaluateExpression(context, Objects.requireNonNull(node.text(), "A string body has no text"));
         return ExecutionContext.empty().state(BodyPublisherProducer.class, text.getBytes());
     }
 

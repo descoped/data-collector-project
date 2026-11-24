@@ -45,7 +45,6 @@ public class EvalHandler extends AbstractQueryHandler<Eval> {
         ExpressionLanguage el = new ExpressionLanguage(input);
         evalContext.state(QueryState.class, new QueryState<>(queryState.type(), el));
 
-//        return output.merge(super.execute(evalContext));
         return super.execute(evalContext);
     }
 

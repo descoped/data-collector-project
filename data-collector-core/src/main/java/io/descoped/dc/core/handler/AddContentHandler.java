@@ -7,16 +7,12 @@ import io.descoped.dc.api.el.ExpressionLanguage;
 import io.descoped.dc.api.handler.Handler;
 import io.descoped.dc.api.http.Response;
 import io.descoped.dc.api.node.AddContent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Handler(forClass = AddContent.class)
 public class AddContentHandler extends AbstractNodeHandler<AddContent> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AddContentHandler.class);
 
     public AddContentHandler(AddContent node) {
         super(node);
@@ -31,28 +27,14 @@ public class AddContentHandler extends AbstractNodeHandler<AddContent> {
 
         ContentStore contentStore = context.services().get(ContentStore.class);
 
-        boolean bufferResponseBody = context.state(ParallelHandler.ADD_BODY_CONTENT) == null ? false : context.state(ParallelHandler.ADD_BODY_CONTENT);
+        boolean bufferResponseBody = Boolean.TRUE.equals(context.state(ParallelHandler.ADD_BODY_CONTENT));
 
         // evaluate state - single expression for key and multiple expressions for value
         HttpRequestInfo httpRequestInfo = context.state(HttpRequestInfo.class);
         // Limitation: only save state for response-type: entry is supported
         Map<String, Object> evaluatedState = new LinkedHashMap<>();
         if (!bufferResponseBody && !node.state().isEmpty()) {
-            for (Map.Entry<String, Object> entry : node.state().entrySet()) {
-                String key = entry.getKey();
-
-                if (el.isExpression(key)) {
-                    key = (String) el.evaluateExpression(key);
-                }
-
-                Object value = entry.getValue();
-
-                if (value instanceof String && el.isExpression((String) value)) {
-                    value = el.evaluateExpressions((String) value);
-                }
-
-                evaluatedState.put(key, value);
-            }
+            evaluateState(el, evaluatedState);
         }
 
         String topicName = node.configurations().flowContext().topic();
@@ -66,7 +48,6 @@ public class AddContentHandler extends AbstractNodeHandler<AddContent> {
         }
 
         byte[] content = bufferResponseBody ? context.state(Response.class).body() : pageEntryState.content;
-        //LOG.trace("Content ({}):\n{}", position, new String(content));
 
         // feature request: decompression of 'content' can be handled here.
 
@@ -77,5 +58,23 @@ public class AddContentHandler extends AbstractNodeHandler<AddContent> {
         }
 
         return ExecutionContext.empty();
+    }
+
+    private void evaluateState(ExpressionLanguage el, Map<String, Object> evaluatedState) {
+        for (Map.Entry<String, Object> entry : node.state().entrySet()) {
+            String key = entry.getKey();
+
+            if (el.isExpression(key)) {
+                key = (String) el.evaluateExpression(key);
+            }
+
+            Object value = entry.getValue();
+
+            if (value instanceof String text && el.isExpression(text)) {
+                value = el.evaluateExpressions(text);
+            }
+
+            evaluatedState.put(key, value);
+        }
     }
 }

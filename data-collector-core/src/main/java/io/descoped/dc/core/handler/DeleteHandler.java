@@ -5,14 +5,10 @@ import io.descoped.dc.api.handler.Handler;
 import io.descoped.dc.api.http.Request;
 import io.descoped.dc.api.http.Response;
 import io.descoped.dc.api.node.Delete;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("unchecked")
 @Handler(forClass = Delete.class)
 public class DeleteHandler extends OperationHandler<Delete> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(DeleteHandler.class);
 
     public DeleteHandler(Delete node) {
         super(node);
@@ -23,7 +19,7 @@ public class DeleteHandler extends OperationHandler<Delete> {
         super.execute(input);
         int requestTimeout = beforeRequest(input);
 
-        Request.Builder requestBuilder = Request.newRequestBuilder().DELETE(); // . timeout(Duration.ofSeconds(requestTimeout));
+        Request.Builder requestBuilder = Request.newRequestBuilder().DELETE();
 
         Response response = doRequest(input, requestTimeout, requestBuilder);
 

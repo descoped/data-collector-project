@@ -8,32 +8,38 @@ import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.common.TextFormat;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.StringWriter;
 import java.util.concurrent.CompletableFuture;
 
-public class HttpClientExporterTest {
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+// calls www.google.com
+@Tag("live")
+class HttpClientExporterTest {
 
     @BeforeAll
-    public static void beforeAll() {
+    static void beforeAll() {
         MetricsAgent.premain(null, ByteBuddyAgent.install());
     }
 
     @Test
-    public void thatByteBuddyAgentInterceptsSend() throws Exception {
+    void thatByteBuddyAgentInterceptsSend() throws Exception {
         Client client = Client.newClient();
         Response resp = client.send(Request.newRequestBuilder().GET().url("https://www.google.com/").build());
+        assertNotNull(resp);
         StringWriter sw = new StringWriter();
         TextFormat.write004(sw, CollectorRegistry.defaultRegistry.metricFamilySamples());
         System.out.printf("%s%n", sw);
     }
 
     @Test
-    public void thatByteBuddyAgentInterceptsSendAsync() throws Exception {
+    void thatByteBuddyAgentInterceptsSendAsync() throws Exception {
         Client client = Client.newClient();
         CompletableFuture<Response> resp = client.sendAsync(Request.newRequestBuilder().GET().url("https://www.google.com/").build());
-        resp.get();
+        assertNotNull(resp.get());
         StringWriter sw = new StringWriter();
         TextFormat.write004(sw, CollectorRegistry.defaultRegistry.metricFamilySamples());
         System.out.printf("%s%n", sw);

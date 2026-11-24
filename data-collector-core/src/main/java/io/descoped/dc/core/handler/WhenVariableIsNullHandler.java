@@ -8,11 +8,8 @@ import io.descoped.dc.core.handler.state.ConditionType;
 @Handler(forClass = WhenVariableIsNull.class)
 public class WhenVariableIsNullHandler extends AbstractHandler<WhenVariableIsNull> {
 
-    private final WhenVariableIsNull node;
-
     public WhenVariableIsNullHandler(WhenVariableIsNull node) {
         super(node);
-        this.node = node;
     }
 
     @Override

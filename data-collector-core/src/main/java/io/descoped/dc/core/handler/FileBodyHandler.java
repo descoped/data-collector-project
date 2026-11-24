@@ -8,22 +8,30 @@ import org.slf4j.LoggerFactory;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Flow;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class FileBodyHandler implements BodyHandler<Path> {
 
     private static final Logger LOG = LoggerFactory.getLogger(FileBodyHandler.class);
 
+    private static final FileAttribute<Set<PosixFilePermission>> OWNER_ONLY = PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------"));
+
     private final Object lock = new Object();
     protected final Path file;
-    private volatile Flow.Subscription subscription;
+    private final AtomicReference<Flow.Subscription> subscription = new AtomicReference<>();
 
     public FileBodyHandler(Path file) {
         Objects.requireNonNull(file);
@@ -35,11 +43,10 @@ public class FileBodyHandler implements BodyHandler<Path> {
 
     @Override
     public void onSubscribe(Flow.Subscription subscription) {
-        if (this.subscription != null) {
+        if (!this.subscription.compareAndSet(null, subscription)) {
             subscription.cancel();
             return;
         }
-        this.subscription = subscription;
         // We can handle whatever you've got
         subscription.request(Long.MAX_VALUE);
         LOG.info("Start download: {}", file);
@@ -80,8 +87,8 @@ public class FileBodyHandler implements BodyHandler<Path> {
 
     @Override
     public void onError(Throwable throwable) {
-        if (throwable instanceof RuntimeException) {
-            throw (RuntimeException) throwable;
+        if (throwable instanceof RuntimeException runtimeException) {
+            throw runtimeException;
         }
         throw new RuntimeException(throwable);
     }
@@ -102,9 +109,9 @@ public class FileBodyHandler implements BodyHandler<Path> {
 
         try {
             LOG.info("Decompress file: {}", file);
-            Path tempFile = Files.createTempFile(UUID.randomUUID().toString(), null);
+            Path tempFile = createOwnerOnlyTempFile();
             if (!Files.isWritable(tempFile)) {
-                throw new RuntimeException("Decompression temp file is not writable: " + tempFile.toString());
+                throw new IllegalStateException("Decompression temp file is not writable: " + tempFile.toString());
             }
 
             CompressUtils.gunzip(file, new FileOutputStream(tempFile.toFile()));
@@ -128,5 +135,17 @@ public class FileBodyHandler implements BodyHandler<Path> {
     @Override
     public Path body() {
         return getFile();
+    }
+
+    /*
+     * A temporary file readable and writable by its owner only. A file system without POSIX permissions (Windows) gets
+     * the default temporary file, as in 2.x: its temporary directory is the user's own.
+     */
+    static Path createOwnerOnlyTempFile() throws IOException {
+        String prefix = UUID.randomUUID().toString();
+        if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
+            return Files.createTempFile(prefix, null, OWNER_ONLY);
+        }
+        return Files.createTempFile(prefix, null);
     }
 }

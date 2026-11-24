@@ -6,14 +6,11 @@ import io.descoped.dc.application.spi.Controller;
 import io.descoped.dc.core.service.TestService;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 
 public class TestController implements Controller {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TestController.class);
     private final DynamicConfiguration configuration;
     private final TestService testService;
 

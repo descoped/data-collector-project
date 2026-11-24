@@ -4,8 +4,6 @@ import io.descoped.dc.api.http.BodyHandler;
 import io.descoped.dc.api.http.Client;
 import io.descoped.dc.api.http.Request;
 import io.descoped.dc.api.http.Response;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
@@ -21,8 +19,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 public class HttpClientDelegate implements Client {
-
-    private static final Logger LOG = LoggerFactory.getLogger(HttpClientDelegate.class);
 
     final HttpClient httpClient;
 
@@ -43,7 +39,10 @@ public class HttpClientDelegate implements Client {
             responseBuilder.delegate(httpResponse);
             return responseBuilder.build();
 
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
     }
@@ -58,7 +57,10 @@ public class HttpClientDelegate implements Client {
             responseBuilder.delegate(httpResponse);
             return responseBuilder.build();
 
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
     }
@@ -97,7 +99,6 @@ public class HttpClientDelegate implements Client {
         private Authenticator authenticator;
         private SSLContext sslContext;
         private SSLParameters sslParameters;
-        private X509TrustManager trustManager; // unused for Java 11 HttpClient
         private Executor executor;
         private Duration duration;
         private Redirect redirectPolicy;
@@ -135,7 +136,7 @@ public class HttpClientDelegate implements Client {
 
         @Override
         public Builder x509TrustManager(X509TrustManager trustManager) {
-            this.trustManager = trustManager;
+            // not kept: the Java HttpClient takes its trust managers from the SSLContext
             return this;
         }
 

@@ -9,10 +9,12 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 import java.util.UUID;
 
-public class HealthWorkerResourceTest {
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class HealthWorkerResourceTest {
 
     @Test
-    public void testSerialize() {
+    void testSerialize() {
         HealthWorkerResource workerResource = new HealthWorkerResource(UUID.randomUUID());
         HealthWorkerMonitor workerMonitor = workerResource.getMonitor();
 
@@ -62,5 +64,7 @@ public class HealthWorkerResourceTest {
         String json = jsonParser.toPrettyJSON(rootNode);
 
         System.out.printf("%s%n", json);
+        assertTrue(json.contains("\"topic-1\""), json);
+        assertTrue(json.contains("\"test spec\""), json);
     }
 }
