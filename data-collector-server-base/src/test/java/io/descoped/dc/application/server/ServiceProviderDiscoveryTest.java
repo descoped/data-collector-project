@@ -17,9 +17,11 @@ class ServiceProviderDiscoveryTest {
     @Test
     void testController() {
         Iterable<Class<Controller>> discovery = ServiceProviderDiscovery.discover(Controller.class);
-        discovery.forEach(a -> System.out.println(a.getName()));
         List<String> names = new ArrayList<>();
-        discovery.forEach(a -> names.add(a.getName()));
+        discovery.forEach(a -> {
+            System.out.println(a.getName());
+            names.add(a.getName());
+        });
         assertTrue(names.containsAll(List.of(HealthController.class.getName(), MetricsController.class.getName())), () -> "missing controllers in " + names);
     }
 

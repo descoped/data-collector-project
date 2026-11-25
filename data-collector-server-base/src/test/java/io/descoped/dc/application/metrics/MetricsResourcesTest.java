@@ -9,7 +9,7 @@ import java.io.StringWriter;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class MetricsResourcesTest {
+class MetricsResourcesTest {
 
     @Test
     void testMetricsFactory() throws InterruptedException, IOException {
