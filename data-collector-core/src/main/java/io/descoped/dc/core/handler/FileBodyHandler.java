@@ -5,7 +5,6 @@ import io.descoped.dc.api.util.CompressUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -14,9 +13,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.AclEntry;
+import java.nio.file.attribute.AclEntryPermission;
+import java.nio.file.attribute.AclEntryType;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.nio.file.attribute.UserPrincipal;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -139,14 +143,34 @@ public class FileBodyHandler implements BodyHandler<Path> {
     }
 
     /*
-     * A temporary file readable and writable by its owner only. A file system without POSIX permissions (Windows) gets
-     * the default temporary file, as in 2.x (the same directory and name): its temporary directory is the user's own.
+     * A temporary file only its owner can access: rw------- on a file system with POSIX permissions, and on one without
+     * them (Windows) an ACL with a single entry, for the user running dc.
      */
     static Path createOwnerOnlyTempFile() throws IOException {
         String prefix = UUID.randomUUID().toString();
         if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
             return Files.createTempFile(prefix, null, OWNER_ONLY);
         }
-        return File.createTempFile(prefix, null).toPath();
+        UserPrincipal owner = FileSystems.getDefault().getUserPrincipalLookupService().lookupPrincipalByName(System.getProperty("user.name"));
+        return Files.createTempFile(prefix, null, ownerOnlyAcl(owner));
+    }
+
+    static FileAttribute<List<AclEntry>> ownerOnlyAcl(UserPrincipal owner) {
+        List<AclEntry> acl = List.of(AclEntry.newBuilder()
+                .setType(AclEntryType.ALLOW)
+                .setPrincipal(owner)
+                .setPermissions(EnumSet.allOf(AclEntryPermission.class))
+                .build());
+        return new FileAttribute<>() {
+            @Override
+            public String name() {
+                return "acl:acl";
+            }
+
+            @Override
+            public List<AclEntry> value() {
+                return acl;
+            }
+        };
     }
 }

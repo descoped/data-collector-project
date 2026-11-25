@@ -221,6 +221,10 @@ public abstract class OperationHandler<T extends Operation> extends AbstractNode
                 }
                 break;
             } catch (Exception e) {
+                // an interrupted thread (the worker is being stopped) does not try again
+                if (Thread.currentThread().isInterrupted()) {
+                    throw e instanceof RuntimeException runtimeException ? runtimeException : new ExecutionException(e);
+                }
                 HealthWorkerMonitor monitor = context.services().get(HealthWorkerMonitor.class);
                 if (monitor != null) {
                     monitor.request().incrementRequestRetryOnFailureCount();

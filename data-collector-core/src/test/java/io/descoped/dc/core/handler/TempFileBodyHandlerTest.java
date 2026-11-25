@@ -6,7 +6,14 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.AclEntry;
+import java.nio.file.attribute.AclEntryPermission;
+import java.nio.file.attribute.AclEntryType;
+import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.nio.file.attribute.UserPrincipal;
+import java.util.EnumSet;
+import java.util.List;
 import java.util.concurrent.Flow;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -28,6 +35,21 @@ class TempFileBodyHandlerTest {
         } finally {
             bodyHandler.dispose();
         }
+    }
+
+    // the attribute a file system without POSIX permissions (Windows) gets: one entry, for the owner, with every permission
+    @Test
+    void thatTheAclIsForItsOwnerOnly() throws IOException {
+        UserPrincipal owner = FileSystems.getDefault().getUserPrincipalLookupService().lookupPrincipalByName(System.getProperty("user.name"));
+
+        FileAttribute<List<AclEntry>> attribute = FileBodyHandler.ownerOnlyAcl(owner);
+
+        assertEquals("acl:acl", attribute.name());
+        assertEquals(1, attribute.value().size());
+        AclEntry entry = attribute.value().get(0);
+        assertEquals(AclEntryType.ALLOW, entry.type());
+        assertEquals(owner, entry.principal());
+        assertEquals(EnumSet.allOf(AclEntryPermission.class), entry.permissions());
     }
 
     @Test

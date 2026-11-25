@@ -83,13 +83,14 @@ dependencies and Java 17. dc's own behaviour stays as in 2.x, except for the cha
 - **Documentation** is Markdown in `docs/`, revised for 3.0. The examples (compose setups, profiles, specifications)
   are in `examples/`.
 - **SonarCloud findings** (bugs, vulnerabilities and code smells), module by module:
-  - a thread interrupted while it waits keeps its interrupt flag when the wait ends in an exception;
+  - a thread interrupted while it waits keeps its interrupt flag when the wait ends in an exception, and an
+    interrupted worker (one being stopped) no longer retries a failed HTTP request;
   - errors that were a plain `RuntimeException` are a subclass of it (`IllegalStateException`,
     `IllegalArgumentException`, `UncheckedIOException`), so a caller that catches `RuntimeException` still does;
   - two specification builders are equal only when their URL (`get`, `post`, `put`, `delete`), identity id or string
     body is equal too;
-  - a temporary file for a response body is readable and writable by its owner only, on a file system with POSIX
-    permissions;
+  - a temporary file for a response body is for its owner only: `rw-------` with POSIX permissions, otherwise
+    (Windows) an ACL with one entry, for the user running dc;
   - `HttpClientExporterTest`, which calls www.google.com, is a `live` test.
 
 ### Removed
