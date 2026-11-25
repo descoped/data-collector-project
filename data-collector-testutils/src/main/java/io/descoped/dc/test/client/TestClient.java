@@ -45,13 +45,10 @@ public final class TestClient {
     }
 
     public <R> ResponseHelper<R> options(String uri, HttpResponse.BodyHandler<R> bodyHandler, String... headersKeyAndValue) {
-        return send(() -> {
-            HttpRequest request = HttpRequest.newBuilder(URI.create(server.testURL(uri)))
-                    .headers(headersKeyAndValue)
-                    .method("OPTIONS", HttpRequest.BodyPublishers.noBody())
-                    .build();
-            return request;
-        }, bodyHandler);
+        return send(() -> HttpRequest.newBuilder(URI.create(server.testURL(uri)))
+                .headers(headersKeyAndValue)
+                .method("OPTIONS", HttpRequest.BodyPublishers.noBody())
+                .build(), bodyHandler);
     }
 
     public ResponseHelper<String> head(String uri) {
@@ -59,12 +56,9 @@ public final class TestClient {
     }
 
     public <R> ResponseHelper<R> head(String uri, HttpResponse.BodyHandler<R> bodyHandler) {
-        return send(() -> {
-            HttpRequest request = HttpRequest.newBuilder(URI.create(server.testURL(uri)))
-                    .method("HEAD", HttpRequest.BodyPublishers.noBody())
-                    .build();
-            return request;
-        }, bodyHandler);
+        return send(() -> HttpRequest.newBuilder(URI.create(server.testURL(uri)))
+                .method("HEAD", HttpRequest.BodyPublishers.noBody())
+                .build(), bodyHandler);
     }
 
     public ResponseHelper<String> put(String uri) {
@@ -76,12 +70,9 @@ public final class TestClient {
     }
 
     public <R> ResponseHelper<R> put(String uri, HttpRequest.BodyPublisher bodyPublisher, HttpResponse.BodyHandler<R> bodyHandler) {
-        return send(() -> {
-            HttpRequest request = HttpRequest.newBuilder(URI.create(server.testURL(uri)))
-                    .PUT(bodyPublisher)
-                    .build();
-            return request;
-        }, bodyHandler);
+        return send(() -> HttpRequest.newBuilder(URI.create(server.testURL(uri)))
+                .PUT(bodyPublisher)
+                .build(), bodyHandler);
     }
 
     public ResponseHelper<String> post(String uri) {
@@ -93,32 +84,23 @@ public final class TestClient {
     }
 
     public <R> ResponseHelper<R> post(String uri, HttpRequest.BodyPublisher bodyPublisher, HttpResponse.BodyHandler<R> bodyHandler) {
-        return send(() -> {
-            HttpRequest request = HttpRequest.newBuilder(URI.create(server.testURL(uri)))
-                    .POST(bodyPublisher)
-                    .build();
-            return request;
-        }, bodyHandler);
+        return send(() -> HttpRequest.newBuilder(URI.create(server.testURL(uri)))
+                .POST(bodyPublisher)
+                .build(), bodyHandler);
     }
 
     public <R> ResponseHelper<R> postJson(String uri, HttpRequest.BodyPublisher bodyPublisher, HttpResponse.BodyHandler<R> bodyHandler) {
-        return send(() -> {
-            HttpRequest request = HttpRequest.newBuilder(URI.create(server.testURL(uri)))
-                    .POST(bodyPublisher)
-                    .header("Content-Type", "application/json")
-                    .build();
-            return request;
-        }, bodyHandler);
+        return send(() -> HttpRequest.newBuilder(URI.create(server.testURL(uri)))
+                .POST(bodyPublisher)
+                .header("Content-Type", "application/json")
+                .build(), bodyHandler);
     }
 
     public <R> ResponseHelper<R> postForm(String uri, HttpRequest.BodyPublisher bodyPublisher, HttpResponse.BodyHandler<R> bodyHandler) {
-        return send(() -> {
-            HttpRequest request = HttpRequest.newBuilder(URI.create(server.testURL(uri)))
-                    .POST(bodyPublisher)
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .build();
-            return request;
-        }, bodyHandler);
+        return send(() -> HttpRequest.newBuilder(URI.create(server.testURL(uri)))
+                .POST(bodyPublisher)
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .build(), bodyHandler);
     }
 
     public ResponseHelper<String> get(String uri, String... headers) {
@@ -141,12 +123,9 @@ public final class TestClient {
     }
 
     public <R> ResponseHelper<R> delete(String uri, HttpResponse.BodyHandler<R> bodyHandler) {
-        return send(() -> {
-            HttpRequest request = HttpRequest.newBuilder(URI.create(server.testURL(uri)))
-                    .DELETE()
-                    .build();
-            return request;
-        }, bodyHandler);
+        return send(() -> HttpRequest.newBuilder(URI.create(server.testURL(uri)))
+                .DELETE()
+                .build(), bodyHandler);
     }
 
     // the request is built and sent in one place; an interrupted send keeps the thread's interrupt flag

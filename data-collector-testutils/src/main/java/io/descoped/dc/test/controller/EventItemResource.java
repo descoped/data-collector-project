@@ -2,7 +2,6 @@ package io.descoped.dc.test.controller;
 
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
-import org.slf4j.Logger;
 
 import java.io.StringWriter;
 import java.security.SecureRandom;

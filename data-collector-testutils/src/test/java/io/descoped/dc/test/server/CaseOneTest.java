@@ -3,7 +3,6 @@ package io.descoped.dc.test.server;
 import io.descoped.dc.test.client.TestClient;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.slf4j.Logger;
 
 import javax.inject.Inject;
 

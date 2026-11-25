@@ -4,7 +4,6 @@ import io.descoped.dc.api.http.Request;
 import io.descoped.dc.application.spi.Controller;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
-import org.slf4j.Logger;
 
 import java.util.Arrays;
 import java.util.Deque;

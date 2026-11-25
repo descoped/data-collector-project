@@ -2,7 +2,6 @@ package io.descoped.dc.test.server;
 
 import io.descoped.config.DynamicConfiguration;
 import io.descoped.dc.test.client.TestClient;
-import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.net.ServerSocket;

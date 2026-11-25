@@ -42,6 +42,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -112,6 +113,7 @@ public class SimpleAltinn3Test {
              * 3. hent ned dokument
              */
             Detector detector = new DefaultDetector();
+            List<MediaType> textMediaTypes = List.of("plain/text", "application/json", "application/xml").stream().map(MediaType::parse).collect(Collectors.toList());
 
             for (JsonNode instance : instanceList) {
                 String ownerPartyId = jqQueryStringLiteral(instance, ".instanceOwner.partyId");

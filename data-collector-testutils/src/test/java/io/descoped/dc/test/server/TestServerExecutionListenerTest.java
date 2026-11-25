@@ -7,8 +7,6 @@ import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.TestPlan;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.util.LinkedHashMap;
@@ -26,8 +24,6 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectPackage;
 
 class TestServerExecutionListenerTest {
-
-    private static final Logger LOG = LoggerFactory.getLogger(TestServerExecutionListenerTest.class);
 
     @Test
     void thatConfigurationFactoryDiscoversAllTestConfigurations() {

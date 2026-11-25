@@ -5,7 +5,6 @@ import io.descoped.dc.test.config.ConfigurationOverride;
 import io.descoped.dc.test.config.ConfigurationProfile;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.slf4j.Logger;
 
 import javax.inject.Inject;
 
