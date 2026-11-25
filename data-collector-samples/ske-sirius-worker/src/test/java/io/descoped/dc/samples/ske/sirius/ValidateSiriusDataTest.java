@@ -110,7 +110,7 @@ public class ValidateSiriusDataTest {
         /*
          * Read unique TaxReturnStream
          */
-        readTaxReturnStream(repository);
+        readTaxReturnStream();
 
         repository.close();
     }
@@ -248,7 +248,7 @@ public class ValidateSiriusDataTest {
                 }
 
                 if (taxReturn.shielded || taxReturn.isIdentityChanged() || taxReturn.isPersonDeleted()) {
-                    System.err.println(String.format("%s", taxReturn));
+                    System.err.printf("%s%n", taxReturn);
                 } else {
                     System.out.printf("%s%n", taxReturn);
                 }
@@ -256,7 +256,7 @@ public class ValidateSiriusDataTest {
         }
     }
 
-    private void readTaxReturnStream(TaxReturnRepository repository) {
+    private void readTaxReturnStream() {
         // TODO
     }
 
@@ -816,7 +816,7 @@ public class ValidateSiriusDataTest {
                     return ps.executeUpdate() == 1;
 
                 } catch (SQLException e) {
-                    throw new RuntimeException(String.format("%s\n%s", identityHistory, CommonUtils.captureStackTrace(e)));
+                    throw new RuntimeException(String.format("%s%n%s", identityHistory, CommonUtils.captureStackTrace(e)));
                 }
             });
         }
@@ -915,9 +915,9 @@ public class ValidateSiriusDataTest {
         private Connection init() {
             try {
                 Class.forName("org.h2.Driver"); // register
-                Connection conn = DriverManager.getConnection(JDBC_URL, "sa", "");
-                dropOrCreateDatabase(conn);
-                return conn;
+                Connection connection = DriverManager.getConnection(JDBC_URL, "sa", "");
+                dropOrCreateDatabase(connection);
+                return connection;
             } catch (SQLException | ClassNotFoundException e) {
                 throw new RuntimeException(e);
             }

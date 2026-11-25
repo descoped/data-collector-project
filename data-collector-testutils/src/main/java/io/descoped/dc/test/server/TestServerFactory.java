@@ -3,7 +3,6 @@ package io.descoped.dc.test.server;
 import io.descoped.config.DynamicConfiguration;
 import io.descoped.dc.test.client.TestClient;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -14,8 +13,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 public class TestServerFactory {
-
-    private static final Logger LOG = LoggerFactory.getLogger(TestServerFactory.class);
 
     private final ConfigurationFactory configurationFactory;
     private final Map<TestConfigurationBinding, Supplier<TestServer>> testServerSuppliers = new ConcurrentHashMap<>();

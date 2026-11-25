@@ -33,7 +33,7 @@ import static io.descoped.dc.api.Builders.status;
 import static io.descoped.dc.api.Builders.whenVariableIsNull;
 import static io.descoped.dc.api.Builders.xpath;
 
-public class TvinnProdWorkerTest {
+class TvinnProdWorkerTest {
 
     static final SpecificationBuilder specificationBuilder = Specification.start("TOLL-TVINN-PROD", "Collect Tvinn Prod", "maskinporten-jwt-grant")
             .configure(context()
@@ -103,7 +103,7 @@ public class TvinnProdWorkerTest {
 
     @Disabled("Needs Toll's production Maskinporten client and the business certificate bundle")
     @Test
-    public void testCollectTvinn() {
+    void testCollectTvinn() {
         Worker.newBuilder()
                 .configuration(DynamicConfiguration.builder()
                         .value("content.stream.connector", "rawdata")

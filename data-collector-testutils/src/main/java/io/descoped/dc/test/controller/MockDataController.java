@@ -2,23 +2,19 @@ package io.descoped.dc.test.controller;
 
 import io.descoped.dc.api.http.Request;
 import io.descoped.dc.application.spi.Controller;
-import io.descoped.dc.test.server.TestServerException;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 
 public class MockDataController implements Controller {
 
     static final int ROOT_CONTEXT_PATH_ELEMENT_COUNT = 2; // requestPath is split to: [/, api, events]. Value of 2 means skip [/, api]
-    private static final Logger LOG = LoggerFactory.getLogger(MockDataController.class);
 
     @Override
     public String contextPath() {
@@ -93,15 +89,6 @@ public class MockDataController implements Controller {
         exchange.setStatusCode(404);
         exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
         exchange.getResponseSender().send("Not found: " + exchange.getRequestPath());
-    }
-
-    private void randomNap(int maxTimeInMillis) {
-        try {
-            int randomInt = 50 + new Random().nextInt(maxTimeInMillis - 50 + 1);
-            Thread.sleep(randomInt);
-        } catch (InterruptedException e) {
-            throw new TestServerException(e);
-        }
     }
 
 }

@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -53,33 +52,32 @@ public class AuthorizationResource extends AbstractResource {
             return contentType.startsWith(FormEncoding.MULTIPART_FORM_DATA.getMimeType());
         }
 
-        private FormData parseForm(final HttpServerExchange exchange, final String charset) {
-            try {
-                if (isFormUrlEncoded()) {
-                    return new FormEncodedDataDefinition()
-                            .setDefaultEncoding(charset)
-                            .create(exchange)
-                            .parseBlocking();
-                } else if (isMultiFormData()) {
-                    return new MultiPartParserDefinition()
-                            .setTempFileLocation(Paths.get("/tmp"))
-                            .setDefaultEncoding(charset)
-                            .create(exchange)
-                            .parseBlocking();
+        // null for a request that is neither form url encoded nor multipart; a multipart parser keeps its files in the
+        // default temporary directory (java.io.tmpdir)
+        private io.undertow.server.handlers.form.FormDataParser formParser(final HttpServerExchange exchange, final String charset) {
+            if (isFormUrlEncoded()) {
+                return new FormEncodedDataDefinition()
+                        .setDefaultEncoding(charset)
+                        .create(exchange);
+            } else if (isMultiFormData()) {
+                return new MultiPartParserDefinition()
+                        .setDefaultEncoding(charset)
+                        .create(exchange);
+            }
+            return null;
+        }
 
+        // the values are read before the parser is closed
+        Map<String, String> parseUrlEncodedNameValuePairs() {
+            Map<String, String> map = new LinkedHashMap<>();
+            try (io.undertow.server.handlers.form.FormDataParser parser = formParser(exchange, "UTF-8")) {
+                FormData formData = parser != null ? parser.parseBlocking() : new FormData(0);
+                for (String name : formData) {
+                    String value = formData.get(name).stream().findFirst().map(FormData.FormValue::getValue).orElse(null);
+                    map.put(name, value);
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
-            }
-            return new FormData(0);
-        }
-
-        Map<String, String> parseUrlEncodedNameValuePairs() {
-            FormData formData = parseForm(exchange, "UTF-8");
-            Map<String, String> map = new LinkedHashMap<>();
-            for (String name : formData) {
-                String value = formData.get(name).stream().findFirst().map(FormData.FormValue::getValue).orElse(null);
-                map.put(name, value);
             }
             return map;
         }

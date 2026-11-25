@@ -49,12 +49,12 @@ class EventListResource extends AbstractResource {
 
 
         Optional<String> contentTypeHeader = getContentTypeHeader(exchange);
-        String contentType = contentTypeHeader.orElse("application/json");
+        String contentType = contentTypeHeader.orElse(APPLICATION_JSON);
 
-        if ("application/json".equals(contentType)) {
+        if (APPLICATION_JSON.equals(contentType)) {
             String payload = renderEventListAsJson(position, pageSize, stopAt);
             exchange.setStatusCode(200);
-            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, APPLICATION_JSON);
             if (gzip) {
                 ByteBuffer buf = ByteBuffer.wrap(CompressUtils.gzip(payload.getBytes(), new ByteArrayOutputStream()).toByteArray());
                 exchange.getResponseSender().send(buf);
@@ -63,14 +63,14 @@ class EventListResource extends AbstractResource {
             }
             return;
 
-        } else if ("application/xml".equals(contentType)) {
+        } else if (APPLICATION_XML.equals(contentType)) {
             String linkNextURL = String.format("http://%s:%s%s?position=%s&pageSize=%s%s", exchange.getHostName(), exchange.getHostPort(),
                     exchange.getRequestPath(), position + pageSize, pageSize, stopAt == -1 ? "" : "&stopAt=" + stopAt
             );
 
             String payload = renderEventListAsXml(position, pageSize, stopAt, linkNextURL);
             exchange.setStatusCode(200);
-            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/xml");
+            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, APPLICATION_XML);
             if (gzip) {
                 ByteBuffer buf = ByteBuffer.wrap(CompressUtils.gzip(payload.getBytes(), new ByteArrayOutputStream()).toByteArray());
                 exchange.getResponseSender().send(buf);

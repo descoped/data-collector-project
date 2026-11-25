@@ -3,7 +3,6 @@ package io.descoped.dc.test.controller;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.StringWriter;
 import java.security.SecureRandom;
@@ -13,8 +12,6 @@ import java.util.Optional;
 
 class EventItemResource extends AbstractResource {
 
-    private static final Logger LOG = LoggerFactory.getLogger(EventItemResource.class);
-
     EventItemResource() {
     }
 
@@ -23,7 +20,7 @@ class EventItemResource extends AbstractResource {
         int position = getPathParam(exchange.getRequestPath(), 1, 1);
 
         Optional<String> contentTypeHeader = getContentTypeHeader(exchange);
-        String contentType = contentTypeHeader.orElse("application/json");
+        String contentType = contentTypeHeader.orElse(APPLICATION_JSON);
 
         boolean generateRandomEventItemData = getQueryParam(exchange.getQueryParameters(), "generateRandomEventItemData", false);
         int generateEventItemRecordSize = getQueryParam(exchange.getQueryParameters(), "generateEventItemRecordSize", 0);
@@ -34,23 +31,23 @@ class EventItemResource extends AbstractResource {
             return;
         }
 
-        if ("application/json".equals(contentType)) {
+        if (APPLICATION_JSON.equals(contentType)) {
             if (checkHttpError404WithExplanation(exchange, contentType)) {
                 return;
             }
             String payload = renderEventItemAsJson(position, generateRandomEventItemData, generateEventItemRecordSize, generateEventItemRecordKeySize, generateEventItemRecordElementSize);
             exchange.setStatusCode(200);
-            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, APPLICATION_JSON);
             exchange.getResponseSender().send(payload);
             return;
 
-        } else if ("application/xml".equals(contentType)) {
+        } else if (APPLICATION_XML.equals(contentType)) {
             if (checkHttpError404WithExplanation(exchange, contentType)) {
                 return;
             }
             String payload = renderEventItemAsXml(position, generateRandomEventItemData, generateEventItemRecordSize, generateEventItemRecordKeySize, generateEventItemRecordElementSize);
             exchange.setStatusCode(200);
-            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/xml");
+            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, APPLICATION_XML);
             exchange.getResponseSender().send(payload);
             return;
         }
@@ -90,9 +87,9 @@ class EventItemResource extends AbstractResource {
     boolean checkHttpError404WithExplanation(HttpServerExchange exchange, String contentType) {
         if (exchange.getQueryParameters().containsKey("404withResponseError")) {
             String payload = null;
-            if ("application/json".equals(contentType)) {
+            if (APPLICATION_JSON.equals(contentType)) {
                 payload = renderHttpError404WithExplanationAsJson();
-            } else if ("application/xml".equals(contentType)) {
+            } else if (APPLICATION_XML.equals(contentType)) {
                 payload = renderHttpError404WithExplanationAsXml();
             }
             exchange.setStatusCode(404);
@@ -129,12 +126,12 @@ class EventItemResource extends AbstractResource {
 
     static class RandomCharacters {
         static final char[] ALPHA_NUM_SPACE_CHARS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ".toCharArray();
+        private static final SecureRandom RANDOM = new SecureRandom();
         static final char[] ALPHA_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
 
         private String randomString(char[] charTable, int size) {
-            SecureRandom random = new SecureRandom();
             byte[] key = new byte[size];
-            random.nextBytes(key);
+            RANDOM.nextBytes(key);
             StringBuilder sb = new StringBuilder(key.length * 2);
             for (byte b : key) {
                 sb.append(charTable[(b >> 4) & charTable.length - 1]);

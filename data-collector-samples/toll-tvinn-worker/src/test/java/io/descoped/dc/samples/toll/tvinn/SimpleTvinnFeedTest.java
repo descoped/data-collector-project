@@ -17,8 +17,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SimpleTvinnFeedTest {
 
-    final static Logger LOG = LoggerFactory.getLogger(SimpleTvinnFeedTest.class);
-    final static String TEST_BASE_URL = "https://api-test.toll.no";
+    static final Logger LOG = LoggerFactory.getLogger(SimpleTvinnFeedTest.class);
+    static final String TEST_BASE_URL = "https://api-test.toll.no";
 
     static SSLContext getBusinessSSLContext() {
 //        CertificateFactory factory = CertificateFactory.scanAndCreate(CommonUtils.currentPath().getParent());
@@ -41,10 +41,10 @@ curl -proxy "https://proxy.ssb.no:3128" -H "Authorization: Bearer ACCESS_TOKEN" 
     Response getPage(Client client, String fromMarker, int numberOfEvents) {
         String url = String.format("%s/api/declaration/declaration-clearance-feed/atom?marker=%s&limit=%s&direction=forward", TEST_BASE_URL, fromMarker, numberOfEvents);
         LOG.info("getPage: {}", url);
-        String ACCESS_TOKEN = "EXECUTE  fetch-tvinn-feed-with-maskinporten.sh and COPY accessToken=CHARS_BETWEEN_EQUAL_AND_END_CURLY BRACKET";
+        String accessToken = "EXECUTE  fetch-tvinn-feed-with-maskinporten.sh and COPY accessToken=CHARS_BETWEEN_EQUAL_AND_END_CURLY BRACKET";
         Request request = Request.newRequestBuilder()
                 .GET()
-                .header("Authorization", String.format("Bearer %s", ACCESS_TOKEN))
+                .header("Authorization", String.format("Bearer %s", accessToken))
                 .header("Content-Type", "application/xml")
                 .url(url)
                 .build();

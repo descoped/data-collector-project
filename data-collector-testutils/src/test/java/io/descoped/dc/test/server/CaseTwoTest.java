@@ -6,16 +6,14 @@ import io.descoped.dc.test.config.ConfigurationProfile;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(TestServerExtension.class)
 class CaseTwoTest {
-
-    private static final Logger LOG = LoggerFactory.getLogger(CaseTwoTest.class);
 
     @Inject
     TestClient client;
@@ -23,26 +21,30 @@ class CaseTwoTest {
     @Test
     void thatExtensionIsInvoked() {
         System.out.println("Hello 2");
+        assertNotNull(client);
     }
 
     @ConfigurationOverride({"foo", "bar"})
     @Test
     void thatMethodOverrideConfigurationIsCreated() {
-
+        // the method's configuration is checked in TestServerExecutionListenerTest
+        assertNotNull(client);
     }
 
     @ConfigurationProfile("dummy")
     @ConfigurationOverride({"foo", "bar"})
     @Test
     void thatMethodOverrideProfileConfigurationIsCreated() {
-
+        // the method's configuration is checked in TestServerExecutionListenerTest
+        assertNotNull(client);
     }
 
     @ConfigurationProfile("dummy")
     @ConfigurationOverride({"foo", "bar"})
     @Test
     void thatMethodOverrideProfileConfiguration2IsCreated() {
-
+        // the method's configuration is checked in TestServerExecutionListenerTest
+        assertNotNull(client);
     }
 
     @Test

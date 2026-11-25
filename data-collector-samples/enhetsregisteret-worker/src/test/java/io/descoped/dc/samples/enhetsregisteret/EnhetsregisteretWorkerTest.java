@@ -47,7 +47,7 @@ import static io.descoped.dc.api.Builders.status;
 import static io.descoped.dc.api.Builders.whenVariableIsNull;
 
 //https://data.brreg.no/enhetsregisteret/api/docs/index.html
-public class EnhetsregisteretWorkerTest {
+class EnhetsregisteretWorkerTest {
 
     static final DynamicConfiguration configuration = DynamicConfiguration.builder()
             .value("content.stream.connector", "rawdata")
@@ -98,7 +98,7 @@ public class EnhetsregisteretWorkerTest {
 
     @Tag("live")
     @Test
-    public void thatWorkerCollectEnhetsregisteret() throws InterruptedException {
+    void thatWorkerCollectEnhetsregisteret() {
         Worker.newBuilder()
                 .configuration(configuration.asMap())
                 .stopAtNumberOfIterations(5)
@@ -174,7 +174,7 @@ public class EnhetsregisteretWorkerTest {
 
     @Disabled("Generator, not a test: writes this sample's specification to examples/specs; run it by hand to regenerate the file")
     @Test
-    public void writeTargetConsumerSpec() throws IOException {
+    void writeTargetConsumerSpec() throws IOException {
         Path currentPath = CommonUtils.currentPath().getParent().getParent();
         Path targetPath = currentPath.resolve("examples");
 

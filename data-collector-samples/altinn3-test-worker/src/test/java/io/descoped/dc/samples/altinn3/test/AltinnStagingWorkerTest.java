@@ -38,7 +38,7 @@ import java.util.function.Supplier;
 import static io.descoped.dc.api.Builders.*;
 import static io.descoped.dc.api.node.builder.SpecificationBuilder.GLOBAL_CONFIGURATION;
 
-public class AltinnStagingWorkerTest {
+class AltinnStagingWorkerTest {
 
     static final Logger LOG = LoggerFactory.getLogger(AltinnStagingWorkerTest.class);
 
@@ -231,7 +231,7 @@ public class AltinnStagingWorkerTest {
 
     @Disabled("Generator, not a test: writes this sample's specification to examples/specs; run it by hand to regenerate the file")
     @Test
-    public void writeTargetConsumerSpec() throws IOException {
+    void writeTargetConsumerSpec() throws IOException {
         Path currentPath = CommonUtils.currentPath().getParent().getParent();
         Path targetPath = currentPath.resolve("examples");
 

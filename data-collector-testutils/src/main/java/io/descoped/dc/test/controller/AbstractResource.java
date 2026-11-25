@@ -35,9 +35,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 abstract class AbstractResource {
+
+    static final String APPLICATION_JSON = "application/json";
+    static final String APPLICATION_XML = "application/xml";
 
     static byte[] serializeXml(Object document) {
         try (StringWriter writer = new StringWriter()) {
@@ -53,7 +55,7 @@ abstract class AbstractResource {
             transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
             transformer.transform(new DOMSource((Node) document), new StreamResult(writer));
             return writer.toString().getBytes();
-        } catch (RuntimeException | Error e) {
+        } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
             throw new QueryException(e);
@@ -128,7 +130,7 @@ abstract class AbstractResource {
     }
 
     int getPathParam(String requestPath, int pathIndex, int defaultValue) {
-        List<String> pathElements = Arrays.asList(requestPath.split("/")).stream().skip(MockDataController.ROOT_CONTEXT_PATH_ELEMENT_COUNT).collect(Collectors.toList());
+        List<String> pathElements = Arrays.asList(requestPath.split("/")).stream().skip(MockDataController.ROOT_CONTEXT_PATH_ELEMENT_COUNT).toList();
 
         if (pathElements.size() <= pathIndex) {
             return defaultValue;

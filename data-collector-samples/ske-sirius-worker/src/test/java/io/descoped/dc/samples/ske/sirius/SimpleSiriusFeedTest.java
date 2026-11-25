@@ -60,7 +60,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -71,11 +70,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * <p>
  * SKE doc: https://skatteetaten.github.io/datasamarbeid-api-dokumentasjon/reference_skattemelding
  */
-public class SimpleSiriusFeedTest {
+class SimpleSiriusFeedTest {
 
-    final static Logger LOG = LoggerFactory.getLogger(SimpleSiriusFeedTest.class);
-    final static String TEST_BASE_URL = "https://api-at.sits.no";
-    final static List<Path> writtenFiles = new ArrayList<>();
+    static final Logger LOG = LoggerFactory.getLogger(SimpleSiriusFeedTest.class);
+    static final String TEST_BASE_URL = "https://api-at.sits.no";
+    static final List<Path> writtenFiles = new ArrayList<>();
     final boolean appendMessages = true;
     final int fromSequence = 1;
     final int numberOfEvents = 3000;
@@ -87,14 +86,14 @@ public class SimpleSiriusFeedTest {
     }
 
     @AfterAll
-    public static void afterAll() {
+    static void afterAll() {
         if (!writtenFiles.isEmpty()) pack();
     }
 
     static void pack() {
         writtenFiles.sort(Comparator.comparing(Path::toString));
         Path outputPath = CommonUtils.currentPath().resolve("target").resolve(String.format("sirius-dump-%s.zip", FileWriter.getTimestampAsString()));
-        LOG.trace("Pack file: {}", outputPath.toString());
+        LOG.trace("Pack file: {}", outputPath);
         try (FileOutputStream fos = new FileOutputStream(outputPath.toFile())) {
             try (ZipOutputStream zos = new ZipOutputStream(fos)) {
                 for (Path sourceFile : writtenFiles) {
@@ -137,7 +136,7 @@ public class SimpleSiriusFeedTest {
     @Disabled("Needs SKE's test certificate bundle (ske-test-certs)")
     @ParameterizedTest
     @EnumSource(Hendelse.class)
-    public void getHendelseListe(Hendelse hendelse) {
+    void getHendelseListe(Hendelse hendelse) {
         Client client = Client.newClientBuilder().sslContext(getBusinessSSLContext()).build();
 
         FixedThreadPool threadPool = FixedThreadPool.newInstance(20);
@@ -244,7 +243,7 @@ public class SimpleSiriusFeedTest {
 
         FileWriter(Path outputPath) {
             this.outputPath = outputPath;
-            LOG.trace("OutputPath: {}", outputPath.normalize().toString());
+            LOG.trace("OutputPath: {}", outputPath.normalize());
             try {
                 Files.createDirectories(outputPath);
             } catch (IOException e) {
@@ -318,7 +317,7 @@ public class SimpleSiriusFeedTest {
                 String filename = String.format("%05d-%05d-alle-skattemeldinger-%s-xml.txt", fromSequenceInclusive, toSequenceInclusive, getTimestampAsString());
                 Path filenamePath = outputPath.resolve(filename);
                 Files.write(filenamePath, new byte[0], StandardOpenOption.CREATE);
-                List<Path> files = positionAndFilenameMap.values().stream().sorted(Comparator.comparing(Path::toString)).skip(1).collect(Collectors.toList());
+                List<Path> files = positionAndFilenameMap.values().stream().sorted(Comparator.comparing(Path::toString)).skip(1).toList();
                 BufferedWriter writer = Files.newBufferedWriter(filenamePath, StandardCharsets.UTF_8, StandardOpenOption.APPEND);
                 for (Path file : files) {
                     if (file.toString().endsWith(".json")) continue;

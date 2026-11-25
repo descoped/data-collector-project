@@ -32,7 +32,7 @@ public class SimpleFregMaskinportenTest {
     private static Path contentStorePath;
 
     @BeforeAll
-    public static void beforeAll() throws IOException {
+    static void beforeAll() throws IOException {
         contentStorePath = CommonUtils.currentPath().resolve("target").resolve("store");
         if (!contentStorePath.toFile().exists()) {
             Files.createDirectories(contentStorePath);
@@ -41,7 +41,7 @@ public class SimpleFregMaskinportenTest {
 
     @Disabled("Needs SKE's Maskinporten client and the business certificate bundle")
     @Test
-    public void collectFregHendelseliste() throws IOException {
+    void collectFregHendelseliste() {
         MaskinportenAuth auth = new MaskinportenAuth(MaskinportenAuth.TEST_MASKINPORTEN_NO, configuration.find("ssb.ske.freg.test.clientId").orElse(null), CommonUtils.currentPath().resolve("pkcs12-certs"), "ssb-test-certs");
         String jwtGrant = auth.createMaskinportenJwtGrant();
         LOG.trace("jwtGrant: {}", jwtGrant);

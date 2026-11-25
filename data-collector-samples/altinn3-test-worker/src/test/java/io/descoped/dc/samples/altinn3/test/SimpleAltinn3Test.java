@@ -42,7 +42,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -113,7 +112,6 @@ public class SimpleAltinn3Test {
              * 3. hent ned dokument
              */
             Detector detector = new DefaultDetector();
-            List<MediaType> textMediaTypes = List.of("plain/text", "application/json", "application/xml").stream().map(MediaType::parse).collect(Collectors.toList());
 
             for (JsonNode instance : instanceList) {
                 String ownerPartyId = jqQueryStringLiteral(instance, ".instanceOwner.partyId");
@@ -175,7 +173,7 @@ public class SimpleAltinn3Test {
         // Create JWT Header
         Map<String, Object> headerClaims = new HashMap<>();
         headerClaims.put("alg", "RS256");
-        headerClaims.put("x5c", List.of(certificateContext.trustManager().getAcceptedIssuers()).stream().map(this::getEncodedCertificate).collect(Collectors.toList()));
+        headerClaims.put("x5c", List.of(certificateContext.trustManager().getAcceptedIssuers()).stream().map(this::getEncodedCertificate).toList());
 
         // Create JWT Grant and Sign
         return JWT.create()

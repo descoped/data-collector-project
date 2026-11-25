@@ -14,11 +14,11 @@ import java.lang.reflect.Method;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.platform.engine.discovery.ClassNameFilter.excludeClassNamePatterns;
 import static org.junit.platform.engine.discovery.ClassNameFilter.includeClassNamePatterns;
@@ -66,18 +66,17 @@ class TestServerExecutionListenerTest {
 
         assertEquals("bar", methodOverrideProfileMap.get("foo"));
 
-//        printConfiguration(configurationFactory);
     }
 
     @Test
     void testConfigurationOverrideKeyValuePairs() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            String[] configurationOverrideValues = {"k1", "v1", "k2"};
-            ConfigurationFactory configurationFactory = new ConfigurationFactory();
-            TestServerFactory testServerFactory = new TestServerFactory(configurationFactory);
-            new TestServerExecutionListener(configurationFactory, testServerFactory)
-                    .resolveOverrideKeyValueMap(configurationOverrideValues, new LinkedHashMap<>(), MethodSource.from("Foo", "method"));
-        });
+        String[] configurationOverrideValues = {"k1", "v1", "k2"};
+        ConfigurationFactory configurationFactory = new ConfigurationFactory();
+        TestServerFactory testServerFactory = new TestServerFactory(configurationFactory);
+        TestServerExecutionListener listener = new TestServerExecutionListener(configurationFactory, testServerFactory);
+        Map<String, String> overrides = new LinkedHashMap<>();
+        MethodSource methodSource = MethodSource.from("Foo", "method");
+        assertThrows(IllegalArgumentException.class, () -> listener.resolveOverrideKeyValueMap(configurationOverrideValues, overrides, methodSource));
     }
 
     @Test
@@ -86,39 +85,21 @@ class TestServerExecutionListenerTest {
         List<Method> methods = listener.findMethodsByName(CaseOneTest.class, MethodSource.from(CaseOneTest.class.getName(), "thatExtensionIsInvoked"));
         assertEquals(1, methods.size());
 
-        assertThrows(IllegalStateException.class, () -> {
-            listener.findMethodsByName(CaseOneTest.class, MethodSource.from(CaseOneTest.class.getName(), "methodDoesNotExist"));
-        });
+        MethodSource missingMethod = MethodSource.from(CaseOneTest.class.getName(), "methodDoesNotExist");
+        assertThrows(IllegalStateException.class, () -> listener.findMethodsByName(CaseOneTest.class, missingMethod));
     }
 
     @Test
     void testLoadTestClassException() {
+        LoadTestClassException loadTestClassException = new LoadTestClassException(new ClassNotFoundException());
         assertThrows(LoadTestClassException.class, () -> {
-            throw new LoadTestClassException(new ClassNotFoundException());
+            throw loadTestClassException;
         });
 
-        assertThrows(RuntimeException.class, () -> {
-            throw new TestServerExecutionListener(null, null)
-                    .handleException(new RuntimeException());
-        });
+        TestServerExecutionListener listener = new TestServerExecutionListener(null, null);
+        RuntimeException runtimeException = new RuntimeException();
+        assertSame(runtimeException, listener.handleException(runtimeException));
 
-        assertThrows(LoadTestClassException.class, () -> {
-            throw new TestServerExecutionListener(null, null)
-                    .handleException(new ClassNotFoundException());
-        });
-    }
-
-    private void printConfiguration(ConfigurationFactory factory) {
-        Set<TestConfigurationBinding> testConfigurationBindings = factory.keys();
-        for (TestConfigurationBinding testConfigurationBinding : testConfigurationBindings) {
-            LOG.trace("configurationKey: {} -> \n\t{}",
-                    testConfigurationBinding,
-                    factory.get(testConfigurationBinding).asMap()
-                            .entrySet()
-                            .stream()
-                            .map(entry -> entry.getKey() + "=" + entry.getValue())
-                            .collect(Collectors.joining("\n\t,"))
-            );
-        }
+        assertInstanceOf(LoadTestClassException.class, listener.handleException(new ClassNotFoundException()));
     }
 }

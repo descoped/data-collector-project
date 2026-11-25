@@ -13,13 +13,13 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class GoogleSecretManagerIntegrationTest {
+class GoogleSecretManagerIntegrationTest {
 
     static final Logger LOG = LoggerFactory.getLogger(GoogleSecretManagerIntegrationTest.class);
 
     @Disabled("Needs Google Cloud credentials for Secret Manager")
     @Test
-    public void loadSecrets() {
+    void loadSecrets() {
         DynamicConfiguration configuration = DynamicConfiguration.builder()
                 .classpath("application-override.properties")
                 .build();

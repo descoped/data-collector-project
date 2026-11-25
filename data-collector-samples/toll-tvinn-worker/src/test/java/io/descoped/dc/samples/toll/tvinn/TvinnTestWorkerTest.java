@@ -35,7 +35,7 @@ import static io.descoped.dc.api.Builders.status;
 import static io.descoped.dc.api.Builders.whenVariableIsNull;
 import static io.descoped.dc.api.Builders.xpath;
 
-public class TvinnTestWorkerTest {
+class TvinnTestWorkerTest {
 
     static final SpecificationBuilder specificationBuilder = Specification.start("TOLL-TVINN-TEST", "Collect Tvinn Test", "maskinporten-jwt-grant")
             .configure(context()
@@ -107,7 +107,7 @@ public class TvinnTestWorkerTest {
 
     @Disabled("Needs Toll's Maskinporten client and the business certificate bundle")
     @Test
-    public void testCollectTvinn() {
+    void testCollectTvinn() {
         String serialized = specificationBuilder.serialize();
         SpecificationBuilder spec = Specification.deserialize(serialized);
         Worker.newBuilder()
@@ -135,7 +135,7 @@ public class TvinnTestWorkerTest {
 
     @Disabled("Generator, not a test: writes this sample's specification to examples/specs; run it by hand to regenerate the file")
     @Test
-    public void writeTargetConsumerSpec() throws IOException {
+    void writeTargetConsumerSpec() throws IOException {
         Path currentPath = CommonUtils.currentPath().getParent().getParent();
         Path targetPath = currentPath.resolve("examples");
 

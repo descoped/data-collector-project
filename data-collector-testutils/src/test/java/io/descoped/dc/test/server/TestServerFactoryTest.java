@@ -33,11 +33,11 @@ class TestServerFactoryTest {
     void thatLocalPortIsFree() throws IOException {
         TestServerFactory testServerFactory = new TestServerFactory(new ConfigurationFactory());
 
-        assertThrows(IllegalStateException.class, () -> {
-            try (ServerSocket ignored = new ServerSocket(10000)) {
-                assertEquals(10000, testServerFactory.findFreePort(new Random(), 10000, 10000));
-            }
-        });
+        // the only port in the range is taken
+        try (ServerSocket ignored = new ServerSocket(10000)) {
+            Random random = new Random();
+            assertThrows(IllegalStateException.class, () -> testServerFactory.findFreePort(random, 10000, 10000));
+        }
         assertEquals(10000, testServerFactory.findFreePort(new Random(), 10000, 10000));
 
         int port = testServerFactory.pick(new Random(), 10000, 10500);
