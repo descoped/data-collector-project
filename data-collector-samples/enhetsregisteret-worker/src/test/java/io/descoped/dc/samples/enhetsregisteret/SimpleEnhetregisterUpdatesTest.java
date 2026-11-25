@@ -28,6 +28,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class SimpleEnhetregisterUpdatesTest {
 
@@ -380,6 +381,8 @@ public class SimpleEnhetregisterUpdatesTest {
         QueryFeature jq = Queries.from(jqPath);
         String updateId = jq.evaluateStringLiteral(source);
         LOG.trace("{}", updateId);
+        // the last update in the page
+        assertEquals("9400372", updateId);
     }
 
     @Test
@@ -395,5 +398,7 @@ public class SimpleEnhetregisterUpdatesTest {
 
         String result = jq.evaluateStringLiteral(source);
         LOG.trace("{}", result);
+        // a page without updates gives no id, instead of failing on iterating null
+        assertNull(result);
     }
 }
