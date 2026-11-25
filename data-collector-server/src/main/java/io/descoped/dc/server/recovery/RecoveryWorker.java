@@ -97,10 +97,11 @@ public class RecoveryWorker {
                     lastTimestamp.set(TimeOrderedIds.timestamp(peekBuffer.id()));
                 }
                 LOG.info("Successful recovery from {} to {}. Recovered {} positions.", sourceTopic, targetTopic, monitor.copiedPositions.get());
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                monitor.setEnded();
+                throw new RuntimeException(e);
             } catch (Exception e) {
-                if (e instanceof InterruptedException) {
-                    Thread.currentThread().interrupt();
-                }
                 monitor.setEnded();
                 throw new RuntimeException(e);
             } finally {
@@ -150,10 +151,10 @@ public class RecoveryWorker {
                 }
             }
             LOG.trace("Done post checking tail positions! Tail size is: {}", monitor.postCheckCheckedPositions.get());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
         } catch (Exception e) {
-            if (e instanceof InterruptedException) {
-                Thread.currentThread().interrupt();
-            }
             throw new RuntimeException(e);
         } finally {
             contentStream.closeAndRemoveConsumer(targetTopic);

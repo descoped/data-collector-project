@@ -115,10 +115,10 @@ public class RawdataFileSystemService implements Service {
                 }
                 LOG.info("Stop rawdata exporter!");
 
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
             } catch (Exception e) {
-                if (e instanceof InterruptedException) {
-                    Thread.currentThread().interrupt();
-                }
                 throw new RuntimeException(e);
             }
         });
@@ -130,7 +130,7 @@ public class RawdataFileSystemService implements Service {
             Files.createDirectories(filePath);
         }
 
-        for (String key : buffer.keys()) {
+        for (String key : Objects.requireNonNull(buffer.keys(), "A buffer without keys")) {
             byte[] data = buffer.get(key);
             String content = new String(data, StandardCharsets.UTF_8);
 

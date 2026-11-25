@@ -16,6 +16,8 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -64,24 +66,19 @@ class RawdataFileSystemServiceTest {
 
         RawdataFileSystemService service = server.getApplication().unwrap(RawdataFileSystemService.class);
 
-        CompletableFuture<Void> consumerFuture = CompletableFuture.runAsync(() -> {
-            while (true) {
-                long count = countWorkDirFolders(service.getWorkDir());
-                if (count == EXPECTED_MESSAGES) {
-                    break;
-                }
-                nap();
-            }
-        });
-
-        CompletableFuture.allOf(producerFuture, consumerFuture).join();
+        // wait at most 30 seconds for the exporter, so a missing export fails instead of hanging
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(30);
+        while (countWorkDirFolders(service.getWorkDir()) != EXPECTED_MESSAGES && System.nanoTime() < deadline) {
+            nap();
+        }
+        producerFuture.join();
 
         assertEquals(EXPECTED_MESSAGES, countWorkDirFolders(service.getWorkDir()));
     }
 
     private long countWorkDirFolders(Path workDir) {
-        try {
-            return Files.list(workDir).filter(p -> p.toFile().isDirectory()).count();
+        try (Stream<Path> paths = Files.list(workDir)) {
+            return paths.filter(p -> p.toFile().isDirectory()).count();
         } catch (NoSuchFileException e) {
             return 0;
         } catch (IOException e) {
