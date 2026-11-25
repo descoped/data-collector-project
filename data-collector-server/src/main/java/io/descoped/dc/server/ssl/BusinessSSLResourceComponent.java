@@ -13,7 +13,7 @@ public class BusinessSSLResourceComponent implements Component {
 
     @Override
     public void initialize() {
-
+        // the supplier is given at construction
     }
 
     @Override
@@ -28,6 +28,6 @@ public class BusinessSSLResourceComponent implements Component {
 
     @Override
     public void close() throws Exception {
-
+        // the supplier's resources are closed by its user
     }
 }

@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import static io.descoped.dc.api.http.Request.Method.DELETE;
 import static io.descoped.dc.api.http.Request.Method.GET;
@@ -25,6 +24,9 @@ public class RecoveryController implements Controller {
 
     private static final Logger LOG = LoggerFactory.getLogger(RecoveryController.class);
 
+    private static final String TOPIC = "topic";
+    private static final String TOPIC_PATH = "/recovery/{" + TOPIC + "}";
+
     private final PathDispatcher dispatcher;
     private final RecoveryService service;
 
@@ -32,10 +34,10 @@ public class RecoveryController implements Controller {
     public RecoveryController(RecoveryService service) {
         this.service = service;
         dispatcher = PathDispatcher.create();
-        dispatcher.bind("/recovery/{topic}", PUT, this::createWorker);
+        dispatcher.bind(TOPIC_PATH, PUT, this::createWorker);
         dispatcher.bind("/recovery", GET, this::getWorkerList);
-        dispatcher.bind("/recovery/{topic}", GET, this::getWorkerSummary);
-        dispatcher.bind("/recovery/{topic}", DELETE, this::cancelWorker);
+        dispatcher.bind(TOPIC_PATH, GET, this::getWorkerSummary);
+        dispatcher.bind(TOPIC_PATH, DELETE, this::cancelWorker);
     }
 
     @Override
@@ -82,6 +84,7 @@ public class RecoveryController implements Controller {
                     failCount--;
                 }
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 throw new RuntimeException(e);
             }
         }
@@ -93,7 +96,7 @@ public class RecoveryController implements Controller {
 
     // PUT /recovery/{topic}?toTopic=TARGET_TOPIC
     private HttpStatus createWorker(PathHandler handler) {
-        String fromTopic = handler.parameters().get("topic");
+        String fromTopic = handler.parameters().get(TOPIC);
         if (isRunning(fromTopic)) {
             return HttpStatus.HTTP_CONFLICT;
         }
@@ -107,7 +110,7 @@ public class RecoveryController implements Controller {
 
     // GET /recovery
     private HttpStatus getWorkerList(PathHandler handler) {
-        List<String> list = service.getSequenceDatabaseList().stream().map(path -> path.getFileName().toString()).collect(Collectors.toList());
+        List<String> list = service.getSequenceDatabaseList().stream().map(path -> path.getFileName().toString()).toList();
         String indexListJson = JsonParser.createJsonParser().toPrettyJSON(list);
         handler.exchange().getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
         handler.exchange().getResponseSender().send(indexListJson);
@@ -116,7 +119,7 @@ public class RecoveryController implements Controller {
 
     // GET /recovery/{topic}
     private HttpStatus getWorkerSummary(PathHandler handler) {
-        String fromTopic = handler.parameters().get("topic");
+        String fromTopic = handler.parameters().get(TOPIC);
         RecoveryWorker recoveryWorker = service.jobs.get(fromTopic);
         if (recoveryWorker == null) {
             return HttpStatus.HTTP_BAD_REQUEST;
@@ -130,7 +133,7 @@ public class RecoveryController implements Controller {
 
     // DELETE /recovery/{topic}
     private HttpStatus cancelWorker(PathHandler handler) {
-        String fromTopic = handler.parameters().get("topic");
+        String fromTopic = handler.parameters().get(TOPIC);
         if (!isRunning(fromTopic)) {
             return HttpStatus.HTTP_NOT_FOUND;
         }

@@ -17,7 +17,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
 public class WorkManager {
 
@@ -33,6 +32,7 @@ public class WorkManager {
         try {
             lock.lockInterruptibly();
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new WorkerException(e);
         }
     }
@@ -66,7 +66,7 @@ public class WorkManager {
     List<Task> list() {
         return workerFutures.keySet().stream()
                 .map(jobId -> new Task(jobId.workerId.toString(), jobId.specificationId, jobId.specificationName))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     boolean cancel(UUID workerId) {

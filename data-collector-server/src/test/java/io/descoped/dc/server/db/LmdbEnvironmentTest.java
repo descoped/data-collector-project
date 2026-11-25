@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -18,16 +17,17 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static io.descoped.dc.server.db.LmdbEnvironment.removePath;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test requires vm arg: --add-opens java.base/java.nio=lmdbjava --add-exports=java.base/sun.nio.ch=lmdbjava
  */
-public class LmdbEnvironmentTest {
+class LmdbEnvironmentTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(LmdbEnvironmentTest.class);
 
     @Test
-    public void testSequence() throws IOException {
+    void testSequence() {
         Path dbPath = CommonUtils.currentPath().resolve("target").resolve("lmdb");
         removePath(dbPath);
 
@@ -74,6 +74,11 @@ public class LmdbEnvironmentTest {
                 index.readSequence((sequenceKey, hasNext) -> {
                     LOG.trace("{}/{}", sequenceKey.position(), sequenceKey.id());
                 });
+
+                // position 11 is written twice and 88 three times
+                assertEquals(Set.of("11", "88"), duplicateMap.keySet());
+                assertEquals(2, duplicateMap.get("11").size());
+                assertEquals(3, duplicateMap.get("88").size());
             }
         }
     }

@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.descoped.dc.server.db.SequenceDbHelper.getSequenceDatabaseLocation;
 
@@ -45,7 +45,7 @@ public class RecoveryService implements Service {
 
     @Override
     public void start() {
-
+        // a recovery starts on request (createRecoveryWorker)
     }
 
     @Override
@@ -58,7 +58,9 @@ public class RecoveryService implements Service {
     List<Path> getSequenceDatabaseList() {
         Path dbLocation = getSequenceDatabaseLocation(configuration);
         try {
-            return Files.list(dbLocation).filter(path -> path.toFile().isDirectory()).collect(Collectors.toList());
+            try (Stream<Path> paths = Files.list(dbLocation)) {
+                return paths.filter(path -> path.toFile().isDirectory()).toList();
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -68,7 +70,7 @@ public class RecoveryService implements Service {
         Path dbLocation = getSequenceDatabaseLocation(configuration);
         LOG.trace("Database path: {}", dbLocation);
         if (!dbLocation.toFile().exists()) {
-            throw new RuntimeException("Lmdb Location does not exist: " + dbLocation.toString());
+            throw new IllegalStateException("Lmdb Location does not exist: " + dbLocation.toString());
         }
 
         CompletableFuture<RecoveryWorker> workerFuture = CompletableFuture.supplyAsync(() -> {
@@ -79,10 +81,10 @@ public class RecoveryService implements Service {
             return recoveryWorker;
         }).exceptionally(throwable -> {
             LOG.error("Ended exceptionally with error: {}", CommonUtils.captureStackTrace(throwable));
-            if (throwable instanceof RuntimeException) {
-                throw (RuntimeException) throwable;
-            } else if (throwable instanceof Error) {
-                throw (Error) throwable;
+            if (throwable instanceof RuntimeException runtimeException) {
+                throw runtimeException;
+            } else if (throwable instanceof Error error) {
+                throw error;
             } else {
                 throw new RuntimeException(throwable);
             }

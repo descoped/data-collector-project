@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
 import static org.lmdbjava.DbiFlags.MDB_CREATE;
 
@@ -38,8 +39,11 @@ public class LmdbEnvironment implements AutoCloseable {
 
     public static void removePath(Path path) {
         try {
-            if (path.toFile().exists())
-                Files.walk(path).sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
+            if (path.toFile().exists()) {
+                try (Stream<Path> paths = Files.walk(path)) {
+                    paths.sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
+                }
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

@@ -9,7 +9,6 @@ import java.math.RoundingMode;
 import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.time.Instant;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -30,9 +29,9 @@ public class IntegrityCheckJobSummary {
     private final AtomicReference<String> duplicateReportId = new AtomicReference<>();
     private final AtomicLong duplicatePositions = new AtomicLong();
     private final AtomicLong affectedPositions = new AtomicLong();
-    private final Map<String, AtomicLong> duplicatePositionCount = new LinkedHashMap<>();
 
     public IntegrityCheckJobSummary() {
+        // the values are set while the job runs
     }
 
     IntegrityCheckJobSummary setTopic(String topic) {
@@ -101,7 +100,7 @@ public class IntegrityCheckJobSummary {
     }
 
     public Summary build() {
-        Summary summary = new Summary(
+        return new Summary(
                 topic.get(),
                 running.get(),
                 started.get(),
@@ -115,7 +114,6 @@ public class IntegrityCheckJobSummary {
                 duplicateReportPath.get(),
                 duplicateReportId.get()
         );
-        return summary;
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

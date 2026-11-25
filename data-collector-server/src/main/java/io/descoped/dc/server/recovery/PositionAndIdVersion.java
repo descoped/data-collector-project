@@ -14,6 +14,7 @@ public class PositionAndIdVersion {
     private UUID id;
 
     public PositionAndIdVersion() {
+        // position and id are set by SequenceDbHelper
     }
 
     public String position() {

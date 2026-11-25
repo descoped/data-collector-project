@@ -5,8 +5,6 @@ import io.descoped.dc.api.content.ContentStore;
 import io.descoped.dc.api.content.ContentStoreInitializer;
 import io.descoped.dc.application.spi.Component;
 import io.descoped.service.provider.api.ProviderConfigurator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -14,8 +12,6 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RecoveryContentStoreComponent implements Component {
-
-    private static final Logger LOG = LoggerFactory.getLogger(RecoveryContentStoreComponent.class);
 
     private final DynamicConfiguration configuration;
     private final AtomicBoolean closed = new AtomicBoolean(true);

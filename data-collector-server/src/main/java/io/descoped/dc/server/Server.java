@@ -88,6 +88,8 @@ public class Server {
             try {
                 Thread.currentThread().join();
             } catch (InterruptedException e) {
+                // the termination signal: stop the application (finally)
+                Thread.currentThread().interrupt();
             }
         } finally {
             application.stop();

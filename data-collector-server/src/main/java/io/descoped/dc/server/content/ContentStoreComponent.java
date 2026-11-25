@@ -5,15 +5,11 @@ import io.descoped.dc.api.content.ContentStore;
 import io.descoped.dc.api.content.ContentStoreInitializer;
 import io.descoped.dc.application.spi.Component;
 import io.descoped.service.provider.api.ProviderConfigurator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ContentStoreComponent implements Component {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ContentStoreComponent.class);
 
     private final DynamicConfiguration configuration;
     private final AtomicBoolean closed = new AtomicBoolean(true);

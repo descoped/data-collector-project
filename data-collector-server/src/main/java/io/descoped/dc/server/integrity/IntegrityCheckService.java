@@ -25,12 +25,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.descoped.dc.server.db.SequenceDbHelper.getSequenceDatabaseLocation;
 
 public class IntegrityCheckService implements Service {
 
     private static final Logger LOG = LoggerFactory.getLogger(IntegrityCheckService.class);
+
+    private static final String CLOSED = "CLOSED";
 
     final DynamicConfiguration configuration;
     final ContentStoreComponent contentStoreComponent;
@@ -48,6 +51,7 @@ public class IntegrityCheckService implements Service {
 
     @Override
     public void start() {
+        // a job starts on request (createJob)
     }
 
     @Override
@@ -63,11 +67,7 @@ public class IntegrityCheckService implements Service {
         }
 
         List<JobStatus> previouslyCompletedJobs = getPreviouslyCompletedJobs();
-        if (previouslyCompletedJobs.contains(new JobStatus(topic, "CLOSED"))) {
-            return true;
-        }
-
-        return false;
+        return previouslyCompletedJobs.contains(new JobStatus(topic, CLOSED));
     }
 
     public boolean isJobRunning(String topic) {
@@ -92,23 +92,23 @@ public class IntegrityCheckService implements Service {
 
         LmdbEnvironment.removePath(dbLocation.resolve(topic));
 
-        CompletableFuture<IntegrityCheckJob> future = CompletableFuture.supplyAsync(() -> {
+        CompletableFuture.supplyAsync(() -> {
             try (LmdbEnvironment lmdbEnvironment = new LmdbEnvironment(configuration, dbLocation, topic)) {
                 try (IntegrityCheckIndex index = new IntegrityCheckIndex(lmdbEnvironment)) {
                     IntegrityCheckJobSummary summary = new IntegrityCheckJobSummary();
                     IntegrityCheckJob job = new IntegrityCheckJob(configuration, contentStoreComponent, index, summary);
                     jobs.put(topic, job);
                     job.consume(topic);
-                    LOG.info("Check integrity of topic {} completed successfully at position {}!", topic, summary.getLastPosition());
+                    LOG.info("Check integrity of topic {}\u00A0completed successfully at position {}!", topic, summary.getLastPosition());
                     return job;
                 }
             }
         }).exceptionally(throwable -> {
             LOG.error("Ended exceptionally with error: {}", CommonUtils.captureStackTrace(throwable));
-            if (throwable instanceof RuntimeException) {
-                throw (RuntimeException) throwable;
-            } else if (throwable instanceof Error) {
-                throw (Error) throwable;
+            if (throwable instanceof RuntimeException runtimeException) {
+                throw runtimeException;
+            } else if (throwable instanceof Error error) {
+                throw error;
             } else {
                 throw new RuntimeException(throwable);
             }
@@ -121,6 +121,7 @@ public class IntegrityCheckService implements Service {
                 TimeUnit.MILLISECONDS.sleep(5);
                 failCount--;
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 throw new RuntimeException(e);
             }
         }
@@ -147,8 +148,10 @@ public class IntegrityCheckService implements Service {
     List<JobStatus> getPreviouslyCompletedJobs() {
         try {
             Path dbLocation = getSequenceDatabaseLocation(configuration);
-            return Files.list(dbLocation).filter(path -> path.toFile().isDirectory())
-                    .map(path -> new JobStatus(path.getFileName().toString(), "CLOSED")).collect(Collectors.toList());
+            try (Stream<Path> paths = Files.list(dbLocation)) {
+                return paths.filter(path -> path.toFile().isDirectory())
+                        .map(path -> new JobStatus(path.getFileName().toString(), CLOSED)).toList();
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -161,7 +164,7 @@ public class IntegrityCheckService implements Service {
 
         // try load summary from filesystem if exists
         List<JobStatus> jobStatusList = getJobs();
-        if (!jobStatusList.contains(new JobStatus(topic, "CLOSED"))) {
+        if (!jobStatusList.contains(new JobStatus(topic, CLOSED))) {
             throw new IllegalStateException("Job not found for topic: " + topic);
         }
 
@@ -187,24 +190,17 @@ public class IntegrityCheckService implements Service {
         JsonParser jsonParser = JsonParser.createJsonParser();
         String jsonSummaryResponseBody = jsonParser.toPrettyJSON(summary);
 
-        boolean firstJsonSummaryLine = false;
         try (BufferedReader jsonSummaryReader = new BufferedReader(new StringReader(jsonSummaryResponseBody))) {
             try (FileWriter jsonSummaryFileWriter = new FileWriter(summaryReportFilePath.toFile(), true)) {
                 try (BufferedWriter jsonSummaryBufferedWriter = new BufferedWriter(jsonSummaryFileWriter)) {
                     jsonSummaryBufferedWriter.write("{");
                     jsonSummaryBufferedWriter.newLine();
                     String jsonSummaryLine = jsonSummaryReader.readLine();
-                    while (jsonSummaryLine != null) {
-                        if (!firstJsonSummaryLine) {
-                            firstJsonSummaryLine = true;
-                            jsonSummaryLine = jsonSummaryReader.readLine();
-                            continue;
-                        }
-
-                        if ("}".equals(jsonSummaryLine)) {
-                            break;
-                        }
-
+                    // the summary's opening line is skipped, and its closing brace ends the copy
+                    if (jsonSummaryLine != null) {
+                        jsonSummaryLine = jsonSummaryReader.readLine();
+                    }
+                    while (jsonSummaryLine != null && !"}".equals(jsonSummaryLine)) {
                         jsonSummaryBufferedWriter.write(jsonSummaryLine);
                         jsonSummaryBufferedWriter.newLine();
 

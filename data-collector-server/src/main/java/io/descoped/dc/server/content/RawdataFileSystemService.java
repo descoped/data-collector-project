@@ -16,6 +16,7 @@ import org.apache.tika.parser.ParseContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -75,10 +76,10 @@ public class RawdataFileSystemService implements Service {
         consumerFuture = createFuture(topic, workDir)
                 .exceptionally(throwable -> {
                     LOG.error("Ended exceptionally with error: {}", CommonUtils.captureStackTrace(throwable));
-                    if (throwable instanceof RuntimeException) {
-                        throw (RuntimeException) throwable;
-                    } else if (throwable instanceof Error) {
-                        throw (Error) throwable;
+                    if (throwable instanceof RuntimeException runtimeException) {
+                        throw runtimeException;
+                    } else if (throwable instanceof Error error) {
+                        throw error;
                     } else {
                         throw new RuntimeException(throwable);
                     }
@@ -109,40 +110,49 @@ public class RawdataFileSystemService implements Service {
             try (ContentStreamConsumer consumer = contentStream.consumer(topic)) {
                 while (!closed.get()) {
                     if ((buffer = consumer.receive(1, TimeUnit.SECONDS)) != null) {
-                        Path filePath = targetPath.resolve(buffer.position()).normalize();
-                        if (!Files.exists(filePath)) {
-                            Files.createDirectories(filePath);
-                        }
-
-                        for (String key : buffer.keys()) {
-                            byte[] data = buffer.get(key);
-                            String content = new String(data, StandardCharsets.UTF_8);
-
-                            MediaType mediaType = detector.detect(TikaInputStream.get(data), metadata, new ParseContext());
-                            String subtype = mediaType.getSubtype();
-                            if ("plain".equals(subtype)) {
-                                if (content.startsWith("{") || content.startsWith("[") && !key.endsWith(".json")) {
-                                    subtype = ".json";
-                                } else if (content.startsWith("<")) {
-                                    subtype = ".xml";
-                                } else {
-                                    subtype = "";
-                                }
-                            } else {
-                                subtype = "." + subtype;
-                            }
-
-                            Path contentFilePath = filePath.resolve(filePath.resolve(key) + subtype);
-                            Files.write(contentFilePath, data);
-                        }
+                        writeBuffer(buffer, targetPath, detector, metadata);
                     }
                 }
                 LOG.info("Stop rawdata exporter!");
 
             } catch (Exception e) {
+                if (e instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                }
                 throw new RuntimeException(e);
             }
         });
+    }
+
+    private static void writeBuffer(ContentStreamBuffer buffer, Path targetPath, Detector detector, Metadata metadata) throws IOException {
+        Path filePath = targetPath.resolve(buffer.position()).normalize();
+        if (!Files.exists(filePath)) {
+            Files.createDirectories(filePath);
+        }
+
+        for (String key : buffer.keys()) {
+            byte[] data = buffer.get(key);
+            String content = new String(data, StandardCharsets.UTF_8);
+
+            MediaType mediaType = detector.detect(TikaInputStream.get(data), metadata, new ParseContext());
+            String subtype = fileSuffix(mediaType.getSubtype(), content, key);
+
+            Path contentFilePath = filePath.resolve(filePath.resolve(key) + subtype);
+            Files.write(contentFilePath, data);
+        }
+    }
+
+    private static String fileSuffix(String subtype, String content, String key) {
+        if (!"plain".equals(subtype)) {
+            return "." + subtype;
+        }
+        if (content.startsWith("{") || content.startsWith("[") && !key.endsWith(".json")) {
+            return ".json";
+        }
+        if (content.startsWith("<")) {
+            return ".xml";
+        }
+        return "";
     }
 
     public Path getWorkDir() {
@@ -154,6 +164,7 @@ public class RawdataFileSystemService implements Service {
         try {
             Thread.sleep(millis);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 
