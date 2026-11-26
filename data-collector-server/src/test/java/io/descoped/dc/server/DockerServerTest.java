@@ -37,7 +37,7 @@ import static io.descoped.dc.api.Builders.whenVariableIsNull;
 import static io.descoped.dc.api.Builders.xpath;
 
 @ExtendWith(TestServerExtension.class)
-public class DockerServerTest {
+class DockerServerTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(DockerServerTest.class);
 
@@ -53,17 +53,17 @@ public class DockerServerTest {
     }
 
     @Test
-    public void testPingServer() {
+    void testPingServer() {
         client.get("/ping").expect200Ok();
     }
 
     @Test
-    public void testMockServer() {
+    void testMockServer() {
         client.get("/api/events").expect200Ok();
     }
 
     @Test
-    public void testPutTask() throws InterruptedException {
+    void testPutTask() throws InterruptedException {
         String spec = CommonUtils.readFileOrClasspathResource("worker.config/page-test.json").replace("PORT", Integer.valueOf(server.getTestServerServicePort()).toString());
         client.put("/tasks", spec).expect201Created();
         LOG.trace("list: {}", client.get("/tasks").expect200Ok().body());
@@ -72,14 +72,14 @@ public class DockerServerTest {
     }
 
     @Test
-    public void testHealth() {
+    void testHealth() {
         ResponseHelper<String> responseHelper = client.get("/health?config&contexts&threads").expect200Ok();
         System.out.printf("health:%n%s%n", responseHelper.body());
     }
 
     @Disabled("Not a test: builds a README example against example.com, which serves no feed")
     @Test
-    public void ReadmeExample() {
+    void ReadmeExample() {
         SpecificationBuilder feedBuilder = Specification.start("", "", "loop")
                 .configure(context()
                         .topic("topic")

@@ -97,6 +97,10 @@ public class RecoveryWorker {
                     lastTimestamp.set(TimeOrderedIds.timestamp(peekBuffer.id()));
                 }
                 LOG.info("Successful recovery from {} to {}. Recovered {} positions.", sourceTopic, targetTopic, monitor.copiedPositions.get());
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                monitor.setEnded();
+                throw new RuntimeException(e);
             } catch (Exception e) {
                 monitor.setEnded();
                 throw new RuntimeException(e);
@@ -114,36 +118,46 @@ public class RecoveryWorker {
                 return;
             }
 
-            ContentStreamConsumer consumer = contentStream.consumer(targetTopic);
-            try {
-                ContentStreamBuffer lastRecoveredMessage = contentStream.lastMessage(targetTopic);
-                long fromTimestamp = lastRecoveredMessage != null && TimeOrderedIds.timestamp(lastRecoveredMessage.id()) < lastTimestamp.get() ?
-                        TimeOrderedIds.timestamp(lastRecoveredMessage.id()) :
-                        lastTimestamp.get();
-                LOG.trace("Post check recovered positions from timestamp: {}", Instant.ofEpochMilli(fromTimestamp).toString());
-                monitor.setPostCheckFromTimestamp(fromTimestamp);
-                consumer.seek(fromTimestamp);
-                ContentStreamBuffer buffer;
-                Path reportPath = getSequenceDatabaseLocation(configuration).resolve(targetTopic).resolve("report");
-                Files.createDirectories(reportPath);
-                try (JsonArrayWriter writer = new JsonArrayWriter(reportPath, "tail-report.json", 5000)) {
-                    while (!closed.get() && (buffer = consumer.receive(3, TimeUnit.SECONDS)) != null) {
-                        if (monitor.postCheckStartPosition.get() == null) {
-                            monitor.setPostCheckStartPosition(buffer.position());
-                        }
-                        monitor.setPostCheckLastPosition(buffer.position());
-                        monitor.incrementPostCheckCheckedPositions();
-                        ObjectNode positionNode = writer.parser().createObjectNode();
-                        positionNode.put(buffer.id().toString(), buffer.position());
-                        writer.write(positionNode);
-                    }
-                }
-                LOG.trace("Done post checking tail positions! Tail size is: {}", monitor.postCheckCheckedPositions.get());
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            } finally {
-                contentStream.closeAndRemoveConsumer(targetTopic);
+            postCheckTail(contentStream, targetTopic, lastTimestamp.get());
+        }
+    }
+
+    // reads the target topic from the last recovered position and writes what follows it to a tail report
+    private void postCheckTail(ContentStream contentStream, String targetTopic, long lastTimestamp) {
+        ContentStreamConsumer consumer = contentStream.consumer(targetTopic);
+        try {
+            ContentStreamBuffer lastRecoveredMessage = contentStream.lastMessage(targetTopic);
+            long fromTimestamp = lastRecoveredMessage != null && TimeOrderedIds.timestamp(lastRecoveredMessage.id()) < lastTimestamp ?
+                    TimeOrderedIds.timestamp(lastRecoveredMessage.id()) :
+                    lastTimestamp;
+            if (LOG.isTraceEnabled()) {
+                LOG.trace("Post check recovered positions from timestamp: {}", Instant.ofEpochMilli(fromTimestamp));
             }
+            monitor.setPostCheckFromTimestamp(fromTimestamp);
+            consumer.seek(fromTimestamp);
+            ContentStreamBuffer buffer;
+            Path reportPath = getSequenceDatabaseLocation(configuration).resolve(targetTopic).resolve("report");
+            Files.createDirectories(reportPath);
+            try (JsonArrayWriter writer = new JsonArrayWriter(reportPath, "tail-report.json", 5000)) {
+                while (!closed.get() && (buffer = consumer.receive(3, TimeUnit.SECONDS)) != null) {
+                    if (monitor.postCheckStartPosition.get() == null) {
+                        monitor.setPostCheckStartPosition(buffer.position());
+                    }
+                    monitor.setPostCheckLastPosition(buffer.position());
+                    monitor.incrementPostCheckCheckedPositions();
+                    ObjectNode positionNode = writer.parser().createObjectNode();
+                    positionNode.put(buffer.id().toString(), buffer.position());
+                    writer.write(positionNode);
+                }
+            }
+            LOG.trace("Done post checking tail positions! Tail size is: {}", monitor.postCheckCheckedPositions.get());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            contentStream.closeAndRemoveConsumer(targetTopic);
         }
     }
 
@@ -151,7 +165,6 @@ public class RecoveryWorker {
         String[] publishPositions = bufferedPositions.toArray(new String[0]);
         producer.publish(publishPositions);
         monitor.incrementCopiedPositions(publishPositions.length);
-        //LOG.trace("Published: [{}]", String.join(", ", publishPositions));
         bufferCounter.set(0);
         bufferedPositions.clear();
         monitor.resetBufferedPositions();

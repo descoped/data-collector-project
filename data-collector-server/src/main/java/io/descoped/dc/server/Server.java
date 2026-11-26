@@ -73,6 +73,7 @@ public class Server {
         UndertowApplication application = UndertowApplication.initializeUndertowApplication(configuration,
                 businessSslResourceProvider != null ? new BusinessSSLResourceSupplier(sslResourceSupplier) : null);
 
+        boolean interrupted = false;
         try {
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 LOG.warn("ShutdownHook triggered..");
@@ -88,9 +89,14 @@ public class Server {
             try {
                 Thread.currentThread().join();
             } catch (InterruptedException e) {
+                // the termination signal: the application is stopped first (finally), then the flag is restored
+                interrupted = true;
             }
         } finally {
             application.stop();
+            if (interrupted) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 

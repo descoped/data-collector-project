@@ -18,9 +18,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class ExportRawdataStreamTest {
 
-    final static Logger LOG = LoggerFactory.getLogger(ExportRawdataStreamTest.class);
+    static final Logger LOG = LoggerFactory.getLogger(ExportRawdataStreamTest.class);
 
-    final static DynamicConfiguration configuration = DynamicConfiguration.builder()
+    static final DynamicConfiguration configuration = DynamicConfiguration.builder()
             .value("rawdata.client.provider", "postgres")
             .value("data.collector.worker.threads", "20")
             .value("postgres.driver.host", "localhost")
@@ -50,7 +50,6 @@ public class ExportRawdataStreamTest {
             RawdataMessage message;
             while ((message = consumer.receive(1, TimeUnit.SECONDS)) != null) {
                 Map<String, byte[]> data = message.data();
-                byte[] manifest = data.get("manifest.json");
                 byte[] entry = data.get("entry");
 
                 LOG.info("{}: {}", message.position(), new String(entry));

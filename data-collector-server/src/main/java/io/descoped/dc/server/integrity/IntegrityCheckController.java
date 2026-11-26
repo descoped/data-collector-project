@@ -20,6 +20,8 @@ import java.util.Set;
 
 public class IntegrityCheckController implements Controller {
 
+    private static final String APPLICATION_JSON = "application/json";
+
     final DynamicConfiguration configuration;
     final IntegrityCheckService service;
 
@@ -45,11 +47,9 @@ public class IntegrityCheckController implements Controller {
             return;
         }
 
-        if ("put".equalsIgnoreCase(exchange.getRequestMethod().toString())) {
-            if (exchange.getRequestPath().startsWith(contextPath())) {
-                createJob(exchange);
-                return;
-            }
+        if ("put".equalsIgnoreCase(exchange.getRequestMethod().toString()) && exchange.getRequestPath().startsWith(contextPath())) {
+            createJob(exchange);
+            return;
         }
 
         if ("get".equalsIgnoreCase(exchange.getRequestMethod().toString())) {
@@ -69,11 +69,9 @@ public class IntegrityCheckController implements Controller {
             }
         }
 
-        if ("delete".equalsIgnoreCase(exchange.getRequestMethod().toString())) {
-            if (exchange.getRequestPath().startsWith(contextPath())) {
-                cancelJob(exchange);
-                return;
-            }
+        if ("delete".equalsIgnoreCase(exchange.getRequestMethod().toString()) && exchange.getRequestPath().startsWith(contextPath())) {
+            cancelJob(exchange);
+            return;
         }
 
         exchange.setStatusCode(400);
@@ -110,7 +108,7 @@ public class IntegrityCheckController implements Controller {
         String responseBody = jsonParser.toPrettyJSON(runningJobs);
 
         exchange.setStatusCode(200);
-        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, APPLICATION_JSON);
         exchange.getResponseSender().send(responseBody);
     }
 
@@ -132,7 +130,7 @@ public class IntegrityCheckController implements Controller {
         String responseBody = jsonParser.toPrettyJSON(summary);
 
         exchange.setStatusCode(200);
-        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, APPLICATION_JSON);
         exchange.getResponseSender().send(responseBody);
     }
 
@@ -155,7 +153,7 @@ public class IntegrityCheckController implements Controller {
         }
 
         exchange.setStatusCode(200);
-        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, APPLICATION_JSON);
         exchange.startBlocking();
         try (OutputStream outputStream = exchange.getOutputStream()) {
             try (InputStream inputStream = new FileInputStream(summaryReportFilePath.toFile())) {

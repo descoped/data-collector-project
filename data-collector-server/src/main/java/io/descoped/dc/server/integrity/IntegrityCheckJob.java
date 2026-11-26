@@ -58,7 +58,6 @@ public class IntegrityCheckJob {
             try {
                 LOG.info("Check integrity for topic: {}", topic);
                 while (!terminated.get() && (buffer = consumer.receive(timeoutInSeconds, TimeUnit.SECONDS)) != null) {
-                    //System.out.printf("consume: %s%n", buffer.position());
                     peekBuffer = buffer;
                     summary.setCurrentPosition(buffer.position());
                     summary.incrementPositionCount();
@@ -168,8 +167,7 @@ public class IntegrityCheckJob {
     }
 
     public IntegrityCheckJobSummary.Summary getSummary() {
-        IntegrityCheckJobSummary.Summary build = summary.build();
-        return build;
+        return summary.build();
     }
 
 }

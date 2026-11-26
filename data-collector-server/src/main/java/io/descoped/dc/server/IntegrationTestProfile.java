@@ -13,6 +13,9 @@ class IntegrationTestProfile {
 
     private static final String EXAMPLES = "examples";
 
+    private IntegrationTestProfile() {
+    }
+
     static Map<String, String> loadApplicationPropertiesFromConsumerSpecificationProfile(String profile, String... replacePropertyKeyValueWithFullPath) {
         Path currentPath = CommonUtils.currentPath();
         while (!currentPath.resolve(EXAMPLES).toFile().exists()) {

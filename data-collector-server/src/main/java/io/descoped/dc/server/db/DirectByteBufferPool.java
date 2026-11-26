@@ -15,6 +15,7 @@ public class DirectByteBufferPool implements AutoCloseable {
             try {
                 deque.put(ByteBuffer.allocateDirect(capacity));
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 throw new RuntimeException(e);
             }
         }
@@ -26,13 +27,14 @@ public class DirectByteBufferPool implements AutoCloseable {
             ByteBuffer buffer;
             while ((buffer = deque.poll(1, TimeUnit.SECONDS)) == null) {
                 if (failCount == 0) {
-                    throw new RuntimeException("Unable to acquire KeyBuffer!");
+                    throw new IllegalStateException("Unable to acquire KeyBuffer!");
                 }
                 TimeUnit.MILLISECONDS.sleep(50);
                 failCount--;
             }
             return buffer;
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
     }
@@ -41,6 +43,7 @@ public class DirectByteBufferPool implements AutoCloseable {
         try {
             deque.put(buffer.clear());
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
     }

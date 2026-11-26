@@ -7,8 +7,6 @@ import io.descoped.dc.server.db.SequenceKey;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.Txn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
@@ -19,8 +17,6 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.function.BiConsumer;
 
 public class IntegrityCheckIndex implements AutoCloseable {
-
-    private static final Logger LOG = LoggerFactory.getLogger(IntegrityCheckIndex.class);
 
     static int BUFFER_POOL_SIZE = 1001;
     static int CONTENT_LENGTH = 0;

@@ -9,8 +9,6 @@ import io.descoped.dc.test.server.TestServer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -18,10 +16,12 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
-public class RawdataFileSystemServiceTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-    private static final Logger LOG = LoggerFactory.getLogger(RawdataFileSystemServiceTest.class);
+class RawdataFileSystemServiceTest {
 
     static int EXPECTED_MESSAGES = 100;
 
@@ -37,14 +37,14 @@ public class RawdataFileSystemServiceTest {
     static TestClient client;
 
     @BeforeAll
-    public static void beforeAll() {
+    static void beforeAll() {
         server = TestServer.create(configuration);
         client = TestClient.create(server);
         server.start();
     }
 
     @AfterAll
-    public static void afterAll() {
+    static void afterAll() {
         server.stop();
     }
 
@@ -60,28 +60,25 @@ public class RawdataFileSystemServiceTest {
     }
 
     @Test
-    public void exportData() throws IOException {
+    void exportData() {
         ContentStoreComponent contentStoreComponent = server.getApplication().unwrap(ContentStoreComponent.class);
         CompletableFuture<Void> producerFuture = CompletableFuture.runAsync(() -> produceMessages(contentStoreComponent));
 
         RawdataFileSystemService service = server.getApplication().unwrap(RawdataFileSystemService.class);
 
-        CompletableFuture<Void> consumerFuture = CompletableFuture.runAsync(() -> {
-            while (true) {
-                long count = countWorkDirFolders(service.getWorkDir());
-                if (count == EXPECTED_MESSAGES) {
-                    break;
-                }
-                nap();
-            }
-        });
+        // wait at most 30 seconds for the exporter, so a missing export fails instead of hanging
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(30);
+        while (countWorkDirFolders(service.getWorkDir()) != EXPECTED_MESSAGES && System.nanoTime() < deadline) {
+            nap();
+        }
+        producerFuture.join();
 
-        CompletableFuture.allOf(producerFuture, consumerFuture).join();
+        assertEquals(EXPECTED_MESSAGES, countWorkDirFolders(service.getWorkDir()));
     }
 
     private long countWorkDirFolders(Path workDir) {
-        try {
-            return Files.list(workDir).filter(p -> p.toFile().isDirectory()).count();
+        try (Stream<Path> paths = Files.list(workDir)) {
+            return paths.filter(p -> p.toFile().isDirectory()).count();
         } catch (NoSuchFileException e) {
             return 0;
         } catch (IOException e) {

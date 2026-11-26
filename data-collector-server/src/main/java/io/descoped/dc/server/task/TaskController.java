@@ -8,8 +8,6 @@ import io.descoped.dc.api.util.JsonParser;
 import io.descoped.dc.application.spi.Controller;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Deque;
 import java.util.LinkedList;
@@ -18,7 +16,7 @@ import java.util.Set;
 
 public class TaskController implements Controller {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TaskController.class);
+    private static final String TASKS = "/tasks";
 
     private final WorkerService workerService;
 
@@ -28,7 +26,7 @@ public class TaskController implements Controller {
 
     @Override
     public String contextPath() {
-        return "/tasks";
+        return TASKS;
     }
 
     @Override
@@ -43,25 +41,19 @@ public class TaskController implements Controller {
             return;
         }
 
-        if ("put".equalsIgnoreCase(exchange.getRequestMethod().toString())) {
-            if ("/tasks".equals(exchange.getRequestPath())) {
-                createWorkerTask(exchange);
-                return;
-            }
+        if ("put".equalsIgnoreCase(exchange.getRequestMethod().toString()) && TASKS.equals(exchange.getRequestPath())) {
+            createWorkerTask(exchange);
+            return;
         }
 
-        if ("get".equalsIgnoreCase(exchange.getRequestMethod().toString())) {
-            if ("/tasks".equals(exchange.getRequestPath())) {
-                getTaskList(exchange);
-                return;
-            }
+        if ("get".equalsIgnoreCase(exchange.getRequestMethod().toString()) && TASKS.equals(exchange.getRequestPath())) {
+            getTaskList(exchange);
+            return;
         }
 
-        if ("delete".equalsIgnoreCase(exchange.getRequestMethod().toString())) {
-            if (exchange.getRequestPath().startsWith("/tasks")) {
-                cancelTask(exchange);
-                return;
-            }
+        if ("delete".equalsIgnoreCase(exchange.getRequestMethod().toString()) && exchange.getRequestPath().startsWith(TASKS)) {
+            cancelTask(exchange);
+            return;
         }
 
         exchange.setStatusCode(400);
@@ -96,7 +88,6 @@ public class TaskController implements Controller {
         }
         Deque<String> pathElements = new LinkedList<>(List.of(path));
         String workerId = pathElements.pollLast();
-        String resourceName = pathElements.pollLast();
         boolean canceled = workerService.cancelTask(workerId);
         if (!canceled) {
             exchange.setStatusCode(400);

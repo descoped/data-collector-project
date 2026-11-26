@@ -27,14 +27,16 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Test requires vm arg: --add-opens java.base/java.nio=lmdbjava --add-exports=java.base/sun.nio.ch=lmdbjava
  */
-public class RecoveryTest {
+class RecoveryTest {
 
     static final int NUMBER_OF_MESSAGES = 25000;
     private static final Logger LOG = LoggerFactory.getLogger(RecoveryTest.class);
@@ -47,7 +49,7 @@ public class RecoveryTest {
                 producer.publishBuilders(producer.builder().position(String.valueOf(n)).put("entry", "DATA".getBytes(StandardCharsets.UTF_8)));
 
                 if (n >= min) {
-                    int randomPosition = (int) (Math.random() * (max - n + 1) + n);
+                    int randomPosition = ThreadLocalRandom.current().nextInt(n, max + 1);
                     producer.publishBuilders(producer.builder().position(String.valueOf(randomPosition)).put("entry", "DATA".getBytes(StandardCharsets.UTF_8)));
                 }
             }
@@ -84,7 +86,7 @@ public class RecoveryTest {
 
     @Disabled("Developer tool: reads a local integrity check index in certs/lmdb")
     @Test
-    public void readIndex() {
+    void readIndex() {
         DynamicConfiguration configuration = DynamicConfiguration.builder()
                 .value("content.stream.connector", "rawdata")
                 .value("rawdata.client.provider", "memory")
@@ -103,19 +105,19 @@ public class RecoveryTest {
         LOG.trace("Time take: {}", now);
         LOG.trace("First: {} -> {} -> {}",
                 firstPosition.position(),
-                firstPosition.id().toString(),
+                firstPosition.id(),
                 new Date(TimeOrderedIds.timestamp(firstPosition.id()))
         );
         LOG.trace("Last: {} -> {} -> {}",
                 lastPosition.position(),
-                lastPosition.id().toString(),
+                lastPosition.id(),
                 new Date(TimeOrderedIds.timestamp(lastPosition.id()))
         );
     }
 
     @Disabled("Racy: it re-runs a recovery and cancels it at once with DELETE, expecting 200, but the re-run can end first and the controller then answers 404")
     @Test
-    public void testController() throws InterruptedException {
+    void testController() throws InterruptedException {
         DynamicConfiguration configuration = DynamicConfiguration.builder()
                 .value("content.stream.connector", "rawdata")
                 .value("rawdata.client.provider", "memory")
@@ -182,7 +184,7 @@ public class RecoveryTest {
     }
 
     @Test
-    public void readIndexAndConsumerSourceAndProduceTarget() throws InterruptedException {
+    void readIndexAndConsumerSourceAndProduceTarget() throws InterruptedException {
         DynamicConfiguration configuration = DynamicConfiguration.builder()
                 .value("content.stream.connector", "rawdata")
                 .value("rawdata.client.provider", "memory")
@@ -192,7 +194,6 @@ public class RecoveryTest {
                 .build();
 
         TestServer server = TestServer.create(configuration);
-        TestClient client = TestClient.create(server);
         server.start();
 
         ContentStoreComponent contentStoreComponent = server.getApplication().unwrap(ContentStoreComponent.class);
@@ -227,10 +228,11 @@ public class RecoveryTest {
             while ((buffer = consumer.receive(1, TimeUnit.SECONDS)) != null) {
                 peekBuffer = buffer;
                 if (Integer.parseInt(buffer.position()) < 10) {
-                    LOG.trace("{} [{}]: {}", buffer.position(), buffer.id(), new Date(TimeOrderedIds.timestamp(buffer.id())), buffer.data().size());
+                    LOG.trace("{} [{}]: {} ({} buffers)", buffer.position(), buffer.id(), new Date(TimeOrderedIds.timestamp(buffer.id())), buffer.data().size());
                 }
             }
-            LOG.trace("{} [{}]: {}", peekBuffer.position(), peekBuffer.id(), new Date(TimeOrderedIds.timestamp(peekBuffer.id())), peekBuffer.data().size());
+            assertNotNull(peekBuffer, "nothing was recovered to the target topic");
+            LOG.trace("{} [{}]: {} ({} buffers)", peekBuffer.position(), peekBuffer.id(), new Date(TimeOrderedIds.timestamp(peekBuffer.id())), peekBuffer.data().size());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -241,7 +243,7 @@ public class RecoveryTest {
     }
 
     @Test
-    public void thatLeastVersionIsSelected() {
+    void thatLeastVersionIsSelected() {
         UUID v1 = TimeOrderedIds.generate();
         UUID v2 = TimeOrderedIds.generate();
         UUID v3 = TimeOrderedIds.generate();

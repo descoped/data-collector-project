@@ -43,7 +43,7 @@ import static io.descoped.dc.api.Builders.xpath;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(TestServerExtension.class)
-public class WorkerServiceLifecycleTest {
+class WorkerServiceLifecycleTest {
 
     static final Logger LOG = LoggerFactory.getLogger(WorkerServiceLifecycleTest.class);
 
@@ -171,12 +171,12 @@ public class WorkerServiceLifecycleTest {
     }
 
     @BeforeAll
-    public static void beforeAll() {
+    static void beforeAll() {
         List.of(WorkerLifecycleCallback.Kind.values()).forEach(key -> lifecycleCounter.computeIfAbsent(key, counter -> new AtomicInteger()));
     }
 
     @AfterAll
-    public static void afterAll() {
+    static void afterAll() {
         Map.Entry<WorkerLifecycleCallback.Kind, AtomicInteger> lastCounter = null;
         for (Map.Entry<WorkerLifecycleCallback.Kind, AtomicInteger> counter : lifecycleCounter.entrySet()) {
             if (lastCounter == null) {
@@ -189,8 +189,8 @@ public class WorkerServiceLifecycleTest {
 
     @ParameterizedTest
     @MethodSource("specificationBuilderProvider")
-    public void testSpecificationWorkerLifecycle(Task task) throws InterruptedException {
-        String workerId = task.workerService.createOrRejectTask(task.specificationBuilder);
+    void testSpecificationWorkerLifecycle(Task task) throws InterruptedException {
+        task.workerService.createOrRejectTask(task.specificationBuilder);
 
         int n = 0;
         if (task.waitForCompletion) {

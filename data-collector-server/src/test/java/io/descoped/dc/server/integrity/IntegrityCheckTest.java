@@ -19,10 +19,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test requires vm arg: --add-opens java.base/java.nio=lmdbjava --add-exports=java.base/sun.nio.ch=lmdbjava
@@ -85,10 +88,10 @@ public class IntegrityCheckTest {
             }
         }).exceptionally(throwable -> {
             LOG.error("Ended exceptionally with error: {}", CommonUtils.captureStackTrace(throwable));
-            if (throwable instanceof RuntimeException) {
-                throw (RuntimeException) throwable;
-            } else if (throwable instanceof Error) {
-                throw (Error) throwable;
+            if (throwable instanceof RuntimeException runtimeException) {
+                throw runtimeException;
+            } else if (throwable instanceof Error error) {
+                throw error;
             } else {
                 throw new RuntimeException(throwable);
             }
@@ -102,6 +105,10 @@ public class IntegrityCheckTest {
 
         String json = JsonParser.createJsonParser().toPrettyJSON(summary);
         LOG.trace("summary: {}", json);
+
+        // every message is checked; positions 10, 25 and 50 are produced more than once
+        assertEquals(NUMBER_OF_MESSAGES + 6, summary.checkedPositions);
+        assertEquals(3, summary.affectedPositions);
     }
 
     @Test
@@ -183,5 +190,9 @@ public class IntegrityCheckTest {
                 writer.write(rootNode);
             }
         }
+
+        JsonNode written = JsonParser.createJsonParser().fromJson(Files.readString(jsonExportPath.resolve("summary.json")), JsonNode.class);
+        assertEquals(2, written.size());
+        assertEquals("value", written.get(1).get("field2").asText());
     }
 }
