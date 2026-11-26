@@ -18,6 +18,13 @@ import java.util.TreeMap;
 @HealthRenderPriority(priority = 50)
 public class HealthThreadsResource implements HealthResource {
 
+    /**
+     * Creates the resource.
+     */
+    public HealthThreadsResource() {
+        // no state
+    }
+
     @Override
     public Optional<Boolean> isUp() {
         return Optional.empty();

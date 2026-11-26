@@ -26,24 +26,33 @@ import static net.bytebuddy.matcher.ElementMatchers.returns;
 public class Handlers {
 
     private static final boolean USE_BYTE_BUDDY = false;
-    private final Map<Class<? extends Base>, Class<? extends AbstractHandler>> handlerFactory = new ConcurrentHashMap<>();
+    private final Map<Class<? extends Base>, Class<?>> handlerFactory = new ConcurrentHashMap<>();
     private final Map<String, Class<?>> supportHandlerFactory = new ConcurrentHashMap<>();
-    private final Map<String, Class<? extends AbstractHandler>> compositionHandlerFactory = new ConcurrentHashMap<>();
+    private final Map<String, Class<?>> compositionHandlerFactory = new ConcurrentHashMap<>();
+
+    /**
+     * Creates the class; the handlers are reached through its static methods.
+     */
+    public Handlers() {
+        // the state is in the fields
+    }
 
     private static Handlers instance() {
         return NodeFactoryHolder.INSTANCE;
     }
 
+    // the handlers are registered by their annotations: the class of a node's handler is an AbstractHandler of that node
+    @SuppressWarnings("unchecked")
     public static <N extends Base> AbstractHandler<N> createHandlerFor(N node) {
         try {
             Class<? extends Base> nodeClass = (Class<? extends Base>) node.getClass().getInterfaces()[0];
-            Class<? extends AbstractHandler> handlerClass = instance().handlerFactory.get(nodeClass);
+            Class<?> handlerClass = instance().handlerFactory.get(nodeClass);
             if (handlerClass == null) {
                 throw new IllegalStateException("unable to resolve handler for: " + nodeClass);
             }
 
             if (USE_BYTE_BUDDY) {
-                Class<? extends AbstractHandler> unloadedType = new ByteBuddy()
+                Class<?> unloadedType = new ByteBuddy()
                         .subclass(handlerClass)
                         .method(named("execute").and(isDeclaredBy(ExecutionContext.class).and(returns(ExecutionContext.class))))
                         .intercept(to(ExecutionWrapper.class))
@@ -54,12 +63,12 @@ public class Handlers {
                 /*
                  * Create new node handler
                  */
-                Constructor<? extends AbstractHandler> constructor = unloadedType.getDeclaredConstructor(nodeClass);
-                return constructor.newInstance(node);
+                Constructor<?> constructor = unloadedType.getDeclaredConstructor(nodeClass);
+                return (AbstractHandler<N>) constructor.newInstance(node);
 
             } else {
-                Constructor<? extends AbstractHandler> constructor = handlerClass.getDeclaredConstructor(nodeClass);
-                return constructor.newInstance(node);
+                Constructor<?> constructor = handlerClass.getDeclaredConstructor(nodeClass);
+                return (AbstractHandler<N>) constructor.newInstance(node);
             }
 
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
@@ -68,6 +77,7 @@ public class Handlers {
         }
     }
 
+    @SuppressWarnings("unchecked") // the caller names the support handler's type
     public static <R> R createSupportHandlerFor(Class<? extends Base> forNodeClass, Class<?> selectorClass) {
         try {
             String classes = createHandlerClasses(forNodeClass, selectorClass);
@@ -87,20 +97,21 @@ public class Handlers {
         }
     }
 
+    @SuppressWarnings("unchecked") // as createHandlerFor
     public static <N extends Base> AbstractHandler<N> createCompositionHandlerFor(N node,
                                                                                   Class<? extends Base> forNodeClass,
                                                                                   Class<? extends Base> selectorNodeClass) {
         try {
             String classes = createHandlerClasses(forNodeClass, selectorNodeClass);
-            Class<? extends AbstractHandler> compositionHandlerClass = instance().compositionHandlerFactory.get(classes);
+            Class<?> compositionHandlerClass = instance().compositionHandlerFactory.get(classes);
             if (compositionHandlerClass == null) {
                 throw new IllegalStateException("unable to resolve handler for: " + forNodeClass);
             }
             /*
              * Create new node handler
              */
-            Constructor<? extends AbstractHandler> constructor = compositionHandlerClass.getDeclaredConstructor(forNodeClass);
-            return constructor.newInstance(node);
+            Constructor<?> constructor = compositionHandlerClass.getDeclaredConstructor(forNodeClass);
+            return (AbstractHandler<N>) constructor.newInstance(node);
 
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
                  InvocationTargetException e) {
@@ -112,7 +123,7 @@ public class Handlers {
         return nodeClass.getName() + " " + byClass.getName();
     }
 
-    private void registerHandler(Class<? extends Base> nodeClass, Class<? extends AbstractHandler> nodeHandlerClass) {
+    private void registerHandler(Class<? extends Base> nodeClass, Class<?> nodeHandlerClass) {
         handlerFactory.put(nodeClass, nodeHandlerClass);
     }
 
@@ -120,7 +131,7 @@ public class Handlers {
         supportHandlerFactory.put(nodeAndSelectorClass, nodeSupportHandlerClass);
     }
 
-    private void registerCompositionHandler(String nodeClasses, Class<? extends AbstractHandler> nodeHandlerClass) {
+    private void registerCompositionHandler(String nodeClasses, Class<?> nodeHandlerClass) {
         compositionHandlerFactory.put(nodeClasses, nodeHandlerClass);
     }
 
@@ -159,25 +170,25 @@ public class Handlers {
             });
         }
 
-        static Set<Class<? extends AbstractHandler>> nodeHandlerDiscovery(String... packageNames) {
+        static Set<Class<?>> nodeHandlerDiscovery(String... packageNames) {
             try (ScanResult scanResult = new ClassGraph().enableAnnotationInfo().acceptPackages(packageNames).scan()) {
 
                 ClassInfoList classInfoHandlerList = scanResult.getClassesWithAnnotation(Handler.class.getName());
                 ClassInfoList classInfoSupportHandlerList = scanResult.getClassesWithAnnotation(SupportHandler.class.getName());
                 ClassInfoList classInfoCompositionHandlerList = scanResult.getClassesWithAnnotation(CompositionHandler.class.getName());
 
-                Set<Class<? extends AbstractHandler>> classes = new HashSet<>();
+                Set<Class<?>> classes = new HashSet<>();
 
                 for (Class<?> clazz : classInfoHandlerList.loadClasses()) {
-                    classes.add((Class<? extends AbstractHandler>) clazz);
+                    classes.add(clazz);
                 }
 
                 for (Class<?> clazz : classInfoSupportHandlerList.loadClasses()) {
-                    classes.add((Class<? extends AbstractHandler>) clazz);
+                    classes.add(clazz);
                 }
 
                 for (Class<?> clazz : classInfoCompositionHandlerList.loadClasses()) {
-                    classes.add((Class<? extends AbstractHandler>) clazz);
+                    classes.add(clazz);
                 }
                 return classes;
             }

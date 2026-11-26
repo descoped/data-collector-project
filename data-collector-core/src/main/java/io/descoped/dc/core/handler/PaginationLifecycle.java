@@ -137,7 +137,7 @@ class PaginationLifecycle {
         PageContext pageContext = outputContext.state(PageContext.class);
 
         // TODO wait for all tasks in parallel-handler instead of here
-        CompletableFuture.allOf(pageContext.parallelFutures().toArray(new CompletableFuture[0]))
+        CompletableFuture.allOf(pageContext.parallelFutures().toArray(new CompletableFuture<?>[0]))
                 .thenApply(v -> {
                     // decrement monitor prefetch count
                     if (monitor != null) {

@@ -24,6 +24,13 @@ public class HealthWorkerHistoryResource implements HealthResource {
     final Lock lock = new ReentrantLock();
     final CopyOnWriteArrayList<ObjectNode> historyList = new CopyOnWriteArrayList<>();
 
+    /**
+     * Creates the resource.
+     */
+    public HealthWorkerHistoryResource() {
+        // the state is in the fields
+    }
+
     @Override
     public Optional<Boolean> isUp() {
         return Optional.empty();

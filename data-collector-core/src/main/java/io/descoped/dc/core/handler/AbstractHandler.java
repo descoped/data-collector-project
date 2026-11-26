@@ -16,6 +16,7 @@ public abstract class AbstractHandler<N extends Base> implements Execution {
         this.node = node;
     }
 
+    @SuppressWarnings("unchecked") // a node's first interface is its node type
     Class<? extends Base> getSpecializedQueryInterface(Base node) {
         return (Class<? extends Base>) node.getClass().getInterfaces()[0];
     }

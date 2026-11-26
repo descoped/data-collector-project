@@ -34,6 +34,7 @@ public class SequenceHandler extends AbstractNodeHandler<Sequence> {
         super.execute(input);
 
         Response response = input.state(Response.class);
+        @SuppressWarnings("unchecked") // the service is kept by its raw class
         BufferedReordering<String> bufferedReordering = input.services().get(BufferedReordering.class);
         PageContext.Builder pageContextBuilder = input.state(PageContext.Builder.class);
 

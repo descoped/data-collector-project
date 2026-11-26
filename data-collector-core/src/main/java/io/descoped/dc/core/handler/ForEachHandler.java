@@ -32,6 +32,7 @@ public class ForEachHandler extends AbstractNodeHandler<ForEach> {
         // evaluate queries for list and item
         DocumentParserFeature parser = Queries.parserFor(node.splitToListQuery().getClass());
         QueryFeature splitQuery = Queries.from(node.splitToListQuery());
+        @SuppressWarnings("unchecked") // evaluateList returns the nodes of a JSON document
         List<JsonNode> list = (List<JsonNode>) splitQuery.evaluateList(body);
 
         for (JsonNode item : list) {

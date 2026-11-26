@@ -38,6 +38,13 @@ public class HealthWorkerMonitor {
     final Map<String, Object> threadPoolInfo = new LinkedHashMap<>();
     final AtomicReference<ObjectNode> threadDumpNodeRef = new AtomicReference<>();
 
+    /**
+     * Creates the monitor.
+     */
+    public HealthWorkerMonitor() {
+        // the state is in the fields
+    }
+
     public WorkerStatus status() {
         return statusRef.get();
     }
@@ -114,6 +121,13 @@ public class HealthWorkerMonitor {
 
     public static class Security {
         String sslBundleName;
+
+        /**
+         * Creates the section.
+         */
+        public Security() {
+            // the state is in the fields
+        }
 
         public void setSslBundleName(String sslBundleName) {
             this.sslBundleName = sslBundleName;
@@ -227,6 +241,13 @@ public class HealthWorkerMonitor {
         final AtomicReference<String> lastPositionRef = new AtomicReference<>();
         final AtomicReference<HealthContentStreamMonitor> contentStreamMonitorRef = new AtomicReference<>();
         String topic;
+
+        /**
+         * Creates the section.
+         */
+        public ContentStore() {
+            // the state is in the fields
+        }
 
         public void setTopic(String topic) {
             this.topic = topic;

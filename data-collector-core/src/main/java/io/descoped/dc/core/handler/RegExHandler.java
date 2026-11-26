@@ -25,6 +25,7 @@ public class RegExHandler extends AbstractQueryHandler<RegEx> {
 
     @Override
     public ExecutionContext execute(ExecutionContext input) {
+        @SuppressWarnings("unchecked") // the state is kept by its raw class
         QueryState<RegEx> queryState = input.state(QueryState.class);
 
         if (queryState == null) {

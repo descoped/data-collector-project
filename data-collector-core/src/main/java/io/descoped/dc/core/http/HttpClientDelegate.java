@@ -104,6 +104,13 @@ public class HttpClientDelegate implements Client {
         private Redirect redirectPolicy;
         private ProxySelector proxySelector;
 
+        /**
+         * Creates an empty builder.
+         */
+        public ClientBuilder() {
+            // the state is in the fields
+        }
+
         @Override
         public Builder version(Version version) {
             this.version = version;

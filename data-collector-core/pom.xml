@@ -16,10 +16,11 @@
     <description>The data collector engine: executes specifications with the HTTP client, the node handlers, client certificates and metrics.</description>
 
     <properties>
-        <!-- Lint and doclint groups this module still breaks (javac -Xlint:all -Werror, Javadoc doclint all with
-             warnings failing); its revision empties both lists. -->
+        <!-- doclint missing: the Javadoc of the public API follows in a pull request of its own.
+             requires-automatic: commons-jexl3, jackson-jq and the Prometheus simpleclient are automatic modules,
+             so javac warns on every requires of them, which this module cannot change. -->
         <doclint.exclusions>,-missing</doclint.exclusions>
-        <lint.exclusions>,-missing-explicit-ctor,-rawtypes,-requires-automatic,-serial,-unchecked</lint.exclusions>
+        <lint.exclusions>,-requires-automatic</lint.exclusions>
     </properties>
 
     <dependencies>
