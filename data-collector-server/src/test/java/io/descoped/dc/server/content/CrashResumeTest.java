@@ -107,13 +107,15 @@ class CrashResumeTest {
         Path temp = Files.createDirectories(root.resolve("temp"));
         Path tempAfterCrash = root.resolve("temp-after-crash");
 
-        // the first process: its publishes return, then it crashes before anything is uploaded
+        // the first process: its publishes return, then it crashes before anything is uploaded. The store is left open
+        // on purpose: closing it would upload its windows, which a crash does not. Its folders stay under target/
         Map<String, String> before = configuration(store, temp);
         ContentStore crashed = ProviderConfigurator.configure(ContentStoreInitializer.class, "rawdata", before);
         run(crashed, before, specification(30));
         copy(temp, tempAfterCrash);
 
-        // the next process, on what the crash left; the feed has grown meanwhile
+        // the next process, on what the crash left; the feed has grown meanwhile. Its worker opens the topics' producers
+        // before it reads what is committed (Worker.openTopics): without that, the crashed run's entries are written twice
         Map<String, String> after = configuration(store, tempAfterCrash);
         try (ContentStore resumed = ProviderConfigurator.configure(ContentStoreInitializer.class, "rawdata", after)) {
             run(resumed, after, specification(50));

@@ -119,16 +119,16 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
   | encryption-util | 3.0.1 |
   | rawdata-client | 3.2.0-SNAPSHOT (on the owner's request, until 3.2.0 is released) |
 
-  rawdata-client 3.1 makes a message id unique in its topic: the same message again is ignored, a different one
-  under a taken id is refused. rawdata-client 3.2 makes two guarantees in every provider: a publish that returned
-  survives a crash of the process, and once a producer of a topic exists its last message holds everything published
-  before, a crashed process's publishes included. The worker opens its topics' producers before it, or the
-  specification's `contentStream` expressions, read what is committed, so a run resumed after a crash writes every
-  position once. This assumes that on `filesystem` and `gcs`, `local-temp-folder` is on durable, persistent storage
-  (a persistent block device such as AWS EBS or a GCE persistent disk, or a `PersistentVolume`). On ephemeral storage
-  (EC2 instance store, the container's writable layer, `emptyDir`, `tmpfs`) the guarantees fall away, and positions
-  that were not uploaded are silently lost. A recovery run repeated over the same source no longer duplicates the target's
-  messages (on 3.0.1 the `filesystem` provider stored them twice and `postgres` failed on its key).
+  rawdata-client 3.1 makes a message id unique in its topic: the same message again is ignored, a different one under
+  a taken id is refused. rawdata-client 3.2 makes two guarantees in every provider: a publish that returned survives a
+  crash of the process, and once a producer of a topic exists its last message holds everything published before, a
+  crashed process's publishes included. The worker opens its topics' producers before it, or the specification's
+  `contentStream` expressions, read what is committed, so a run resumed after a crash writes every position once. This
+  assumes that on `filesystem` and `gcs`, `local-temp-folder` is on durable, persistent storage (a persistent block
+  device such as AWS EBS or a GCE persistent disk, or a `PersistentVolume`). On ephemeral storage (EC2 instance store,
+  the container's writable layer, `emptyDir`, `tmpfs`) the guarantees fall away, and positions that were not uploaded
+  are silently lost. A recovery run repeated over the same source no longer duplicates the target's messages (on 3.0.1
+  the `filesystem` provider stored them twice and `postgres` failed on its key).
 
   Every other dependency is at its latest version. classgraph 6 (for JDK 25 and later) scans only the sources it is
   given and no longer loads classes: dc enables the class path and the module path, as 4.x scanned by default, and
@@ -201,6 +201,10 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
   topic is now claimed before anything starts, and the request that loses gets 409 Conflict.
 - **An integrity check's buffer pool fails at once when it is empty** (#68), instead of waiting about 26 seconds for a
   buffer that no other thread can release.
+- **A page is no longer fetched twice** (#75). When a page completed, the next page was scheduled and only then
+  recorded as the last page; if it ran first and started the next prefetch, that prefetch chained on the completed
+  page and fetched the same page again, so its entries were published twice. A page is now recorded and queued before
+  it can run.
 - **The stream is durable, and a committed position is never written again** (#71, #72).
   - **Lost entries:** a page was committed to `<topic>-pages` when it was fetched, before its entries, and prefetch ran
     several pages ahead. A specification that resumes from the page topic skipped the entries of those pages: 28 of

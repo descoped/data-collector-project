@@ -145,10 +145,6 @@ public class Worker {
         return context;
     }
 
-    /*
-     * Aimed at test case scenarios where you want to execute subsequent runs
-     */
-
     // the producers of the worker's topic, and of its page topic when a paginate adds page content
     private void openTopics() {
         String topic = node.configurations().flowContext().topic();
@@ -167,6 +163,10 @@ public class Worker {
             contentStore.contentStream().producer(topic + "-pages");
         }
     }
+
+    /*
+     * Aimed at test case scenarios where you want to execute subsequent runs
+     */
 
     /**
      * Removes the iteration limit and resets the iteration count of the parallel handler, so that the worker can run
