@@ -2,10 +2,8 @@ package io.descoped.dc.core.content;
 
 import io.prometheus.client.Counter;
 import io.prometheus.client.Histogram;
-import net.bytebuddy.implementation.bind.annotation.Argument;
-import net.bytebuddy.implementation.bind.annotation.SuperCall;
+import net.bytebuddy.asm.Advice;
 
-import java.util.concurrent.Callable;
 
 /**
  * Metrics:
@@ -16,6 +14,9 @@ import java.util.concurrent.Callable;
  * buffer_entry_document_count
  * pagination_entry_publish_position_count
  * pagination_entry_publish_position_duration
+ * <p>
+ * The interceptors are Advice that {@link ContentStoreAgent} inlines into the content stores, so they call only public
+ * methods here.
  */
 public class ContentStoreExporter {
 
@@ -61,57 +62,181 @@ public class ContentStoreExporter {
             .labelNames(TOPIC)
             .register();
 
-    public static class Paginate {
+    /**
+     * Advice for {@code ContentStore.addPaginationDocument}.
+     */
+    public static final class Paginate {
 
         private Paginate() {
         }
 
-        public static void intercept(@SuperCall Callable<?> zuper, @Argument(0) String topic) throws Exception {
-            Histogram.Timer timer = writePaginationPageContentDuration.labels(topic).startTimer();
-            try {
-                zuper.call();
-            } finally {
-                timer.observeDuration();
-                writePaginationPageContent.labels(topic).inc();
-            }
+        /**
+         * Starts timing.
+         *
+         * @param topic the topic
+         * @return the timer
+         */
+        @Advice.OnMethodEnter
+        public static Object enter(@Advice.Argument(0) String topic) {
+            return paginationStarted(topic);
+        }
+
+        /**
+         * Ends timing and counts the page.
+         *
+         * @param timer the timer
+         * @param topic the topic
+         */
+        @Advice.OnMethodExit(onThrowable = Throwable.class)
+        public static void exit(@Advice.Enter Object timer, @Advice.Argument(0) String topic) {
+            paginationCompleted(timer, topic);
         }
     }
 
-    public static class Entry {
+    /**
+     * Advice for {@code ContentStore.bufferPaginationEntryDocument}.
+     */
+    public static final class Entry {
 
         private Entry() {
         }
 
-        public static void intercept(@SuperCall Callable<?> zuper, @Argument(0) String topic) throws Exception {
-            zuper.call();
-            bufferPaginationPageEntryContent.labels(topic).inc();
+        /**
+         * Counts the entry when it was buffered.
+         *
+         * @param topic  the topic
+         * @param thrown what was thrown
+         */
+        @Advice.OnMethodExit(onThrowable = Throwable.class)
+        public static void exit(@Advice.Argument(0) String topic, @Advice.Thrown Throwable thrown) {
+            entryBuffered(topic, thrown);
         }
     }
 
-    public static class Document {
+    /**
+     * Advice for {@code ContentStore.bufferDocument}.
+     */
+    public static final class Document {
 
         private Document() {
         }
 
-        public static void intercept(@SuperCall Callable<?> zuper, @Argument(0) String topic) throws Exception {
-            zuper.call();
-            bufferPageEntryDocumentContent.labels(topic).inc();
+        /**
+         * Counts the document when it was buffered.
+         *
+         * @param topic  the topic
+         * @param thrown what was thrown
+         */
+        @Advice.OnMethodExit(onThrowable = Throwable.class)
+        public static void exit(@Advice.Argument(0) String topic, @Advice.Thrown Throwable thrown) {
+            documentBuffered(topic, thrown);
         }
     }
 
-    public static class Publish {
+    /**
+     * Advice for {@code ContentStore.publish}.
+     */
+    public static final class Publish {
 
         private Publish() {
         }
 
-        public static void intercept(@SuperCall Callable<?> zuper, @Argument(0) String topic, @Argument(1) String[] positions) throws Exception {
-            Histogram.Timer timer = publishPositionContentDuration.labels(topic).startTimer();
-            try {
-                zuper.call();
-            } finally {
-                timer.observeDuration();
-                publishPositionContent.labels(topic).inc(positions.length);
-            }
+        /**
+         * Starts timing.
+         *
+         * @param topic the topic
+         * @return the timer
+         */
+        @Advice.OnMethodEnter
+        public static Object enter(@Advice.Argument(0) String topic) {
+            return publishStarted(topic);
+        }
+
+        /**
+         * Ends timing and counts the positions.
+         *
+         * @param timer     the timer
+         * @param topic     the topic
+         * @param positions the positions
+         */
+        @Advice.OnMethodExit(onThrowable = Throwable.class)
+        public static void exit(@Advice.Enter Object timer, @Advice.Argument(0) String topic, @Advice.Argument(1) String[] positions) {
+            publishCompleted(timer, topic, positions);
+        }
+    }
+
+    // the advice is inlined into stores in other modules, so it reaches the metrics through these public methods
+
+    /**
+     * Starts timing a pagination page.
+     *
+     * @param topic the topic
+     * @return the timer
+     */
+    public static Object paginationStarted(String topic) {
+        return writePaginationPageContentDuration.labels(topic).startTimer();
+    }
+
+    /**
+     * Ends timing a pagination page and counts it.
+     *
+     * @param timer the timer from {@link #paginationStarted}
+     * @param topic the topic
+     */
+    public static void paginationCompleted(Object timer, String topic) {
+        observe(timer);
+        writePaginationPageContent.labels(topic).inc();
+    }
+
+    /**
+     * Counts a buffered pagination entry.
+     *
+     * @param topic  the topic
+     * @param thrown what buffering threw, or {@code null}
+     */
+    public static void entryBuffered(String topic, Throwable thrown) {
+        if (thrown == null) {
+            bufferPaginationPageEntryContent.labels(topic).inc();
+        }
+    }
+
+    /**
+     * Counts a buffered document.
+     *
+     * @param topic  the topic
+     * @param thrown what buffering threw, or {@code null}
+     */
+    public static void documentBuffered(String topic, Throwable thrown) {
+        if (thrown == null) {
+            bufferPageEntryDocumentContent.labels(topic).inc();
+        }
+    }
+
+    /**
+     * Starts timing a publication.
+     *
+     * @param topic the topic
+     * @return the timer
+     */
+    public static Object publishStarted(String topic) {
+        return publishPositionContentDuration.labels(topic).startTimer();
+    }
+
+    /**
+     * Ends timing a publication and counts its positions.
+     *
+     * @param timer     the timer from {@link #publishStarted}
+     * @param topic     the topic
+     * @param positions the positions
+     */
+    public static void publishCompleted(Object timer, String topic, String[] positions) {
+        observe(timer);
+        publishPositionContent.labels(topic).inc(positions.length);
+    }
+
+    private static void observe(Object timer) {
+        if (timer instanceof Histogram.Timer histogramTimer) {
+            histogramTimer.observeDuration();
         }
     }
 }

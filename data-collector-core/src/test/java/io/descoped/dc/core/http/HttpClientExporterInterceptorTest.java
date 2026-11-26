@@ -18,8 +18,8 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /*
- * The interceptors are called directly, as the agent would call them in place of Client.send, Client.sendAsync and
- * GetHandler.execute.
+ * The advice is called directly, as the code the agent inlines into Client.send, Client.sendAsync and
+ * GetHandler.execute calls it.
  */
 class HttpClientExporterInterceptorTest {
 
@@ -76,7 +76,8 @@ class HttpClientExporterInterceptorTest {
         double completed = sample("dc_client_request_completed_total", LOCATION, "200", "false");
         Response response = response(200, "body".getBytes());
 
-        assertSame(response, HttpClientExporter.Send.intercept(() -> response, request()));
+        Object observation = HttpClientExporter.Send.enter(request());
+        HttpClientExporter.Send.exit(observation, response, null);
 
         assertEquals(started + 1, sample("dc_client_request_started_total", LOCATION));
         assertEquals(completed + 1, sample("dc_client_request_completed_total", LOCATION, "200", "false"));
@@ -85,11 +86,8 @@ class HttpClientExporterInterceptorTest {
     @Test
     void thatSendCountsFailedRequests() {
         double failed = sample("dc_client_request_failure_total", LOCATION);
-        Request request = request();
-
-        assertThrows(IOException.class, () -> HttpClientExporter.Send.intercept(() -> {
-            throw new IOException("refused");
-        }, request));
+        Object observation = HttpClientExporter.Send.enter(request());
+        HttpClientExporter.Send.exit(observation, null, new IOException("refused"));
 
         assertEquals(failed + 1, sample("dc_client_request_failure_total", LOCATION));
     }
@@ -98,9 +96,9 @@ class HttpClientExporterInterceptorTest {
     void thatSendAsyncCountsCompletedRequests() throws Exception {
         double completed = sample("dc_client_request_completed_total", LOCATION, "204", "true");
 
-        Response response = HttpClientExporter.SendAsync.intercept(() -> CompletableFuture.completedFuture(response(204, new byte[0])), request()).join();
+        Object observation = HttpClientExporter.SendAsync.enter(request());
+        HttpClientExporter.SendAsync.exit(observation, CompletableFuture.completedFuture(response(204, new byte[0])), null);
 
-        assertEquals(204, response.statusCode());
         assertEquals(completed + 1, sample("dc_client_request_completed_total", LOCATION, "204", "true"));
     }
 
@@ -108,10 +106,12 @@ class HttpClientExporterInterceptorTest {
     void thatSendAsyncCountsFailedRequests() throws Exception {
         double failed = sample("dc_client_request_failure_total", LOCATION);
 
-        CompletableFuture<Response> future = HttpClientExporter.SendAsync.intercept(() -> CompletableFuture.failedFuture(new IllegalStateException("refused")), request());
+        CompletableFuture<Response> future = new CompletableFuture<>();
+        Object observation = HttpClientExporter.SendAsync.enter(request());
+        HttpClientExporter.SendAsync.exit(observation, future, null);
+        assertEquals(failed, sample("dc_client_request_failure_total", LOCATION), "counted when the response fails");
+        future.completeExceptionally(new IllegalStateException("refused"));
 
-        CompletionException e = assertThrows(CompletionException.class, future::join);
-        assertEquals(IllegalStateException.class, e.getCause().getClass());
         assertEquals(failed + 1, sample("dc_client_request_failure_total", LOCATION));
     }
 
@@ -120,9 +120,8 @@ class HttpClientExporterInterceptorTest {
         double failed = sample("dc_client_request_failure_total", LOCATION);
         ExecutionContext context = ExecutionContext.empty().state("PROMETHEUS_METRICS_REQUEST_URL", URL);
 
-        assertThrows(IllegalStateException.class, () -> HttpClientExporter.GetHandlerInterceptor.intercept(() -> {
-            throw new IllegalStateException("failed");
-        }, context));
+        HttpClientExporter.GetHandlerInterceptor.exit(context, new IllegalStateException("failed"));
+        HttpClientExporter.GetHandlerInterceptor.exit(context, null);
 
         assertEquals(failed + 1, sample("dc_client_request_failure_total", LOCATION));
     }

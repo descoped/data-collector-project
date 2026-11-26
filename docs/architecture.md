@@ -447,6 +447,9 @@ finds to `tail-report.json`.
 - `ContentStoreAgent` intercepts `addPaginationDocument`, `bufferPaginationEntryDocument`, `bufferDocument` and
   `publish` on every `ContentStore` implementation (`ContentStoreExporter`).
 
+The interceptors are ByteBuddy `Advice`, inlined into the methods. 2.x used `MethodDelegation` with `@SuperCall`,
+whose helper classes ByteBuddy cannot define in a named module on JDK 27, so no metric was recorded (#25).
+
 | Metric | Type | Labels | Measures |
 |---|---|---|---|
 | `dc_client_request_started` | counter | `location` | Requests started |

@@ -152,6 +152,14 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
 
 ### Fixed
 
+- **The client and content store metrics are recorded** (#25). The metrics agent's interceptors are ByteBuddy
+  `Advice`; `MethodDelegation` could not define its helper classes on JDK 27, so no `dc_client_*` or
+  `dc_content_stream_*` metric was recorded.
+- **Recovery closes its own producer and consumer** (#31): the producer of the target topic and the consumer of the
+  source topic; it closed them under each other's topic, so neither was closed.
+- **The rawdata dump stops on the first `stop()`** and waits for its exporter (#32); it waited only on a second call.
+- **`GET /check-integrity` lists each job once** (#33); a completed job still held in memory was listed again for
+  each job on disk.
 - `start-collector.sh`: setting an HTTPS proxy no longer drops the HTTP proxy.
 - `-XX:+EnableJVMCI` is no longer passed. Temurin has no Graal compiler, and JDK 27 rejects the option.
 - jffi's classes and its native libraries are the same version.
