@@ -5,6 +5,7 @@ import io.descoped.dc.api.error.ExecutionException;
 public class HttpErrorException extends ExecutionException {
 
     private static final long serialVersionUID = 1L;
+
     public HttpErrorException() {
     }
 
