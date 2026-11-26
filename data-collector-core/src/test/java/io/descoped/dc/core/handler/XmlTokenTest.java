@@ -73,7 +73,8 @@ class XmlTokenTest {
         DocumentParserFeature parser = Queries.parserFor(XmlToken.class);
         List<Object> entries = new ArrayList<>();
         byte[] source = xml.getBytes(StandardCharsets.UTF_8);
-        assertThrows(RuntimeException.class, () -> parser.tokenDeserializer(new ByteArrayInputStream(source), entries::add));
+        ByteArrayInputStream stream = new ByteArrayInputStream(source);
+        assertThrows(RuntimeException.class, () -> parser.tokenDeserializer(stream, entries::add));
         assertThrows(RuntimeException.class, () -> parser.deserialize(source));
         assertTrue(entries.isEmpty());
     }
