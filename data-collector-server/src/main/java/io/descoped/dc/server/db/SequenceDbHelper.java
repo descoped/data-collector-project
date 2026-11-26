@@ -4,6 +4,7 @@ import io.descoped.config.DynamicConfiguration;
 import io.descoped.dc.api.ids.TimeOrderedIds;
 import io.descoped.dc.api.util.CommonUtils;
 import io.descoped.dc.server.recovery.PositionAndIdVersion;
+import io.descoped.rawdata.api.RawdataTopics;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.Txn;
@@ -74,6 +75,20 @@ public class SequenceDbHelper {
                 return Paths.get(location);
             }
         }).get();
+    }
+
+    /**
+     * The directory of a topic's index under the directory of the indexes. The topic must be a valid rawdata topic
+     * name ({@link RawdataTopics}), so it is never spliced into the path as anything but one plain directory name.
+     *
+     * @param location the directory of the indexes
+     * @param topic    the topic
+     * @return the topic's directory, inside {@code location}
+     * @throws IllegalArgumentException if the topic is not a valid topic name
+     */
+    public static Path topicDirectory(Path location, String topic) {
+        // a valid name is one segment of letters, digits, '_', '.' and '-' that starts with a letter or digit
+        return location.resolve(RawdataTopics.requireValid(topic));
     }
 
     /**

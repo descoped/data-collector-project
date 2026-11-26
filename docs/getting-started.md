@@ -83,6 +83,14 @@ make start-filesystem-dev
 make tail-filesystem-dev    # follow the log; Ctrl-C to stop following
 ```
 
+Every endpoint requires a bearer token, the value of `http.authentication.bearer.token`. `make` makes one the first time
+and keeps it in `examples/.dc-token`, which git ignores, and the Compose files pass it to the server as
+`DC_http.authentication.bearer.token`. The `curl` commands below send it from `DC_TOKEN`:
+
+```sh
+export DC_TOKEN="$(cat .dc-token)"
+```
+
 `make start-filesystem-dev` runs `docker compose -f docker-compose-filesystem.yml up -d` with `DC_IMAGE=data-collector:dev`
 and `PROFILE=filesystem`. The Compose file publishes ports 9990 (HTTP) and 9992 (JMX) and mounts
 `profile/filesystem/conf` on `/conf`, `certs` on `/certs` and `target` on `/target`.
@@ -92,6 +100,7 @@ The same with plain `docker run`:
 ```sh
 cd examples
 docker run --rm -p 9990:9990 \
+  -e "DC_http.authentication.bearer.token=$DC_TOKEN" \
   -v "$PWD/profile/filesystem/conf:/conf" \
   -v "$PWD/target:/target" \
   data-collector:dev
@@ -103,8 +112,8 @@ filesystem provider cannot create its folders. On Docker Desktop, bind mounts ar
 Check that the server answers:
 
 ```sh
-curl -i localhost:9990/ping            # 200, empty body
-curl -i localhost:9990/health/ready    # 200 when the server is running, 503 otherwise
+curl -H "Authorization: Bearer $DC_TOKEN" -i localhost:9990/ping            # 200, empty body
+curl -H "Authorization: Bearer $DC_TOKEN" -i localhost:9990/health/ready    # 200 when the server is running, 503 otherwise
 ```
 
 ## 3. Run a specification
@@ -118,7 +127,7 @@ Submit it with `PUT /tasks`:
 
 ```sh
 cd examples
-curl -X PUT -i localhost:9990/tasks -H 'content-type: application/json' -d @specs/enhetsregisteret-test-spec.json
+curl -H "Authorization: Bearer $DC_TOKEN" -X PUT -i localhost:9990/tasks -H 'content-type: application/json' -d @specs/enhetsregisteret-test-spec.json
 ```
 
 The server answers `201 Created` with no body; the response does not carry the task id. A second `PUT` of the same specification while it runs is answered with `409 Conflict`:
@@ -128,7 +137,7 @@ request.
 List the running tasks:
 
 ```sh
-curl localhost:9990/tasks
+curl -H "Authorization: Bearer $DC_TOKEN" localhost:9990/tasks
 ```
 
 ```json
@@ -143,14 +152,14 @@ Follow the task in the health report. While it runs, it has an entry `worker-<ta
 topic and the last published position:
 
 ```sh
-curl localhost:9990/health
+curl -H "Authorization: Bearer $DC_TOKEN" localhost:9990/health
 ```
 
 When the task ends, it leaves `GET /tasks` and its last report moves to the `worker-history` list in `/health`. To
 stop it early, cancel it with its task id:
 
 ```sh
-curl -X DELETE -i localhost:9990/tasks/019aa1d2-7c3e-7b41-a1f0-5c2d9e8b3f60
+curl -H "Authorization: Bearer $DC_TOKEN" -X DELETE -i localhost:9990/tasks/019aa1d2-7c3e-7b41-a1f0-5c2d9e8b3f60
 ```
 
 The content is under `examples/target/avro/rawdata-store`, in the layout of the rawdata-client filesystem provider.
@@ -161,14 +170,14 @@ The integrity check reads a topic from its first to its last position, indexes e
 reports positions that were published more than once. Start it for the topic `enhetsregister`:
 
 ```sh
-curl -X PUT -i localhost:9990/check-integrity/enhetsregister    # 201 Created
+curl -H "Authorization: Bearer $DC_TOKEN" -X PUT -i localhost:9990/check-integrity/enhetsregister    # 201 Created
 ```
 
 List the checks and read the summary of this one:
 
 ```sh
-curl localhost:9990/check-integrity
-curl localhost:9990/check-integrity/enhetsregister
+curl -H "Authorization: Bearer $DC_TOKEN" localhost:9990/check-integrity
+curl -H "Authorization: Bearer $DC_TOKEN" localhost:9990/check-integrity/enhetsregister
 ```
 
 ```json

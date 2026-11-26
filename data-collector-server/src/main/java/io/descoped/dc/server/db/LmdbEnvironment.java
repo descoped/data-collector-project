@@ -40,7 +40,7 @@ public class LmdbEnvironment implements AutoCloseable {
      * @param topic         the topic
      */
     public LmdbEnvironment(DynamicConfiguration configuration, Path databaseDir, String topic) {
-        this.databaseDir = databaseDir.resolve(topic);
+        this.databaseDir = SequenceDbHelper.topicDirectory(databaseDir, topic);
         createDirectories(this.databaseDir);
         this.topic = topic;
         mapSize = configuration != null ? configuration.find("data.collector.integrityCheck.dbSizeInMb").map(Integer::parseInt).orElse(50) : 50;

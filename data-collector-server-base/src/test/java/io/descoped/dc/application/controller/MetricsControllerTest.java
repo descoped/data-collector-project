@@ -27,12 +27,15 @@ class MetricsControllerTest {
     private static final Logger LOG = LoggerFactory.getLogger(MetricsControllerTest.class);
 
     private static final HttpClient client = HttpClient.newHttpClient();
+    private static final String TOKEN = "metrics-test-token";
+
     private static UndertowApplication server;
 
     @BeforeAll
     static void beforeAll() {
         DynamicConfiguration configuration = DynamicConfiguration.builder()
                 .value("prometheus.defaultExports.disabled", "true")
+                .value("http.authentication.bearer.token", TOKEN)
                 .build();
         server = UndertowApplication.initializeUndertowApplication(configuration, findFree(), null);
         server.start();
@@ -46,7 +49,9 @@ class MetricsControllerTest {
     public static HttpResponse GET(String uri, String... headers) {
         try {
             HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(
-                    URI.create("http://" + server.getHost() + ":" + server.getPort() + uri)).GET();
+                    URI.create("http://" + server.getHost() + ":" + server.getPort() + uri))
+                    .header("Authorization", "Bearer " + TOKEN)
+                    .GET();
             if (headers != null && headers.length > 1) {
                 requestBuilder.headers(headers);
             }

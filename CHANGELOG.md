@@ -13,6 +13,19 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
 
 ### Breaking
 
+- **Every endpoint requires authentication**, `/ping`, `/health` and `/metrics` included. The authenticator is a
+  provider chosen by `http.authentication.provider`; the built-in `bearer` (the default) accepts
+  `Authorization: Bearer <token>` with the token in `http.authentication.bearer.token`. The server does not start
+  without the token. Other schemes are providers of `io.descoped.dc.application.spi.Authenticator`. 2.x had no
+  authentication.
+- **CORS is off by default.** `http.cors.allow.origin` was `.*` in the defaults files; without it the server now sends
+  no CORS headers. Setting it turns CORS on, and preflights are answered before authentication.
+- **Topic names in requests are checked:** the integrity check and recovery endpoints answer `400` to a `{topic}` or
+  `toTopic` that is not a rawdata topic name (1 to 100 of `A-Z a-z 0-9 _ . -`, starting with a letter or digit). In 2.x
+  `PUT /check-integrity/..` deleted the directory above the LMDB indexes.
+- **The rawdata dump** writes each position and content key as one file name, percent-encoding anything but letters,
+  digits and `. - * _`; in 2.x a position or key could name a path outside the dump directory. It does not start when
+  `data.collector.rawdata.dump.topic` is not a topic name.
 - **JDK 27:** dc is built for, tested on and runs on JDK 27 (class files of Java 27); 2.x ran on Java 17. The server
   image's runtime is Temurin 27, and its `java` allows native access for the class path (jffi) and lmdbjava's use of
   `sun.misc.Unsafe`, which JDK 27 would otherwise warn about.

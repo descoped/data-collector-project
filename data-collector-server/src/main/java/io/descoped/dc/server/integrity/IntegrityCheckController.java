@@ -5,6 +5,7 @@ import io.descoped.dc.api.http.HttpStatus;
 import io.descoped.dc.api.http.Request;
 import io.descoped.dc.api.util.JsonParser;
 import io.descoped.dc.application.spi.Controller;
+import io.descoped.rawdata.api.RawdataTopics;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 
@@ -100,6 +101,10 @@ public class IntegrityCheckController implements Controller {
         Deque<String> pathElements = parseRequestPath(exchange, 3);
         if (pathElements == null) return;
         String topic = pathElements.pollLast();
+        if (!RawdataTopics.isValid(topic)) {
+            exchange.setStatusCode(400);
+            return;
+        }
         if (service.isJobRunning(topic)) {
             exchange.setStatusCode(HttpStatus.HTTP_CONFLICT.code());
             return;
@@ -126,6 +131,10 @@ public class IntegrityCheckController implements Controller {
         Deque<String> pathElements = parseRequestPath(exchange, 3);
         if (pathElements == null) return;
         String topic = pathElements.pollLast();
+        if (!RawdataTopics.isValid(topic)) {
+            exchange.setStatusCode(400);
+            return;
+        }
         if (!service.hasJob(topic)) {
             exchange.setStatusCode(400);
             return;
@@ -149,6 +158,10 @@ public class IntegrityCheckController implements Controller {
         if (pathElements == null) return;
         pathElements.pollLast();
         String topic = pathElements.pollLast();
+        if (!RawdataTopics.isValid(topic)) {
+            exchange.setStatusCode(400);
+            return;
+        }
         if (!service.hasJob(topic)) {
             exchange.setStatusCode(400);
             return;
@@ -184,6 +197,10 @@ public class IntegrityCheckController implements Controller {
         Deque<String> pathElements = parseRequestPath(exchange, 3);
         if (pathElements == null) return;
         String topic = pathElements.pollLast();
+        if (!RawdataTopics.isValid(topic)) {
+            exchange.setStatusCode(400);
+            return;
+        }
         if (!service.isJobRunning(topic)) {
             exchange.setStatusCode(400);
             return;
