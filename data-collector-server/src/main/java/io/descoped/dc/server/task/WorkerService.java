@@ -205,7 +205,7 @@ public class WorkerService implements Service {
      * @return true if it was found
      */
     public boolean cancelTask(String workerId) {
-        // TODO lock prevents onWorkerFinish to complete
+        // the lock is held only while the worker's termination is set, so onWorkerFinish waits no longer than that
         WorkManager.JobId jobId = workManager.get(UUID.fromString(workerId));
         if (jobId == null) {
             LOG.warn("Worker '{}' NOT found! Maybe it was already completed.", workerId);

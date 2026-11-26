@@ -83,6 +83,9 @@ public class RecoveryController implements Controller {
     }
 
     boolean isRunning(String topic) {
+        if (service.isActive(topic)) {
+            return true;
+        }
         CompletableFuture<RecoveryWorker> future = service.jobFutures.get(topic);
         RecoveryWorker worker = service.jobs.get(topic);
         if (worker == null && future != null && !future.isDone()) {
@@ -119,8 +122,8 @@ public class RecoveryController implements Controller {
         if (!RawdataTopics.isValid(toTopic)) {
             return HttpStatus.HTTP_BAD_REQUEST;
         }
-        service.createRecoveryWorker(fromTopic, toTopic);
-        return HttpStatus.HTTP_CREATED;
+        // another request may have started a recovery of the topic since the check above
+        return service.createRecoveryWorker(fromTopic, toTopic) ? HttpStatus.HTTP_CREATED : HttpStatus.HTTP_CONFLICT;
     }
 
     // GET /recovery
@@ -159,7 +162,10 @@ public class RecoveryController implements Controller {
             return HttpStatus.HTTP_NOT_FOUND;
         }
         RecoveryWorker recoveryWorker = service.jobs.get(fromTopic);
-        recoveryWorker.terminate();
+        // a recovery that is starting has no worker yet
+        if (recoveryWorker != null) {
+            recoveryWorker.terminate();
+        }
         return HttpStatus.HTTP_OK;
     }
 }

@@ -3,13 +3,19 @@ package io.descoped.dc.core.executor;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.NavigableSet;
 import java.util.Random;
 import java.util.TreeSet;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BufferedReorderingTest {
 
@@ -101,5 +107,35 @@ class BufferedReorderingTest {
 
             assertEquals(List.of(p1, p2, p3, p4, p5), completedPositionSequence.expected());
         }
+    }
+
+    // a release is handed on before a later one, also when the callback locks nothing (#69): while position 1's
+    // hand-on is held up, position 2 completes on another thread and must not be handed on first
+    @Test
+    void thatALaterReleaseWaitsForAnEarlierHandOn() throws Exception {
+        BufferedReordering<String> bufferedReordering = new BufferedReordering<>();
+        bufferedReordering.addExpected(List.of("1", "2"));
+        List<String> handedOn = Collections.synchronizedList(new ArrayList<>());
+        CountDownLatch firstInCallback = new CountDownLatch(1);
+        CountDownLatch secondHandedOn = new CountDownLatch(1);
+
+        try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
+            executor.execute(() -> bufferedReordering.addCompleted("1", released -> {
+                firstInCallback.countDown();
+                try {
+                    // without the lock, position 2 is handed on meanwhile
+                    secondHandedOn.await(500, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                handedOn.addAll(released);
+            }));
+            assertTrue(firstInCallback.await(5, TimeUnit.SECONDS));
+            executor.execute(() -> bufferedReordering.addCompleted("2", released -> {
+                handedOn.addAll(released);
+                secondHandedOn.countDown();
+            }));
+        }
+        assertEquals(List.of("1", "2"), handedOn);
     }
 }

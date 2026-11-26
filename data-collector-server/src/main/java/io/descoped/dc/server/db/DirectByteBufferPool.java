@@ -1,16 +1,16 @@
 package io.descoped.dc.server.db;
 
 import java.nio.ByteBuffer;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.TimeUnit;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 /**
- * A fixed pool of direct byte buffers.
+ * A fixed pool of direct byte buffers, used by one thread: an integrity check's index, whose LMDB writes are tied to
+ * one thread as well. No other thread releases a buffer, so an empty pool fails at once instead of waiting (#68).
  */
 public class DirectByteBufferPool implements AutoCloseable {
 
-    final BlockingQueue<ByteBuffer> deque;
+    final Deque<ByteBuffer> deque;
 
     /**
      * Allocates the buffers.
@@ -19,53 +19,33 @@ public class DirectByteBufferPool implements AutoCloseable {
      * @param capacity each buffer's capacity
      */
     public DirectByteBufferPool(int n, int capacity) {
-        deque = new LinkedBlockingDeque<>(n);
+        deque = new ArrayDeque<>(n);
         for (int i = 0; i < n; i++) {
-            try {
-                deque.put(ByteBuffer.allocateDirect(capacity));
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException(e);
-            }
+            deque.addLast(ByteBuffer.allocateDirect(capacity));
         }
     }
 
     /**
-     * Takes a buffer, waiting for one to be released.
+     * Takes a buffer.
      *
      * @return the buffer
-     * @throws IllegalStateException if none is released in time
+     * @throws IllegalStateException if every buffer is taken
      */
     public ByteBuffer acquire() {
-        try {
-            int failCount = 25;
-            ByteBuffer buffer;
-            while ((buffer = deque.poll(1, TimeUnit.SECONDS)) == null) {
-                if (failCount == 0) {
-                    throw new IllegalStateException("Unable to acquire KeyBuffer!");
-                }
-                TimeUnit.MILLISECONDS.sleep(50);
-                failCount--;
-            }
-            return buffer;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
+        ByteBuffer buffer = deque.pollFirst();
+        if (buffer == null) {
+            throw new IllegalStateException("Unable to acquire KeyBuffer!");
         }
+        return buffer;
     }
 
     /**
-     * Returns a buffer to the pool.
+     * Returns a buffer to the pool, cleared.
      *
      * @param buffer the buffer
      */
     public void release(ByteBuffer buffer) {
-        try {
-            deque.put(buffer.clear());
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
-        }
+        deque.addLast(buffer.clear());
     }
 
     @Override

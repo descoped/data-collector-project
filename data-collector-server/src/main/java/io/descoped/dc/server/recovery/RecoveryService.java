@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
@@ -34,6 +35,8 @@ public class RecoveryService implements Service {
     private final RecoveryContentStoreComponent recoveryContentStoreComponent;
     final Map<String, CompletableFuture<RecoveryWorker>> jobFutures = new ConcurrentHashMap<>();
     final Map<String, RecoveryWorker> jobs = new ConcurrentHashMap<>();
+    // the source topics whose recovery is starting or running, claimed before it starts (#67)
+    private final Set<String> active = ConcurrentHashMap.newKeySet();
 
     /**
      * Creates the service.
@@ -76,20 +79,38 @@ public class RecoveryService implements Service {
         }
     }
 
-    void createRecoveryWorker(String fromTopic, String toTopic) {
+    // whether a recovery of the topic is starting or running
+    boolean isActive(String fromTopic) {
+        return active.contains(fromTopic);
+    }
+
+    // false when a recovery of the topic is starting or running
+    boolean createRecoveryWorker(String fromTopic, String toTopic) {
         Path dbLocation = getSequenceDatabaseLocation(configuration);
         LOG.trace("Database path: {}", dbLocation);
         if (!dbLocation.toFile().exists()) {
             throw new IllegalStateException("Lmdb Location does not exist: " + dbLocation.toString());
         }
+        if (!active.add(fromTopic)) {
+            return false;
+        }
+        try {
+            jobFutures.put(fromTopic, startRecovery(fromTopic, toTopic));
+        } catch (RuntimeException | Error e) {
+            active.remove(fromTopic);
+            throw e;
+        }
+        return true;
+    }
 
-        CompletableFuture<RecoveryWorker> workerFuture = CompletableFuture.supplyAsync(() -> {
+    private CompletableFuture<RecoveryWorker> startRecovery(String fromTopic, String toTopic) {
+        return CompletableFuture.supplyAsync(() -> {
             RecoveryWorker recoveryWorker = new RecoveryWorker(configuration, contentStoreComponent, recoveryContentStoreComponent);
             jobs.put(fromTopic, recoveryWorker);
             recoveryWorker.recover(fromTopic, toTopic);
             LOG.trace("Completed Recovery!");
             return recoveryWorker;
-        }).exceptionally(throwable -> {
+        }).whenComplete((recoveryWorker, throwable) -> active.remove(fromTopic)).exceptionally(throwable -> {
             LOG.error("Ended exceptionally with error: {}", CommonUtils.captureStackTrace(throwable));
             if (throwable instanceof RuntimeException runtimeException) {
                 throw runtimeException;
@@ -99,6 +120,5 @@ public class RecoveryService implements Service {
                 throw new RuntimeException(throwable);
             }
         });
-        jobFutures.put(fromTopic, workerFuture);
     }
 }

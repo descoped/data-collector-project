@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,6 +43,8 @@ public class IntegrityCheckService implements Service {
     final DynamicConfiguration configuration;
     final ContentStoreComponent contentStoreComponent;
     final Map<String, IntegrityCheckJob> jobs = new ConcurrentHashMap<>();
+    // the topics whose job is starting or running, claimed before anything is deleted or opened (#67)
+    private final Set<String> active = ConcurrentHashMap.newKeySet();
 
     /**
      * Creates the service.
@@ -93,7 +96,11 @@ public class IntegrityCheckService implements Service {
      * @return true if it runs
      */
     public boolean isJobRunning(String topic) {
-        return jobs.containsKey(topic) && "RUNNING".equals(jobs.get(topic).getSummary().status);
+        if (active.contains(topic)) {
+            return true;
+        }
+        IntegrityCheckJob job = jobs.get(topic);
+        return job != null && "RUNNING".equals(job.getSummary().status);
     }
 
     /**
@@ -111,15 +118,25 @@ public class IntegrityCheckService implements Service {
     }
 
     /**
-     * Starts a job for a topic, replacing the topic's earlier index.
+     * Starts a job for a topic, replacing the topic's earlier index, unless the topic's job is starting or running.
      *
      * @param topic the topic
+     * @return true if the job started, false if the topic's job is starting or running
      */
-    public void createJob(String topic) {
-        if (isJobRunning(topic)) {
-            return;
+    public boolean createJob(String topic) {
+        if (isJobRunning(topic) || !active.add(topic)) {
+            return false;
         }
+        try {
+            startJob(topic);
+        } catch (RuntimeException | Error e) {
+            active.remove(topic);
+            throw e;
+        }
+        return true;
+    }
 
+    private void startJob(String topic) {
         Path dbLocation = getSequenceDatabaseLocation(configuration);
         LOG.trace("Database path: {}", dbLocation);
 
@@ -136,7 +153,7 @@ public class IntegrityCheckService implements Service {
                     return job;
                 }
             }
-        }).exceptionally(throwable -> {
+        }).whenComplete((job, throwable) -> active.remove(topic)).exceptionally(throwable -> {
             LOG.error("Ended exceptionally with error: {}", CommonUtils.captureStackTrace(throwable));
             if (throwable instanceof RuntimeException runtimeException) {
                 throw runtimeException;
@@ -289,11 +306,11 @@ public class IntegrityCheckService implements Service {
      * @param topic the topic
      */
     public void cancelJob(String topic) {
-        if (!isJobRunning(topic)) {
-            return;
-        }
         IntegrityCheckJob job = jobs.get(topic);
-        job.terminate();
+        // a job that is still opening its index is not registered yet
+        if (job != null && isJobRunning(topic)) {
+            job.terminate();
+        }
     }
 
     /**

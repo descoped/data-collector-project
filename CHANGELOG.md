@@ -185,6 +185,18 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
   the store under them. A task's future no longer fails with a `NullPointerException` when the task succeeds.
 - **Data races** (#46): the contexts of a worker no longer copy its shared global state onto itself from every thread,
   the global state is synchronized, and `/health` reads the workers' health resources under the lock that guards them.
+- **Each worker counts its own `Parallel` iterations** (#66). The counters behind `stopAtNumberOfIterations` and the
+  queue buffer's page log were static, shared by every worker in the JVM: a worker's limit counted the entries of
+  every other worker, and a second worker after a limited one published nothing. `ParallelHandler.countNumberOfIterations`
+  is gone; `ParallelHandler.Counters` is registered in each worker's services.
+- **One integrity check or recovery per topic** (#67): two `PUT /check-integrity/{topic}` (or `PUT /recovery/{topic}`)
+  requests that raced could both start, the integrity check deleting and opening the same LMDB directory twice. The
+  topic is now claimed before anything starts, and the request that loses gets 409 Conflict.
+- **An integrity check's buffer pool fails at once when it is empty** (#68), instead of waiting about 26 seconds for a
+  buffer that no other thread can release.
+- **Positions are published in order whatever the content store locks** (#69). The reordering of completed positions
+  handed a released run on after leaving its lock, so two threads could publish their runs in reverse order. The rawdata
+  store's topic lock hid it; with the `discarding` store, the default, the last position could end below the real one.
 - **`http.port=0` reports the port the server got** (#62): `UndertowApplication.getPort()`, the startup log and the
   health output give the ephemeral port the listener is bound to, not 0. The test servers of data-collector-testutils
   use this: they bind port 0 instead of probing for a free port between 9000 and 9499 and binding it later, which
