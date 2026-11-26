@@ -10,6 +10,13 @@ import java.util.function.Consumer;
  */
 public abstract class AbstractBaseNode implements Base {
 
+    /**
+     * Creates the node; subclasses call it.
+     */
+    public AbstractBaseNode() {
+        // no state
+    }
+
     @Override
     public boolean instanceOf(Class<? extends Base> nodeClass) {
         return this.getClass().isAssignableFrom(nodeClass);

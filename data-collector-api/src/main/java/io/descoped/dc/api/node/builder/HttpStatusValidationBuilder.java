@@ -55,6 +55,7 @@ public class HttpStatusValidationBuilder extends LeafNodeBuilder {
         return this;
     }
 
+    @SuppressWarnings("unchecked") // the caller names the node type it builds
     @Override
     public <R extends Base> R build(BuildContext buildContext) {
         Map<HttpStatus, List<ResponsePredicate>> successMap = new LinkedHashMap<>();

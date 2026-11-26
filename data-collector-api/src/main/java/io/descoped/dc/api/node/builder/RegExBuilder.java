@@ -22,6 +22,7 @@ public class RegExBuilder extends QueryBuilder {
         this.expression = expression;
     }
 
+    @SuppressWarnings("unchecked") // the caller names the node type it builds
     @Override
     <R extends Base> R build(BuildContext buildContext) {
         QueryNode queryNode = queryBuilder.build(buildContext);

@@ -30,6 +30,7 @@ public class EvalBuilder extends QueryBuilder {
         this.elExpression = elExpression;
     }
 
+    @SuppressWarnings("unchecked") // the caller names the node type it builds
     @Override
     <R extends Base> R build(BuildContext buildContext) {
         QueryNode queryNode = queryBuilder != null ? queryBuilder.build(buildContext) : null;

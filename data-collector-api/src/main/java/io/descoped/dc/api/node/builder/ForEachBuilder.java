@@ -30,6 +30,7 @@ public class ForEachBuilder extends NodeBuilder {
         return this;
     }
 
+    @SuppressWarnings("unchecked") // the caller names the node type it builds
     @Override
     <R extends Base> R build(BuildContext buildContext) {
         QueryBuilder.QueryNode splitToListQueryNode = splitBuilder.build(buildContext);

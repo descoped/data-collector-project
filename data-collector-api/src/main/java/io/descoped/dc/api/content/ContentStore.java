@@ -3,6 +3,7 @@ package io.descoped.dc.api.content;
 import java.util.Map;
 import java.util.Set;
 
+@SuppressWarnings("try") // close() keeps AutoCloseable's throws Exception; narrowing it is the owner's decision
 public interface ContentStore extends AutoCloseable {
 
     void lock(String topic);

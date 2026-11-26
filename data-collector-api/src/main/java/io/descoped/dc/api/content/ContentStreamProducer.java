@@ -3,6 +3,7 @@ package io.descoped.dc.api.content;
 import java.util.Arrays;
 import java.util.List;
 
+@SuppressWarnings("try") // close() keeps AutoCloseable's throws Exception; narrowing it is the owner's decision
 public interface ContentStreamProducer extends AutoCloseable {
 
     ContentStreamBuffer.Builder builder();

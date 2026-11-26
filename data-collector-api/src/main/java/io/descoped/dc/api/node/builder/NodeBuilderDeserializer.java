@@ -27,6 +27,8 @@ import java.util.stream.Collectors;
  */
 public class NodeBuilderDeserializer extends StdDeserializer<AbstractBuilder> {
 
+    private static final long serialVersionUID = 1L;
+
     private static final String VARIABLES = "variables";
     private static final String SPLIT_QUERY = "splitQuery";
     private static final String PIPES = "pipes";
@@ -234,7 +236,7 @@ public class NodeBuilderDeserializer extends StdDeserializer<AbstractBuilder> {
             }
         }
 
-        currentNode.get("functions").fields().forEachRemaining(entry ->
+        currentNode.get("functions").properties().forEach(entry ->
                 builder.function((NodeWithIdBuilder) handleNodeBuilder(depth + 1, context, ancestors, currentNode, entry.getValue())));
 
         return builder;
@@ -245,14 +247,14 @@ public class NodeBuilderDeserializer extends StdDeserializer<AbstractBuilder> {
 
         JsonNode headerNode = currentNode.get("headers");
         if (headerNode != null) {
-            headerNode.fields().forEachRemaining(entry -> {
+            headerNode.properties().forEach(entry -> {
                 entry.getValue().forEach(headerValueNode -> builder.header(entry.getKey(), headerValueNode.textValue()));
             });
         }
 
         JsonNode variableNode = currentNode.get(VARIABLES);
         if (variableNode != null) {
-            variableNode.fields().forEachRemaining(entry -> {
+            variableNode.properties().forEach(entry -> {
                 Object value;
                 if (entry.getValue().isInt()) {
                     value = entry.getValue().intValue();
@@ -271,7 +273,7 @@ public class NodeBuilderDeserializer extends StdDeserializer<AbstractBuilder> {
 
         JsonNode globalStateNode = currentNode.get("globalState");
         if (globalStateNode != null) {
-            globalStateNode.fields().forEachRemaining(entry -> {
+            globalStateNode.properties().forEach(entry -> {
                 builder.globalState(entry.getKey(), entry.getValue().textValue());
             });
         }
@@ -303,7 +305,7 @@ public class NodeBuilderDeserializer extends StdDeserializer<AbstractBuilder> {
         JwtHeaderClaims headerClaims = new JwtHeaderClaims();
         JsonNode headerClaimsNode = currentNode.get("headerClaims");
         if (headerClaimsNode != null) {
-            headerClaimsNode.fields().forEachRemaining(entry -> {
+            headerClaimsNode.properties().forEach(entry -> {
                 String value = entry.getValue() == null ? null : entry.getValue().textValue(); // todo only support string values
                 headerClaims.headerClaims.put(entry.getKey(), value);
             });
@@ -312,7 +314,7 @@ public class NodeBuilderDeserializer extends StdDeserializer<AbstractBuilder> {
         JwtClaims claims = new JwtClaims();
         JsonNode claimsNode = currentNode.get("claims");
         if (claimsNode != null) {
-            claimsNode.fields().forEachRemaining(entry -> {
+            claimsNode.properties().forEach(entry -> {
                 String value = entry.getValue() == null ? null : entry.getValue().textValue(); // todo only support string values
                 claims.claims.put(entry.getKey(), value);
             });
@@ -324,7 +326,7 @@ public class NodeBuilderDeserializer extends StdDeserializer<AbstractBuilder> {
     private AbstractBuilder buildPaginate(int depth, DeserializationContext context, Deque<JsonNode> ancestors, JsonNode currentNode) {
         PaginateBuilder builder = new PaginateBuilder(currentNode.get("id").textValue());
 
-        currentNode.get(VARIABLES).fields().forEachRemaining(entry -> builder.variable(entry.getKey(), entry.getValue().textValue()));
+        currentNode.get(VARIABLES).properties().forEach(entry -> builder.variable(entry.getKey(), entry.getValue().textValue()));
 
         if (currentNode.has("addPageContent") && currentNode.get("addPageContent").asBoolean()) {
             builder.addPageContent(currentNode.get("positionVariable").textValue());
@@ -356,7 +358,7 @@ public class NodeBuilderDeserializer extends StdDeserializer<AbstractBuilder> {
     private AbstractBuilder buildNextPage(int depth, DeserializationContext context, Deque<JsonNode> ancestors, JsonNode currentNode) {
         NextPageBuilder builder = new NextPageBuilder();
 
-        currentNode.get("outputs").fields().forEachRemaining(entry ->
+        currentNode.get("outputs").properties().forEach(entry ->
                 builder.output(
                         entry.getKey(),
                         (QueryBuilder) handleNodeBuilder(depth + 1, context, ancestors, currentNode, entry.getValue())
@@ -370,7 +372,7 @@ public class NodeBuilderDeserializer extends StdDeserializer<AbstractBuilder> {
         QueryBuilder splitBuilder = (QueryBuilder) handleNodeBuilder(depth + 1, context, ancestors, currentNode, currentNode.get(SPLIT_QUERY));
         ParallelBuilder builder = new ParallelBuilder(splitBuilder);
 
-        currentNode.get(VARIABLES).fields().forEachRemaining(entry ->
+        currentNode.get(VARIABLES).properties().forEach(entry ->
                 builder.variable(entry.getKey(), (QueryBuilder) handleNodeBuilder(depth + 1, context, ancestors, currentNode, entry.getValue())));
 
         JsonNode stepsNode = currentNode.get(PIPES);
@@ -409,12 +411,13 @@ public class NodeBuilderDeserializer extends StdDeserializer<AbstractBuilder> {
         }
 
         if (currentNode.has("inputVariables")) {
-            currentNode.get("inputVariables").fields().forEachRemaining(entry ->
+            currentNode.get("inputVariables").properties().forEach(entry ->
                     builder.inputVariable(entry.getKey(), (QueryBuilder) handleNodeBuilder(depth + 1, context, ancestors, currentNode, entry.getValue())));
         }
         return builder;
     }
 
+    @SuppressWarnings("unchecked") // the processor class is named by the specification (see the security audit)
     private AbstractBuilder buildProcess(JsonNode currentNode) {
         try {
             ProcessBuilder builder = new ProcessBuilder((Class<? extends Processor>) Class.forName(currentNode.get("processorClass").textValue()));
@@ -437,7 +440,7 @@ public class NodeBuilderDeserializer extends StdDeserializer<AbstractBuilder> {
         JsonNode stateNode = currentNode.get("state");
         if (stateNode != null) {
 
-            stateNode.fields().forEachRemaining(entry -> {
+            stateNode.properties().forEach(entry -> {
                 JsonNode value = entry.getValue();
                 Object stateValue;
                 if (value.isInt()) {
@@ -651,7 +654,7 @@ public class NodeBuilderDeserializer extends StdDeserializer<AbstractBuilder> {
         JsonNode successNode = currentNode.get("success");
         // "success" maps each status code to the response predicates it must meet, an empty list for none: for
         // example 200 to none, and 404 to an HttpResponseBodyContains of a QueryJqPath ".kode" equal to "SP-002"
-        for (Iterator<Map.Entry<String, JsonNode>> it = successNode.fields(); it.hasNext(); ) {
+        for (Iterator<Map.Entry<String, JsonNode>> it = successNode.properties().iterator(); it.hasNext(); ) {
             Map.Entry<String, JsonNode> elementNode = it.next();
 
             int statusCode = Integer.parseInt(elementNode.getKey());

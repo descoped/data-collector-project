@@ -9,6 +9,13 @@ import java.time.temporal.TemporalAccessor;
 
 public class ELConvert {
 
+    /**
+     * Creates the functions; expressions call them on the instance bound in the context.
+     */
+    public ELConvert() {
+        // no state
+    }
+
     public Long utcDateToEpoc(String value) {
         try {
             TemporalAccessor ta = DateTimeFormatter.ISO_DATE_TIME.parse("2020-10-05T00:00:00.000Z");

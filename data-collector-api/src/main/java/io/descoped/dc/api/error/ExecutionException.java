@@ -2,6 +2,8 @@ package io.descoped.dc.api.error;
 
 public class ExecutionException extends RuntimeException {
 
+    private static final long serialVersionUID = 1L;
+
     public ExecutionException() {
     }
 

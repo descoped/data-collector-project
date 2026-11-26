@@ -12,6 +12,7 @@ public class ObjectCreator {
     private ObjectCreator() {
     }
 
+    @SuppressWarnings("unchecked") // the constructor is the class's own
     public static <T> T newInstance(Class<T> clazz, Services services) {
         List<Constructor<?>> constructors = new ArrayList<>(List.of(clazz.getConstructors()));
 

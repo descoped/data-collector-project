@@ -58,6 +58,7 @@ public class ExecutionContext {
         return this;
     }
 
+    @SuppressWarnings("unchecked") // the caller names the state's type
     public <R> R globalStateIfAbsent(Object key, Supplier<R> supplier) {
         return (R) globalState.putIfAbsent(key, supplier);
     }
@@ -80,10 +81,12 @@ public class ExecutionContext {
         return this;
     }
 
+    @SuppressWarnings("unchecked") // the caller names the state's type
     public <R> R state(Class<R> key) {
         return (R) state((Object) key);
     }
 
+    @SuppressWarnings("unchecked") // the caller names the state's type
     public <R> R state(Object key) {
         R r = (R) state.get(key);
         if (r == null) {
@@ -134,6 +137,13 @@ public class ExecutionContext {
         private Map<Object, Object> globalState;
         private Map<String, Object> variables;
         private Map<Object, Object> state;
+
+        /**
+         * Creates an empty builder.
+         */
+        public Builder() {
+            // the state is in the fields
+        }
 
         public Builder services(Services services) {
             this.services = services;

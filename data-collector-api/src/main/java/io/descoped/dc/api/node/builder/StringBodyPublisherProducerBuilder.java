@@ -18,6 +18,7 @@ public class StringBodyPublisherProducerBuilder extends BodyPublisherProducerBui
         this.data = data;
     }
 
+    @SuppressWarnings("unchecked") // the caller names the node type it builds
     @Override
     public <R extends Base> R build(BuildContext buildContext) {
         return (R) new StringBodyPublisherProducerNode(data);

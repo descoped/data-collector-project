@@ -18,6 +18,7 @@ public class JqPathBuilder extends QueryBuilder {
         this.expression = expression;
     }
 
+    @SuppressWarnings("unchecked") // the caller names the node type it builds
     @Override
     <R extends Base> R build(BuildContext buildContext) {
         return (R) new JqPathNode(expression);

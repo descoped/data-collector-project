@@ -5,7 +5,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class InstanceCache {
 
-    private final Map<Class<?>, Object> cache = new ConcurrentHashMap();
+    private final Map<Class<?>, Object> cache = new ConcurrentHashMap<>();
+
+    /**
+     * Creates an empty instance.
+     */
+    public InstanceCache() {
+        // the state is in the fields
+    }
 
     public <R> R add(Class<?> clazz, R instance) {
         cache.put(clazz, instance);
@@ -16,6 +23,7 @@ public class InstanceCache {
         return cache.containsKey(clazz);
     }
 
+    @SuppressWarnings("unchecked") // the caller names the cached instance's type
     public <R> R get(Class<?> clazz) {
         return (R) cache.get(clazz);
     }
