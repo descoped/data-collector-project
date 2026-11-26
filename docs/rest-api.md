@@ -58,7 +58,8 @@ empty body, before it reaches an endpoint.
 The authenticator is a provider chosen by `http.authentication.provider` ([configuration
 reference](administration.md#http-server-and-cors)). The built-in one, `bearer` (the default), accepts a request whose
 `Authorization` header is `Bearer <token>` with the token in `http.authentication.bearer.token`, compared in constant
-time; it answers `WWW-Authenticate: Bearer realm="data-collector"`. The server does not start when the token is not set,
+time; it answers `WWW-Authenticate: Bearer realm="data-collector"`. The server does not start when the token is not set
+or is shorter than 32 characters,
 or when no provider has the configured name. Other schemes are added as providers of
 `io.descoped.dc.application.spi.Authenticator` (see [Extending the server](developer-guide.md#extending-the-server)).
 

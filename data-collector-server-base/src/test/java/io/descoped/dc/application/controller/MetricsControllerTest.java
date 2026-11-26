@@ -27,7 +27,7 @@ class MetricsControllerTest {
     private static final Logger LOG = LoggerFactory.getLogger(MetricsControllerTest.class);
 
     private static final HttpClient client = HttpClient.newHttpClient();
-    private static final String TOKEN = "metrics-test-token";
+    private static final String TOKEN = "metrics-test-token-0123456789abcdef0123";
 
     private static UndertowApplication server;
 

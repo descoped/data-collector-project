@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AuthenticationTest {
 
-    static final String TOKEN = "authentication-test-token";
+    static final String TOKEN = "authentication-test-token-0123456789abcdef";
 
     static final HttpClient client = HttpClient.newHttpClient();
     static UndertowApplication server;
@@ -96,6 +96,18 @@ class AuthenticationTest {
         IllegalStateException e = assertThrows(IllegalStateException.class,
                 () -> UndertowApplication.initializeUndertowApplication(configuration, port, null));
         assertTrue(e.getMessage().contains("http.authentication.bearer.token"), e.getMessage());
+    }
+
+    @Test
+    void thatTheServerDoesNotStartWithAShortToken() {
+        DynamicConfiguration configuration = DynamicConfiguration.builder()
+                .value("prometheus.defaultExports.disabled", "true")
+                .value("http.authentication.bearer.token", "0123456789abcdef0123456789abcde")
+                .build();
+        int port = findFree();
+        IllegalStateException e = assertThrows(IllegalStateException.class,
+                () -> UndertowApplication.initializeUndertowApplication(configuration, port, null));
+        assertEquals("http.authentication.bearer.token is shorter than 32 characters", e.getMessage());
     }
 
     @Test

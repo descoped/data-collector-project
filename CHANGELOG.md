@@ -16,7 +16,7 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
 - **Every endpoint requires authentication**, `/ping`, `/health` and `/metrics` included. The authenticator is a
   provider chosen by `http.authentication.provider`; the built-in `bearer` (the default) accepts
   `Authorization: Bearer <token>` with the token in `http.authentication.bearer.token`. The server does not start
-  without the token. Other schemes are providers of `io.descoped.dc.application.spi.Authenticator`. 2.x had no
+  without the token, or with one shorter than 32 characters. Other schemes are providers of `io.descoped.dc.application.spi.Authenticator`. 2.x had no
   authentication.
 - **CORS is off by default.** `http.cors.allow.origin` was `.*` in the defaults files; without it the server now sends
   no CORS headers. Setting it turns CORS on, and preflights are answered before authentication.

@@ -70,7 +70,7 @@ Read by `data-collector-server-base` at start-up.
 | `http.host` | `0.0.0.0` | `localhost` | Address the HTTP listener binds to. |
 | `http.port` | `9990` | none, required | HTTP port. |
 | `http.authentication.provider` | not set | `bearer` | The authenticator every request passes: the name of a provider of `io.descoped.dc.application.spi.Authenticator`. The server does not start when no provider has the name. |
-| `http.authentication.bearer.token` | not set | none, required by `bearer` | The token of the `bearer` provider: a request is authenticated by `Authorization: Bearer <token>`. The server does not start without it. Give it as `DC_http.authentication.bearer.token`, or in `/conf/application-override.properties`; never in a file of the image. |
+| `http.authentication.bearer.token` | not set | none, required by `bearer` | The token of the `bearer` provider: a request is authenticated by `Authorization: Bearer <token>`. The server does not start without it, or with a token shorter than 32 characters (`openssl rand -hex 16` gives 32). Give it as `DC_http.authentication.bearer.token`, or in `/conf/application-override.properties`; never in a file of the image. |
 | `http.cors.allow.origin` | not set | not set: CORS is off | Comma-separated regular expressions. An `Origin` that one of them matches in full is allowed. Setting it turns CORS on. |
 | `http.cors.allow.methods` | not set | `POST,GET,PUT,DELETE,HEAD` | Methods a preflight may ask for. |
 | `http.cors.allow.header` | not set | `Content-Type,Authorization` | Headers a preflight may ask for; also sent as `Access-Control-Expose-Headers`. |

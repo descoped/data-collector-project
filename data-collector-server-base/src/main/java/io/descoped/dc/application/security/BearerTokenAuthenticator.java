@@ -11,8 +11,8 @@ import java.security.NoSuchAlgorithmException;
 
 /**
  * The built-in authenticator, {@code bearer}: a request is authenticated when its {@code Authorization} header is
- * {@code Bearer <token>} with the token in {@code http.authentication.bearer.token}. The tokens are compared by their
- * SHA-256 digests in constant time.
+ * {@code Bearer <token>} with the token in {@code http.authentication.bearer.token}, at least
+ * {@value #MINIMUM_TOKEN_LENGTH} characters. The tokens are compared by their SHA-256 digests in constant time.
  */
 public class BearerTokenAuthenticator implements Authenticator {
 
@@ -20,6 +20,11 @@ public class BearerTokenAuthenticator implements Authenticator {
      * The configuration key of the token.
      */
     public static final String TOKEN_KEY = "http.authentication.bearer.token";
+
+    /**
+     * The shortest token the server starts with: {@code openssl rand -hex 16} gives 32 characters.
+     */
+    public static final int MINIMUM_TOKEN_LENGTH = 32;
 
     private static final String SCHEME = "Bearer ";
 
@@ -41,6 +46,9 @@ public class BearerTokenAuthenticator implements Authenticator {
     public void initialize(DynamicConfiguration configuration) {
         String token = configuration.find(TOKEN_KEY).filter(value -> !value.isBlank()).orElseThrow(() ->
                 new IllegalStateException(TOKEN_KEY + " is not set: every endpoint requires authentication"));
+        if (token.length() < MINIMUM_TOKEN_LENGTH) {
+            throw new IllegalStateException(TOKEN_KEY + " is shorter than " + MINIMUM_TOKEN_LENGTH + " characters");
+        }
         tokenDigest = digest(token);
     }
 
