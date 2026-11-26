@@ -40,12 +40,15 @@ class ContentStoreExporterTest {
     void name() {
         ContentStore contentStore = ProviderConfigurator.configure(ContentStoreInitializer.class, "rawdata", Map.of("rawdata.client.provider", "memory"));
         assertNotNull(contentStore);
+        double positions = sample("dc_content_stream_pagination_entry_publish_position_count_total", "topic");
         HttpRequestInfo httpRequestInfo = new HttpRequestInfo(CorrelationIds.create(ExecutionContext.empty()), null, -1, new Headers(), new Headers(), -1);
         contentStore.addPaginationDocument("topic", "1", "page", "PAGINATION_PAGE".getBytes(), httpRequestInfo);
         contentStore.bufferPaginationEntryDocument("topic", "1", "page", "PAGINATION_PAGE_ENTRY".getBytes(), httpRequestInfo, new LinkedHashMap<>());
         contentStore.bufferDocument("topic", "1", "entry", "PAYLOAD".getBytes(), httpRequestInfo);
         assertEquals(2, contentStore.contentKeys("topic", "1").size());
         contentStore.publish("topic", "1");
+        // the agent inlined the advice into the rawdata connector's store (issue #25)
+        assertEquals(positions + 1, sample("dc_content_stream_pagination_entry_publish_position_count_total", "topic"));
     }
 
     static double sample(String name, String topic) {
@@ -54,17 +57,18 @@ class ContentStoreExporterTest {
     }
 
     @Test
-    void thatInterceptorsCountContentStoreWrites() throws Exception {
+    void thatInterceptorsCountContentStoreWrites() {
         String topic = "interceptor-topic";
         double pages = sample("dc_content_stream_pagination_page_publish_count_total", topic);
         double entries = sample("dc_content_stream_buffer_pagination_entry_count_total", topic);
         double documents = sample("dc_content_stream_buffer_entry_document_count_total", topic);
         double positions = sample("dc_content_stream_pagination_entry_publish_position_count_total", topic);
 
-        ContentStoreExporter.Paginate.intercept(() -> null, topic);
-        ContentStoreExporter.Entry.intercept(() -> null, topic);
-        ContentStoreExporter.Document.intercept(() -> null, topic);
-        ContentStoreExporter.Publish.intercept(() -> null, topic, new String[]{"1", "2"});
+        ContentStoreExporter.Paginate.exit(ContentStoreExporter.Paginate.enter(topic), topic);
+        ContentStoreExporter.Entry.exit(topic, null);
+        ContentStoreExporter.Entry.exit(topic, new IllegalStateException("not buffered"));
+        ContentStoreExporter.Document.exit(topic, null);
+        ContentStoreExporter.Publish.exit(ContentStoreExporter.Publish.enter(topic), topic, new String[]{"1", "2"});
 
         assertEquals(pages + 1, sample("dc_content_stream_pagination_page_publish_count_total", topic));
         assertEquals(entries + 1, sample("dc_content_stream_buffer_pagination_entry_count_total", topic));

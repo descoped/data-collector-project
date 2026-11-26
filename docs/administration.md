@@ -258,7 +258,6 @@ services these modules `use`; every other jar moves to the class path directory.
 --add-exports java.base/sun.nio.ch=lmdbjava
 --add-reads io.descoped.dc.core=ALL-UNNAMED
 --add-opens io.descoped.dc.core/io.descoped.dc.core=ALL-UNNAMED
---add-reads io.descoped.dc.content.rawdata=io.descoped.dc.core
 --add-modules ALL-MODULE-PATH
 --module-path /opt/dc/lib
 --class-path /opt/dc/classpath/*

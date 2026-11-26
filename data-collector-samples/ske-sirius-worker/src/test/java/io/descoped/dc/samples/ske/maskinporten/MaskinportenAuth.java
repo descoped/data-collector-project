@@ -88,7 +88,7 @@ public class MaskinportenAuth {
         // Create JWT Grant and Sign
         return JWT.create()
                 .withHeader(headerClaims)
-                .withAudience(MASKINPORTEN_NO)
+                .withAudience(maskinportenURL)
                 .withClaim("scope", "folkeregister:deling/svalbardregister folkeregister:deling/offentligmedhjemmel")
                 .withIssuer(clientId)
                 .withExpiresAt(Date.from(Instant.now().atOffset(ZoneOffset.UTC).plusSeconds(expirationInSeconds).toInstant()))
@@ -100,7 +100,7 @@ public class MaskinportenAuth {
     public String getMaskinportenJwtAccessToken(String jwtGrant) {
         String payload = String.format("grant_type=%s&assertion=%s", "urn:ietf:params:oauth:grant-type:jwt-bearer", jwtGrant);
         Request request = Request.newRequestBuilder()
-                .url(MASKINPORTEN_NO + "/token/v1/token")
+                .url(maskinportenURL + "token/v1/token")
 //                .header("Accept", "application/xml")
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .POST(payload.getBytes())

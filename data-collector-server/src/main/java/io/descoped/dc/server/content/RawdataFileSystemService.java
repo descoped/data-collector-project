@@ -103,7 +103,9 @@ public class RawdataFileSystemService implements Service {
 
     @Override
     public void stop() {
-        if (!closed.compareAndSet(false, true)) {
+        // the first call stops the exporter and waits for it, up to a second; a later call waits again
+        closed.set(true);
+        if (consumerFuture != null) {
             int retryCount = 0;
             while (!consumerFuture.isDone()) {
                 if (retryCount > 10) {

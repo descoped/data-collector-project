@@ -111,8 +111,7 @@ explains every skipped test.
 A test tagged `@Tag("live")` calls a real public API. The default build leaves these tests out, so an outage at the
 source never fails a pull request; `./mvnw verify -P live` runs only them. The workflow `live.yml` runs them weekly
 and on demand. Today they are the brreg (Enhetsregisteret) tests: the feed and page tests in `enhetsregisteret-worker`,
-the bulk download, and the JSON token parser in core that reads the bulk file; and `HttpClientExporterTest` in core,
-which sends two requests to www.google.com through the metrics agent. The bulk download takes over an hour
+the bulk download, and the JSON token parser in core that reads the bulk file. The bulk download takes over an hour
 and logs some 150 MB. To run one live test, keep `-P live`, or the tag filter leaves it out and the build passes
 without running it:
 
@@ -412,9 +411,10 @@ MetricsAgent.premain(null, ByteBuddyAgent.install());
 ```
 
 On JDK 21 and later, loading an agent at run time needs `-XX:+EnableDynamicAgentLoading` to run without a warning, or
-start the JVM with `-javaagent:<byte-buddy-agent jar>`. The agent rewrites the `ContentStore` implementation to call
-`io.descoped.dc.core.content.ContentStoreExporter`; on the module path, the connector module must then read
-`io.descoped.dc.core`. The server's start script passes `--add-reads io.descoped.dc.content.rawdata=io.descoped.dc.core`.
+start the JVM with `-javaagent:<byte-buddy-agent jar>`. The agent inlines ByteBuddy `Advice` into the client and the
+`ContentStore` implementations, which calls public methods of `io.descoped.dc.core.http.HttpClientExporter` and
+`io.descoped.dc.core.content.ContentStoreExporter`; it gives a connector module on the module path a read edge to
+`io.descoped.dc.core` itself, and retransforms classes that were loaded before it.
 The metric names are listed in [Architecture](architecture.md#metrics-and-monitoring).
 
 ## The HTTP client

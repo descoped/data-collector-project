@@ -124,8 +124,9 @@ public class RecoveryWorker {
                 monitor.setEnded();
                 throw new RuntimeException(e);
             } finally {
-                recoveryContentStream.closeAndRemoveProducer(sourceTopic);
-                contentStream.closeAndRemoveConsumer(targetTopic);
+                // the producer writes the target topic and the consumer reads the source topic
+                recoveryContentStream.closeAndRemoveProducer(targetTopic);
+                contentStream.closeAndRemoveConsumer(sourceTopic);
             }
 
             if (closed.get()) {

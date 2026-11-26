@@ -19,13 +19,13 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.descoped.dc.server.db.SequenceDbHelper.getSequenceDatabaseLocation;
@@ -170,17 +170,20 @@ public class IntegrityCheckService implements Service {
                 .map(job -> {
                     IntegrityCheckJobSummary.Summary summary = job.getSummary();
                     return new JobStatus(summary.topic, summary.status);
-                }).collect(Collectors.toList());
+                }).toList();
 
-        List<JobStatus> previouslyCompletedJobs = getPreviouslyCompletedJobs();
+        return merge(jobStatusList, getPreviouslyCompletedJobs());
+    }
 
-        // merge previous completed jobs - restore from file system
+    // the jobs held in memory, then each completed job on disk that is not among them
+    static List<JobStatus> merge(List<JobStatus> jobStatusList, List<JobStatus> previouslyCompletedJobs) {
+        List<JobStatus> merged = new ArrayList<>(jobStatusList);
         for (JobStatus previousCompletedJob : previouslyCompletedJobs) {
-            if (!jobStatusList.contains(previousCompletedJob)) {
-                jobStatusList.addAll(previouslyCompletedJobs);
+            if (!merged.contains(previousCompletedJob)) {
+                merged.add(previousCompletedJob);
             }
         }
-        return jobStatusList;
+        return merged;
     }
 
     List<JobStatus> getPreviouslyCompletedJobs() {
