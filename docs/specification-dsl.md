@@ -78,6 +78,7 @@ empty `Security`. When a `SpecificationContext` is present but sets no topic, an
 | Write | `SpecificationBuilder.serialize()` | Pretty-printed JSON. |
 | Write | `SpecificationBuilder.serializeAsYaml()` | YAML. |
 | Write | `NodeBuilder.serialize()`, `LeafNodeBuilder.serialize()` | Pretty-printed JSON of a single node. |
+| Write | `NodeBuilder.serializeAsYaml()` | YAML of a single node. |
 
 The server reads the body of `PUT /tasks` with `Specification.deserialize` (`TaskController`). The test
 `ExampleSpecificationsTest` reads and builds every file in `examples/specs` and the server's `page-test.json` the same
@@ -439,7 +440,7 @@ the server's module path or class path. The name is looked up when the step runs
 written as JSON only when a provider registers the class. `ProcessHandler` creates the processor with
 `ObjectCreator.newInstance`, which fills constructor parameters from the worker's services, and calls
 `process(ExecutionContext)` with the current context and response. The step fails with `A variable is missing!` when
-none of `requiredOutputs` is among the processor's output variables; with an empty list it always fails.
+any of `requiredOutputs` is not among the processor's output variables; an empty list passes.
 
 #### Console
 
