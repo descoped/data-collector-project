@@ -195,7 +195,6 @@
                 <configuration>
                     <argLine>
                         @{argLine}
-                        -XX:+EnableDynamicAgentLoading
                         --add-opens=java.base/java.nio=lmdbjava
                         --add-exports=java.base/sun.nio.ch=lmdbjava
                         --add-opens=io.descoped.dc.server/io.descoped.dc.server.task=ALL-UNNAMED

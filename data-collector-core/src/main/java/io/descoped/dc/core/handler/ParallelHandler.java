@@ -15,6 +15,7 @@ import io.descoped.dc.api.node.Parallel;
 import io.descoped.dc.api.security.Masking;
 import io.descoped.dc.core.executor.Executor;
 import io.descoped.dc.core.executor.FixedThreadPool;
+import io.descoped.dc.core.observer.EngineObservers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -234,6 +235,8 @@ public class ParallelHandler extends AbstractNodeHandler<Parallel> {
         if (ParallelHandler.countNumberOfIterations.get() > -1) {
             ParallelHandler.countNumberOfIterations.incrementAndGet();
         }
+
+        EngineObservers.instance().entryFannedOut(EngineObservers.nodeEvent(node));
 
         cancelCallback.accept(false);
         return parallelFuture;

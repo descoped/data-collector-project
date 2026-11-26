@@ -36,7 +36,7 @@ except `data-collector-testutils` is a named JPMS module.
 | `data-collector-project` | n/a | Parent and aggregator. Holds the dependency versions as properties. |
 | `data-collector-bom` | n/a | BOM. Manages the published dc modules. |
 | `data-collector-api` | `io.descoped.dc.api` | The specification DSL (`Builders`, `Specification`, `node`, `node.builder`), the expression language, the execution context, the HTTP client interfaces, the content store SPI, health and metrics interfaces. |
-| `data-collector-core` | `io.descoped.dc.core` | The engine: `Worker`, `Executor`, the node handlers, the `java.net.http` client, client certificates, the Maskinporten JWT grant, worker health, the ByteBuddy metrics agents. |
+| `data-collector-core` | `io.descoped.dc.core` | The engine: `Worker`, `Executor`, the node handlers, the `java.net.http` client, client certificates, the Maskinporten JWT grant, worker health, the engine observers and their Prometheus metrics. |
 | `data-collector-connector-content-stream-discarding` | `io.descoped.dc.content.discarding` | Content store provider `discarding`: keeps the last published position in memory and drops the content. The engine's default connector. |
 | `data-collector-connector-content-stream-rawdata` | `io.descoped.dc.content.rawdata` | Content store provider `rawdata`: writes content to rawdata-client topics, optionally encrypted. |
 | `data-collector-server-base` | `io.descoped.dc.application` | The Undertow application: discovery of components, services and controllers, authentication, routing, CORS, health, Prometheus metrics. |
@@ -396,7 +396,7 @@ The endpoints are described in [REST API](rest-api.md).
 
 ### The server (data-collector-server)
 
-`io.descoped.dc.server.Server.main` installs the metrics agent, builds the configuration (in order:
+`io.descoped.dc.server.Server.main` builds the configuration (in order:
 `application-defaults.properties` from the class path, `/conf/application-defaults.properties`,
 `/conf/application.properties`, `/conf/application-override.properties`, environment variables with the prefix `DC_`,
 system properties) and starts the `UndertowApplication`. When `data.collector.sslBundle.provider` is set, it passes a
@@ -439,18 +439,28 @@ finds to `tail-report.json`.
 
 ### Prometheus metrics
 
-`io.descoped.dc.core.metrics.MetricsAgent.premain(String, Instrumentation)` installs two ByteBuddy agents.
-`Server.main` calls it with `ByteBuddyAgent.install()`; the server image also starts the JVM with
-`-javaagent:<byte-buddy-agent jar>`. A library user who wants these metrics calls `MetricsAgent.premain` the same way.
+The engine reports what it does to the engine observers, `io.descoped.dc.api.observer.EngineObserver`, the
+providers that `java.util.ServiceLoader` finds; `io.descoped.dc.core.metrics.PrometheusEngineObserver` is core's own.
+Nobody installs anything: a specification, a library user and the server get the same metrics.
 
-- `HttpClientAgent` intercepts `send` and `sendAsync` on every `io.descoped.dc.api.http.Client` implementation
-  (`HttpClientExporter.Send`, `HttpClientExporter.SendAsync`), and `execute` on `GetHandler`
-  (`HttpClientExporter.GetHandlerInterceptor`, which counts failures of the whole GET step).
-- `ContentStoreAgent` intercepts `addPaginationDocument`, `bufferPaginationEntryDocument`, `bufferDocument` and
-  `publish` on every `ContentStore` implementation (`ContentStoreExporter`).
+| Event | Reported by |
+|---|---|
+| a worker starts and finishes | `Worker`, through a `WorkerObserver` of its own that runs first |
+| a node executes | `Executor.execute`, the one place every node runs through |
+| a request is sent, answered or fails | `ObservedClient`, which `Worker` wraps around the client it registers |
+| a request is tried again | `OperationHandler`, in its retry loop |
+| a GET step fails | `GetHandler` |
+| a page completes, an entry fans out | `PaginationLifecycle`, `ParallelHandler` |
+| the content store adds a page, buffers, publishes | `ObservedContentStore`, which `Worker` wraps around the store it registers |
 
-The interceptors are ByteBuddy `Advice`, inlined into the methods. 2.x used `MethodDelegation` with `@SuperCall`,
-whose helper classes ByteBuddy cannot define in a named module on JDK 27, so no metric was recorded (#25).
+The engine calls the observers synchronously, on its own thread, in the order of their class names. A
+`RuntimeException` an observer throws is logged once per observer and event, with its class only, and never fails the
+engine; an `Error` is not caught. The events
+carry ids, node types, the request's location and topics; never headers, bodies or configuration values. An event
+that takes time returns an `Observation`, closed when the work ends: a timer here, a span for a tracing provider.
+
+2.x measured the client and the content store with ByteBuddy agents that rewrote their methods; under JDK 27's named
+modules they recorded nothing (#25), and 3.0.0 has no agent.
 
 | Metric | Type | Labels | Measures |
 |---|---|---|---|
@@ -464,6 +474,13 @@ whose helper classes ByteBuddy cannot define in a named module on JDK 27, so no 
 | `dc_content_stream_buffer_entry_document_count` | counter | `topic` | Documents buffered |
 | `dc_content_stream_pagination_entry_publish_position_count` | counter | `topic` | Positions published |
 | `dc_content_stream_pagination_entry_publish_position_duration` | histogram | `topic` | Duration of `publish` |
+| `dc_client_request_retry` | counter | `location` | Requests tried again after a failure |
+| `dc_worker_started` | counter | `specification` | Workers started |
+| `dc_worker_finished` | counter | `specification`, `status` | Workers finished: `COMPLETED`, `CANCELED` or `FAILED` |
+| `dc_node_duration` | histogram | `type` | Node execution duration in seconds, by node type (`Get`, `Paginate`, …) |
+| `dc_node_failure` | counter | `type` | Node executions that threw |
+| `dc_pagination_page` | counter | `node` | Pages completed, by the paginate node's id |
+| `dc_parallel_entry` | counter | | Entries fanned out by parallel nodes |
 | `dc_application_since` | gauge | | Start time of the application, in epoch milliseconds |
 | `dc_application_uptime` | gauge | | Set only by `MetricsApplicationResource.trackUptime()`, which no main code calls, so it stays 0 |
 

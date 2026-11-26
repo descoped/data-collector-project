@@ -15,15 +15,19 @@ import io.descoped.dc.api.node.NodeWithId;
 import io.descoped.dc.api.node.Security;
 import io.descoped.dc.api.node.builder.NodeBuilder;
 import io.descoped.dc.api.node.builder.SpecificationBuilder;
+import io.descoped.dc.api.observer.WorkerEvent;
 import io.descoped.dc.api.security.BusinessSSLResource;
 import io.descoped.dc.api.security.Masking;
 import io.descoped.dc.api.services.Services;
 import io.descoped.dc.api.ids.TimeOrderedIds;
 import io.descoped.dc.api.util.CommonUtils;
 import io.descoped.dc.api.util.JsonParser;
+import io.descoped.dc.core.content.ObservedContentStore;
 import io.descoped.dc.core.handler.ParallelHandler;
 import io.descoped.dc.core.health.HealthThreadsResource;
 import io.descoped.dc.core.health.HealthWorkerMonitor;
+import io.descoped.dc.core.http.ObservedClient;
+import io.descoped.dc.core.observer.EngineObservers;
 import io.descoped.dc.core.security.CertificateContext;
 import io.descoped.dc.core.security.CertificateFactory;
 import io.descoped.service.provider.api.ProviderConfigurator;
@@ -67,7 +71,8 @@ public class Worker {
      *
      * @param specificationId                        the specification's id
      * @param name                                   the specification's name
-     * @param workerObservers                        the observers to tell when the worker starts and finishes
+     * @param workerObservers                        the observers to tell when the worker starts and finishes; the engine
+     *                                               observers are told first when it starts, and last when it finishes
      * @param node                                   the start node
      * @param context                                the execution context
      * @param keepContentStoreOpenOnWorkerCompletion whether the topic is left open when the worker ends
@@ -75,11 +80,22 @@ public class Worker {
     public Worker(String specificationId, String name, List<WorkerObserver> workerObservers, Node node, ExecutionContext context, boolean keepContentStoreOpenOnWorkerCompletion) {
         this.specificationId = specificationId;
         this.name = name;
-        this.workerObservers = workerObservers;
+        this.workerObservers = withEngineObservers(name, workerObservers);
         this.workerId = TimeOrderedIds.generate();
         this.node = node;
         this.context = context;
         this.keepContentStoreOpenOnWorkerCompletion = keepContentStoreOpenOnWorkerCompletion;
+    }
+
+    // the engine observers hear of the worker through a worker observer of their own, the first one
+    private static List<WorkerObserver> withEngineObservers(String name, List<WorkerObserver> workerObservers) {
+        EngineObservers engineObservers = EngineObservers.instance();
+        List<WorkerObserver> observers = new ArrayList<>(workerObservers.size() + 1);
+        observers.add(new WorkerObserver(
+                observable -> engineObservers.workerStarted(new WorkerEvent(observable.workerId(), observable.specificationId(), name)),
+                (observable, status) -> engineObservers.workerFinished(new WorkerEvent(observable.workerId(), observable.specificationId(), name), status.name())));
+        observers.addAll(workerObservers);
+        return observers;
     }
 
     /**
@@ -688,7 +704,7 @@ public class Worker {
                 LOG.warn("ContentStore should be provided to WorkerBuilder! Creating a new instance.");
                 contentStore = ProviderConfigurator.configure(ContentStoreInitializer.class, configurationMap.get(CONTENT_STREAM_CONNECTOR), configurationMap.asMap());
             }
-            services.register(ContentStore.class, contentStore);
+            services.register(ContentStore.class, ObservedContentStore.of(contentStore));
 
             if (!headers.asMap().isEmpty()) {
                 globalState(Headers.class, headers);
@@ -728,7 +744,7 @@ public class Worker {
             clientBuilder.connectTimeout(Duration.ofSeconds(Long.parseLong(configurationMap.get(HTTP_CLIENT_TIMEOUT_SECONDS))));
             Client client = clientBuilder.build();
             LOG.info("Configured HttpClient version: {}", client.version());
-            services.register(Client.class, client);
+            services.register(Client.class, ObservedClient.of(client));
         }
 
         private CertificateFactory createSslFactory() {

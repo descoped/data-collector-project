@@ -31,9 +31,9 @@ FROM gcr.io/distroless/base-nossl-debian13:debug@sha256:2548abf86d3e319cdfd0184d
 # runtimes. jdeps finds the modules of the JDK that dc and its libraries use, in the classes of every jar taken out
 # into one directory (jdeps cannot resolve the jars as modules: some have no valid module name, some require a module
 # statically that is not there), and the modules of the module path require more (methanol jdk.httpserver), which
-# their descriptors name; jlink links them all. Modules are added that no class names: java.instrument (the byte-buddy
-# agent, -javaagent, that ContentStoreAgent needs), jdk.charsets (character sets a source may name that java.base
-# lacks) and jdk.localedata. /jre, of the regular and the distroless image, has no debug information, and of the
+# their descriptors name; jlink links them all. Modules are added that no class names: jdk.charsets (character sets a
+# source may name that java.base lacks) and jdk.localedata; the debug runtime also has java.instrument, for a
+# diagnostic agent given with JAVA_TOOL_OPTIONS. /jre, of the regular and the distroless image, has no debug information, and of the
 # archives of classes (CDS) that jlink writes only the one of the default settings of the JVM. /jre-debug, of the debug image, keeps the debug information and has the
 # modules of diagnostics.
 # Temurin 27 is built on Ubuntu 26.04 (resolute) only; the runtime that jlink makes from it does not depend on the
@@ -45,7 +45,7 @@ COPY target/data-collector-*.jar /dc/lib/
 COPY docker/SplitModulePath.java docker/java.args /build/
 
 # jdeps writes its warnings before the list of modules, its last line. pipefail and the test make a failure of jdeps
-# stop the build with its own message. The agent gets a name without its version, so java.args can name it.
+# stop the build with its own message.
 # java.args allows what lmdbjava's libraries do and JDK 27 warns about: jffi (class path) loads its native library,
 # and lmdbjava calls sun.misc.Unsafe's memory-access methods.
 SHELL ["/bin/bash", "-c"]
@@ -59,17 +59,13 @@ RUN set -o pipefail \
     && echo "jdeps: ${modules}" \
     && [ -n "${modules}" ] \
     && java /build/SplitModulePath.java /dc/lib /dc/classpath io.descoped.dc.server \
-    && agent="$(find /dc -name 'byte-buddy-agent-*.jar')" \
-    && [ -n "${agent}" ] \
-    && dir="$(dirname "${agent}")" \
-    && mv "${agent}" "${dir}/byte-buddy-agent.jar" \
-    && sed "s|@AGENT@|/opt/dc${dir#/dc}/byte-buddy-agent.jar|" /build/java.args > /dc/java.args \
+    && cp /build/java.args /dc/java.args \
     && jdk="$(java --list-modules | sed 's/@.*//')" \
     && required="$(for jar in /dc/lib/*.jar; do jar --describe-module --file "${jar}"; done \
             | awk '$1 == "requires" {print $2}' | sort -u | command grep -x -F "${jdk}" | paste -s -d, -)" \
     && echo "required by the module path: ${required}" \
     && modules="${modules},${required}" \
-    && jlink --add-modules "${modules},java.instrument,jdk.charsets,jdk.localedata" \
+    && jlink --add-modules "${modules},jdk.charsets,jdk.localedata" \
             --strip-debug --no-man-pages --no-header-files --generate-cds-archive --output /jre \
     && rm -f /jre/lib/server/classes_no*.jsa \
     && /jre/bin/java -Xshare:on --list-modules > /dev/null \

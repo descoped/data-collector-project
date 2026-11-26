@@ -15,10 +15,6 @@ module io.descoped.dc.server {
     // The rawdata and secrets providers are runtime dependencies: their API modules declare `uses`, so the
     // providers resolve on the module path without being required.
 
-    requires java.instrument;
-
-    requires net.bytebuddy;
-    requires net.bytebuddy.agent;
     requires org.slf4j;
     requires jul.to.slf4j;
     requires com.fasterxml.jackson.databind;

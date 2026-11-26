@@ -253,7 +253,8 @@ services these modules `use`; every other jar moves to the class path directory.
 ```text
 -XX:+UseContainerSupport
 -XX:+StartAttachListener
--javaagent:/opt/dc/lib/byte-buddy-agent.jar
+--enable-native-access=ALL-UNNAMED
+--sun-misc-unsafe-memory-access=allow
 --add-opens java.base/java.nio=lmdbjava
 --add-exports java.base/sun.nio.ch=lmdbjava
 --add-reads io.descoped.dc.core=ALL-UNNAMED
@@ -264,7 +265,8 @@ services these modules `use`; every other jar moves to the class path directory.
 --module io.descoped.dc.server/io.descoped.dc.server.Server
 ```
 
-The Byte Buddy agent instruments the HTTP client and the content store for the Prometheus metrics.
+No Java agent is loaded: the engine reports to its observers itself (see
+[Architecture: metrics and monitoring](architecture.md#metrics-and-monitoring)).
 
 ### Building
 
@@ -331,7 +333,7 @@ the container.
 jars into `target/dependency` (module path) and `target/classpath` (class path) with `docker/SplitModulePath.java`,
 and starts `io.descoped.dc.server.Server` in the foreground. It must be run from `data-collector-server`. With
 `ENABLE_JMX_REMOTE_DEBUGGING=true` it opens JMX remote on port 9992. Its `java` command adds
-`--add-opens=java.base/java.nio=lmdbjava` and the Byte Buddy agent, but not the other JPMS switches of `java.args`.
+`--add-opens=java.base/java.nio=lmdbjava`, but not the other JPMS switches of `java.args`.
 
 The working directory is `data-collector-server`, so the log file is `data-collector-server/application.log` and the
 indexes go to `data-collector-server/lmdb`. Without `/conf`, the class path defaults apply: port 9990,
