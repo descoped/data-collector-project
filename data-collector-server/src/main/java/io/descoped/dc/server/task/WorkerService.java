@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -35,7 +36,11 @@ public class WorkerService implements Service {
 
     private static final Logger LOG = LoggerFactory.getLogger(WorkerService.class);
 
+    // how long stop() waits for the workers it cancels
+    static final String STOP_TIMEOUT = "data.collector.worker.stop.timeoutInSeconds";
+
     private final DynamicConfiguration configuration;
+    private final Duration stopTimeout;
     private final MetricsResourceFactory metricsResourceFactory;
     private final HealthResourceFactory healthResourceFactory;
     private final WorkManager workManager = new WorkManager();
@@ -82,6 +87,7 @@ public class WorkerService implements Service {
                          boolean printExecutionPlan,
                          Consumer<WorkerLifecycleCallback> workerLifecycleCallback) {
         this.configuration = configuration;
+        this.stopTimeout = stopTimeout(configuration);
         this.metricsResourceFactory = metricsResourceFactory;
         this.healthResourceFactory = healthResourceFactory;
         this.businessSSLResourceComponent = businessSSLResourceComponent;
@@ -225,10 +231,21 @@ public class WorkerService implements Service {
 
     @Override
     public void stop() {
+        workManager.cancel(stopTimeout);
+    }
+
+    // read at start-up, so a value that is not a number of seconds fails then, not when the server stops (#45)
+    static Duration stopTimeout(DynamicConfiguration configuration) {
+        String value = configuration.find(STOP_TIMEOUT).orElse("30");
+        long seconds;
         try {
-            workManager.cancel();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            seconds = Long.parseLong(value.trim());
+        } catch (NumberFormatException _) {
+            throw new IllegalArgumentException(STOP_TIMEOUT + " is not a whole number of seconds");
         }
+        if (seconds < 0) {
+            throw new IllegalArgumentException(STOP_TIMEOUT + " is negative");
+        }
+        return Duration.ofSeconds(seconds);
     }
 }

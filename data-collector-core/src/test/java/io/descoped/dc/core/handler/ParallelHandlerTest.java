@@ -77,4 +77,27 @@ class ParallelHandlerTest {
 
         assertThrows(RuntimeException.class, worker::run);
     }
+
+    // #24: outside a paginate, the worker waits for the entries it started, so a failing entry fails it too
+    @Test
+    void thatAFailingEntryFailsTheWorker() {
+        SpecificationBuilder specification = Specification.start("test", "page", "page")
+                .configure(context().topic("topic"))
+                .function(get("page")
+                        .url(testServer.testURL("/api/events?position=1&pageSize=5"))
+                        .pipe(sequence(xpath("/feed/entry"))
+                                .expected(xpath("/entry/id")))
+                        .pipe(parallel(xpath("/feed/entry"))
+                                .variable("position", xpath("/entry/id"))
+                                .pipe(get("entry")
+                                        .url(testServer.testURL("/api/does-not-exist"))
+                                        .validate(status().success(200, 299)))));
+        Worker worker = Worker.newBuilder()
+                .specification(specification)
+                .configuration(Map.of("data.collector.http.request.napOnRetry", "1"))
+                .header("Accept", "application/xml")
+                .build();
+
+        assertThrows(RuntimeException.class, worker::run);
+    }
 }

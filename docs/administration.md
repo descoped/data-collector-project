@@ -132,6 +132,15 @@ Read by the engine (`data-collector-core`) when a task is built. Every task gets
 | `data.collector.print-execution-plan` | `false` | `true` logs each task's specification (as YAML) and its execution plan when the task starts. |
 | `data.collector.secret-headers` | not set | Further secret headers, comma-separated, for services whose security schemes use headers of their own. See [Secrets in logs, messages and health](#secrets-in-logs-messages-and-health). |
 
+### Tasks
+
+Read by the server (`data-collector-server`) at start-up; a value that is not a whole, non-negative number of seconds
+stops the start.
+
+| Key | Code default | Meaning |
+|---|---|---|
+| `data.collector.worker.stop.timeoutInSeconds` | 30 | When the server stops, how long it waits for the running tasks it cancels before it closes the content store. |
+
 ### Secrets in logs, messages and health
 
 dc keeps secrets out of its logs, exception messages, `/health` and message manifests:

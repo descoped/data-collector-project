@@ -157,7 +157,8 @@ public class Worker {
     }
 
     /**
-     * Runs the worker on the calling thread: tells the observers it starts, executes the start node, closes the topic
+     * Runs the worker on the calling thread: tells the observers it starts, executes the start node, waits for the
+     * tasks it left running ({@link WorkerTasks}; the first that failed fails the worker), closes the topic
      * (unless the content store is kept open) and shuts the thread pool down. Then it sets the status on the monitor
      * ({@link WorkerStatus#CANCELED} when terminated, {@link WorkerStatus#FAILED} on another failure) and tells the
      * observers, in reverse order, that it finished. A failure is rethrown, a checked exception wrapped in a
@@ -189,6 +190,10 @@ public class Worker {
             // Execute start node
             //
             ExecutionContext output = Executor.execute(node, context);
+            // the tasks the start node left running, such as parallel entries outside a paginate (#24)
+            if (context.services().contains(WorkerTasks.class)) {
+                context.services().get(WorkerTasks.class).awaitAll();
+            }
             //
             // =============================================================================================
 
@@ -396,7 +401,8 @@ public class Worker {
         private ConfigurationMap configurationMap;
         private final Headers headers = new Headers();
         private final Services services = Services.create();
-        private final Map<Object, Object> globalState = new LinkedHashMap<>();
+        // shared by every context of the worker, on every thread of its pool (#46)
+        private final Map<Object, Object> globalState = Collections.synchronizedMap(new LinkedHashMap<>());
         private final Map<String, Object> variables = new LinkedHashMap<>();
         private final Map<Object, Object> state = new LinkedHashMap<>();
         private Path sslFactoryScanDirectory;
@@ -634,6 +640,7 @@ public class Worker {
             services.register(ConfigurationMap.class, configurationMap);
 
             services.register(Termination.class, Termination.create());
+            services.register(WorkerTasks.class, new WorkerTasks());
             services.register(BufferedReordering.class, new BufferedReordering<String>());
             services.register(FixedThreadPool.class, FixedThreadPool.newInstance(
                     configurationMap.contains("data.collector.worker.threads") ? Integer.parseInt(configurationMap.get("data.collector.worker.threads")) : -1)

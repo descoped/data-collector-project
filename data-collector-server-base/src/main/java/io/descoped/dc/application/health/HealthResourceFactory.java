@@ -12,6 +12,7 @@ import io.github.classgraph.ScanResult;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,7 +33,8 @@ public class HealthResourceFactory {
     private HealthResourceFactory() {
         healthResourceClasses = loadHealthResources();
         healthResources = createHealthResources(healthResourceClasses);
-        dynamicHealthResources = new LinkedHashMap<>();
+        // workers add and remove their resources while /health reads them (#46)
+        dynamicHealthResources = Collections.synchronizedMap(new LinkedHashMap<>());
     }
 
     /**
@@ -63,8 +65,12 @@ public class HealthResourceFactory {
     public List<HealthResource> getHealthResources() {
         SortedSet<HealthResource> resourceList = new TreeSet<>(new HealthResourcePriorityComparator());
         resourceList.addAll(healthResources.values());
-        resourceList.addAll(dynamicHealthResources.values());
-        if (resourceList.size() != (healthResources.size() + dynamicHealthResources.size())) {
+        List<HealthResource> dynamic;
+        synchronized (dynamicHealthResources) {
+            dynamic = new ArrayList<>(dynamicHealthResources.values());
+        }
+        resourceList.addAll(dynamic);
+        if (resourceList.size() != (healthResources.size() + dynamic.size())) {
             throw new IllegalStateException("Something is wrong with comparator. Elements are lost!");
         }
         return new ArrayList<>(resourceList);

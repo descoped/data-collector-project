@@ -8,13 +8,16 @@ import io.descoped.dc.core.executor.WorkerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -56,14 +59,20 @@ public class WorkManager {
 
         CompletableFuture<ExecutionContext> future = worker
                 .runAsync()
-                .handle((output, throwable) -> {
-                    LOG.error("Worker failed: {}", CommonUtils.captureStackTrace(throwable));
-                    return output;
+                .whenComplete((output, throwable) -> {
+                    // logged only on failure: on success throwable is null (#45)
+                    if (throwable != null) {
+                        LOG.error("Worker failed: {}", CommonUtils.captureStackTrace(throwable));
+                    }
                 });
 
         workerFutures.put(jobId, future);
 
         return jobId;
+    }
+
+    CompletableFuture<ExecutionContext> future(JobId jobId) {
+        return workerFutures.get(jobId);
     }
 
     List<Task> list() {
@@ -97,9 +106,23 @@ public class WorkManager {
         }
     }
 
-    void cancel() {
-        CompletableFuture.allOf(workerFutures.values().toArray(new CompletableFuture<?>[0]))
-                .completeOnTimeout(null, 0, TimeUnit.MILLISECONDS);
+    // asks every running worker to stop and waits for them, at most the timeout, so the content store is not closed
+    // under them (#45)
+    void cancel(Duration timeout) {
+        workerFutures.keySet().forEach(jobId -> {
+            LOG.warn("Cancel worker: {}", jobId.workerId);
+            jobId.worker.terminate();
+        });
+        try {
+            CompletableFuture.allOf(workerFutures.values().toArray(new CompletableFuture<?>[0]))
+                    .get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (TimeoutException _) {
+            LOG.warn("Workers still running after {} seconds: {}", timeout.toSeconds(), workerFutures.keySet().stream().map(jobId -> jobId.workerId).toList());
+        } catch (ExecutionException _) {
+            // a worker that failed is logged when it completes
+        } catch (InterruptedException _) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     static class JobId {
