@@ -180,7 +180,9 @@ public abstract class OperationHandler<T extends Operation> extends AbstractNode
             // the body handler belongs to this operation: a request in a step reads its own response, and must not
             // take over (and restart) the file this operation's response is streamed from; the steps read that file
             // through the response
-            stepInput.releaseState(io.descoped.dc.api.http.BodyHandler.class);
+            if (stepInput.state(io.descoped.dc.api.http.BodyHandler.class) != null) {
+                stepInput.releaseState(io.descoped.dc.api.http.BodyHandler.class);
+            }
 
             try {
                 ExecutionContext stepOutput = Executor.execute(step, stepInput);
