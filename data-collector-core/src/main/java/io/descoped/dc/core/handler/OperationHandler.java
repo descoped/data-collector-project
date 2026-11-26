@@ -33,6 +33,8 @@ public abstract class OperationHandler<T extends Operation> extends AbstractNode
 
     private static final String RETRY_COUNT = "data.collector.http.request.retryCount";
 
+    private static final String NAP_ON_RETRY = "data.collector.http.request.napOnRetryInMillis";
+
     private static final Logger LOG = LoggerFactory.getLogger(OperationHandler.class);
 
     protected OperationHandler(T node) {
@@ -97,7 +99,7 @@ public abstract class OperationHandler<T extends Operation> extends AbstractNode
         // override default retry count
         ConfigurationMap configurationMap = input.services().get(ConfigurationMap.class);
         int retryCount = configurationMap.contains(RETRY_COUNT) ? Integer.parseInt(configurationMap.get(RETRY_COUNT)) : 3;
-        int napOnRetryInMillis = configurationMap.contains("data.collector.http.request.napOnRetryInMillis") ? Integer.parseInt(configurationMap.get(RETRY_COUNT)) : 150;
+        int napOnRetryInMillis = configurationMap.contains(NAP_ON_RETRY) ? Integer.parseInt(configurationMap.get(NAP_ON_RETRY)) : 150;
 
         /*
          * Execute Request
@@ -163,6 +165,10 @@ public abstract class OperationHandler<T extends Operation> extends AbstractNode
         for (Node step : node.steps()) {
             ExecutionContext stepInput = ExecutionContext.of(input).merge(accumulated);
             stepInput.state(PageContext.Builder.class, pageContextBuilder);
+            // the body handler belongs to this operation: a request in a step reads its own response, and must not
+            // take over (and restart) the file this operation's response is streamed from; the steps read that file
+            // through the response
+            stepInput.releaseState(io.descoped.dc.api.http.BodyHandler.class);
 
             try {
                 ExecutionContext stepOutput = Executor.execute(step, stepInput);
@@ -239,11 +245,22 @@ public abstract class OperationHandler<T extends Operation> extends AbstractNode
         return response;
     }
 
+    // propagate bodyHandler; a file handler receives one request's body, so a retry gets a new one of the same file
+    private static io.descoped.dc.api.http.BodyHandler<?> bodyHandler(ExecutionContext context) {
+        io.descoped.dc.api.http.BodyHandler<?> bodyHandler = context.state(io.descoped.dc.api.http.BodyHandler.class);
+        if (bodyHandler instanceof FileBodyHandler fileBodyHandler && !fileBodyHandler.claim()) {
+            FileBodyHandler next = fileBodyHandler.restart();
+            next.claim();
+            context.state(io.descoped.dc.api.http.BodyHandler.class, next);
+            return next;
+        }
+        return bodyHandler;
+    }
+
     private Response executeRequest(ExecutionContext context, Client client, Request request, int requestTimeout, boolean inRetryWhileState) {
         AtomicReference<Throwable> failureCause = new AtomicReference<>();
 
-        // propagate bodyHandler
-        io.descoped.dc.api.http.BodyHandler<?> bodyHandler = context.state(io.descoped.dc.api.http.BodyHandler.class);
+        io.descoped.dc.api.http.BodyHandler<?> bodyHandler = bodyHandler(context);
 
         CompletableFuture<Response> requestFuture = (bodyHandler == null ? client.sendAsync(request) : client.sendAsync(request, bodyHandler))
                 .exceptionally(throwable -> {

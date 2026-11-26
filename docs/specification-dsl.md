@@ -316,7 +316,8 @@ values are taken from the page's `NextPage` outputs. The list does not filter th
 produced by the steps are returned.
 
 When a `Sequence` in `pipes` splits with `QueryJsonToken` or `QueryXmlToken`, `GetHandler` writes the response body to a
-temporary file (`TempFileBodyHandler`) so that `Sequence` and `Parallel` can stream it.
+temporary file (`TempFileBodyHandler`) so that `Sequence` and `Parallel` can stream it. The file belongs to that
+request: a request in its steps (an `Execute` from a `Parallel` entry) reads its own response.
 
 Request handling, common to all HTTP functions (`OperationHandler`):
 
@@ -514,8 +515,10 @@ A response whose status is a key of `success` is accepted. Any other status fail
 not it is listed in `failed`; `failed` does not change the outcome. The failure message holds the URL, the status, the
 response body and the request and response headers. A failed validation is retried as described under [Get](#get).
 
-When a status has predicates, the handler evaluates them in order until one returns false. In 3.0 the status is
-accepted whatever the predicates return.
+When a status has predicates, it is accepted when one of them holds: the handler evaluates them in order until one
+returns true. A status with predicates none of which holds fails like a status that is not listed: a `404` listed
+with `bodyContains(xpath("/feil/kode"), "SM-001")` and `bodyContains(xpath("/feil/kode"), "SM-002")` is accepted when
+its body has either code, and fails with any other.
 
 Only the status codes in `io.descoped.dc.api.http.HttpStatus` are known: 200 to 206, 300 to 305, 400 to 415 and 500 to
 505. Building a validator with another code fails with `HttpStatusCode is not supported`, and so does a response with
@@ -692,7 +695,12 @@ both nodes read it from there.
 
 - `QueryJsonToken` (`JsonTokenParser`) reads a top-level JSON array and gives each object in it as an entry. Query the
   entries with `QueryJqPath`.
-- `QueryXmlToken` (`XmlTokenParser`) gives no entries in 3.0: its token reader is empty.
+- `QueryXmlToken` (`XmlTokenParser`) reads the document with StAX and gives each child element of the root as an
+  entry: a document of its own whose root is that element, read without namespaces as `QueryXPath` reads a body. Query
+  the entries with `QueryXPath` from their own root: `<hendelser><hendelse>...</hendelse></hendelser>` gives each
+  `hendelse`, queried as `/hendelse/sekvensnummer`. Each entry carries the namespace declarations (`xmlns`,
+  `xmlns:*`) of the root, so a prefixed entry serializes as a document of its own. A DOCTYPE fails, as with
+  `QueryXPath`.
 
 ## Expression language
 
@@ -754,7 +762,7 @@ exception), and the error is logged together with all current variables.
 |---|---|---|
 | `ENV` | `Map` | The keys of the worker's configuration that start with `spec.`, without that prefix: `spec.maskinporten.clientId` is read as `ENV.'maskinporten.clientId'` (keys with dots are quoted). No other configuration value is visible. In the server the configuration is the server's: configuration files, environment variables with the prefix `DC_` (keyed without it) and system properties. |
 | `cast` | `ELCast` | `toInteger(String)`, `toLong(String)`, `toFloat(String)`, `toDouble(String)`. A `null` argument gives `null`. |
-| `convert` | `ELConvert` | `utcDateToEpoc(String)`. In 3.0 it ignores its argument and returns the epoch second of `2020-10-05T00:00:00Z`. |
+| `convert` | `ELConvert` | `utcDateToEpoc(String)`: the epoch second of an ISO date-time. A date with an offset or zone is read with it; one without is read as UTC. |
 | `contentStream` | `ELContentStream` | See below. |
 
 `contentStream` reads the last published position of the run's topic (`global.topic`) from the content store, through

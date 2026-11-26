@@ -160,6 +160,23 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
 - **The rawdata dump stops on the first `stop()`** and waits for its exporter (#32); it waited only on a second call.
 - **`GET /check-integrity` lists each job once** (#33); a completed job still held in memory was listed again for
   each job on disk.
+- **Response predicates decide the outcome** (#28): a status listed with predicates is a success when one of them
+  holds, and a failure otherwise. In 2.x the status was accepted whatever the body held.
+- **`QueryXmlToken` gives entries** (#26): each child element of the root, streamed with StAX, with the root's
+  namespace declarations. Its token reader was empty, so a `Sequence` or `Parallel` split with it gave nothing. A
+  document with a DOCTYPE fails, as with `QueryXPath`.
+- **`data.collector.http.request.napOnRetryInMillis`** is the pause between attempts (#23); it was read from the value
+  of `data.collector.http.request.retryCount`.
+- **A retried request with a body streamed to a file** receives its body (#47): each attempt gets a new handler of the
+  file, and the abandoned attempt is cancelled and writes no more. A request in the steps of a request that streams to a
+  file reads its own response; it used to take over the outer request's file handler.
+- **`convert.utcDateToEpoc(value)`** converts its argument (#30); it returned the epoch second of
+  `2020-10-05T00:00:00Z` whatever it was given.
+- **`HttpStatus.okCodes()`, `redirectionCodes()`, `clientErrorList()`, `clientErrorCodes()` and
+  `serverErrorCodes()`** return their codes (#29); every call threw `ClassCastException`.
+- **`ExecutionContext.globalStateIfAbsent`** stores the supplier's value and returns the value held for the key (#44);
+  it stored the supplier itself.
+- **An `OPTIONS` request is sent as `OPTIONS`** (#27), not as `GET`.
 - `start-collector.sh`: setting an HTTPS proxy no longer drops the HTTP proxy.
 - `-XX:+EnableJVMCI` is no longer passed. Temurin has no Graal compiler, and JDK 27 rejects the option.
 - jffi's classes and its native libraries are the same version.

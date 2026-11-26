@@ -127,7 +127,7 @@ Read by the engine (`data-collector-core`) when a task is built. Every task gets
 | `data.collector.http.client.timeout.seconds` | `20` | Connect timeout of the HTTP client. |
 | `data.collector.http.request.timeout.seconds` | `15` | How long to wait for each response. |
 | `data.collector.http.request.retryCount` | `3` | Attempts per request, counting the first. |
-| `data.collector.http.request.napOnRetryInMillis` | `150` | Pause between attempts, in milliseconds. When this key is set, the code reads the value of `data.collector.http.request.retryCount` as the pause, and fails when that key is not set. |
+| `data.collector.http.request.napOnRetryInMillis` | `150` | Pause between attempts, in milliseconds. |
 | `data.collector.parallel.queueBuffer.threshold` | `-1` (off) | A value above `-1` makes a `Parallel` node wait for its running entries to finish after every this many entries of a page, for responses that are not streamed to a body handler. `0` fails with a division by zero. |
 | `data.collector.print-execution-plan` | `false` | `true` logs each task's specification (as YAML) and its execution plan when the task starts. |
 | `data.collector.secret-headers` | not set | Further secret headers, comma-separated, for services whose security schemes use headers of their own. See [Secrets in logs, messages and health](#secrets-in-logs-messages-and-health). |

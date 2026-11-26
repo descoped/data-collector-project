@@ -4,7 +4,9 @@ import io.descoped.dc.api.util.CommonUtils;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
 
 public class ELConvert {
@@ -18,8 +20,11 @@ public class ELConvert {
 
     public Long utcDateToEpoc(String value) {
         try {
-            TemporalAccessor ta = DateTimeFormatter.ISO_DATE_TIME.parse("2020-10-05T00:00:00.000Z");
-            long epochSecond = LocalDateTime.from(ta).toEpochSecond(ZoneOffset.UTC);
+            TemporalAccessor ta = DateTimeFormatter.ISO_DATE_TIME.parse(value);
+            // a date with an offset or zone is read with it; one without is read as UTC
+            long epochSecond = ta.isSupported(ChronoField.OFFSET_SECONDS)
+                    ? ZonedDateTime.from(ta).toEpochSecond()
+                    : LocalDateTime.from(ta).toEpochSecond(ZoneOffset.UTC);
             return Long.valueOf(epochSecond);
         } catch (RuntimeException e) {
             throw e;

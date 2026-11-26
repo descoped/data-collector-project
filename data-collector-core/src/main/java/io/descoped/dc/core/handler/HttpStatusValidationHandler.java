@@ -33,12 +33,12 @@ public class HttpStatusValidationHandler extends AbstractHandler<HttpStatusValid
         Response response = context.state(Response.class);
         int statusCode = response.statusCode();
 
+        // a status in the success list is a success when it has no predicates, or when one of them holds: a 404 is a
+        // success when its body names one of the allowed errors
         boolean success = false;
         for (Map.Entry<HttpStatus, List<ResponsePredicate>> entry : node.success().entrySet()) {
-            // true when statusCode is in the success list: its predicates are evaluated, but do not decide
             if (entry.getKey().code() == statusCode) {
-                evaluatePredicates(context, entry.getValue());
-                success = true;
+                success = entry.getValue().isEmpty() || anyPredicateHolds(context, entry.getValue());
                 break;
             }
         }
@@ -57,16 +57,16 @@ public class HttpStatusValidationHandler extends AbstractHandler<HttpStatusValid
         return ExecutionContext.empty();
     }
 
-    // the predicates are evaluated until one is false
-    private void evaluatePredicates(ExecutionContext context, List<ResponsePredicate> responsePredicates) {
+    // the predicates are evaluated until one holds
+    private boolean anyPredicateHolds(ExecutionContext context, List<ResponsePredicate> responsePredicates) {
         for (ResponsePredicate responsePredicate : responsePredicates) {
             // response predicate handler must evaluate state(Response.class).body
             ExecutionContext output = Executor.execute(responsePredicate, ExecutionContext.of(context));
-            boolean test = output.state(ResponsePredicate.RESPONSE_PREDICATE_RESULT);
-            if (!test) {
-                break;
+            if (Boolean.TRUE.equals(output.state(ResponsePredicate.RESPONSE_PREDICATE_RESULT))) {
+                return true;
             }
         }
+        return false;
     }
 
     // the message reaches logs and /health: secret headers are masked, and the body is given by length and type only
