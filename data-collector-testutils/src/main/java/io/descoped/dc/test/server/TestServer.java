@@ -12,6 +12,9 @@ import java.net.URL;
 import java.security.SecureRandom;
 import java.util.function.Supplier;
 
+/**
+ * A data collector server for tests, on a port of its own on localhost.
+ */
 public class TestServer implements TestUriResolver {
 
     static final Logger LOG = LoggerFactory.getLogger(TestServer.class);
@@ -22,6 +25,12 @@ public class TestServer implements TestUriResolver {
 
     private final int testServerServicePort;
 
+    /**
+     * Creates the server; it is not started.
+     *
+     * @param configuration         the server's configuration
+     * @param testServerServicePort the port
+     */
     public TestServer(DynamicConfiguration configuration, int testServerServicePort) {
         this.configuration = configuration;
         this.testServerServicePort = testServerServicePort;
@@ -42,22 +51,44 @@ public class TestServer implements TestUriResolver {
                 businessSslResourceProvider != null ? new BusinessSSLResourceSupplier(sslResourceSupplier) : null);
     }
 
+    /**
+     * Creates a server on a free port between 9000 and 9499.
+     *
+     * @param configuration the server's configuration
+     * @return the server, not started
+     */
     public static TestServer create(DynamicConfiguration configuration) {
         return new TestServer(configuration, TestServerFactory.findFreePort(new SecureRandom(), 9000, 9499));
     }
 
+    /**
+     * Starts the server.
+     */
     public void start() {
         application.start();
     }
 
+    /**
+     * Stops the server.
+     */
     public void stop() {
         application.stop();
     }
 
+    /**
+     * The server's host.
+     *
+     * @return the host
+     */
     public String getTestServerHost() {
         return application.getHost();
     }
 
+    /**
+     * The server's port.
+     *
+     * @return the port
+     */
     public int getTestServerServicePort() {
         return testServerServicePort;
     }
@@ -72,10 +103,20 @@ public class TestServer implements TestUriResolver {
         }
     }
 
+    /**
+     * The server's configuration.
+     *
+     * @return the configuration
+     */
     public DynamicConfiguration getConfiguration() {
         return configuration;
     }
 
+    /**
+     * The application the server runs.
+     *
+     * @return the application
+     */
     public UndertowApplication getApplication() {
         return application;
     }

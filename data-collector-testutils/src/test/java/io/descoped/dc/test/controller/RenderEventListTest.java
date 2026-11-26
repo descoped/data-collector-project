@@ -34,7 +34,7 @@ class RenderEventListTest {
     void renderXmlItem() {
         StringWriter output = listResource.renderTemplate("event-list-item-xml.ftl", itemResource.getItemDataModel(1, true, 250, 8, 200));
         String xml = listResource.compactXml(output.toString());
-        xml = itemResource.prettyXml(xml);
+        xml = AbstractResource.prettyXml(xml);
         System.out.printf("%s%n", xml);
         assertTrue(xml.contains("<id>1</id>"), xml);
     }

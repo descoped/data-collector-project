@@ -25,8 +25,7 @@ class TestServerTest {
                 .value("http.cors.allow.max-age", "900")
                 .build();
 
-        TestServerFactory testServerFactory = new TestServerFactory(null);
-        int testServerServicePort = testServerFactory.findFreePort(new Random(), 9000, 9499);
+        int testServerServicePort = TestServerFactory.findFreePort(new Random(), 9000, 9499);
         Phaser phaser = new Phaser(1);
         TestServer testServer = new TestServer(configuration, testServerServicePort);
         testServer.start();

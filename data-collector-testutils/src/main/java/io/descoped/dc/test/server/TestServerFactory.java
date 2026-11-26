@@ -11,6 +11,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
+/**
+ * Creates and keeps the test servers of a test plan, one for each configuration binding.
+ */
 public class TestServerFactory {
 
     private final ConfigurationFactory configurationFactory;
@@ -26,10 +29,24 @@ public class TestServerFactory {
         this.configurationFactory = configurationFactory;
     }
 
+    /**
+     * The factory of the running test plan.
+     *
+     * @return the factory
+     */
     public static TestServerFactory instance() {
         return TestServerFactory.TestServerFactorySingleton.INSTANCE;
     }
 
+    /**
+     * Finds a free port on localhost.
+     *
+     * @param random picks the ports to try
+     * @param from   the lowest port
+     * @param to     the highest port
+     * @return a port that was free when it was tried
+     * @throws IllegalStateException if no port in the range is free
+     */
     @SuppressWarnings("SameParameterValue")
     public static int findFreePort(Random random, int from, int to) {
         int port = pick(random, from, to);
@@ -46,6 +63,8 @@ public class TestServerFactory {
         return from + random.nextInt((to + 1) - from);
     }
 
+    // the socket is opened only to see whether the port is free
+    @SuppressWarnings("try")
     static boolean isLocalPortFree(int port) {
         try {
             try (ServerSocket ignore = new ServerSocket(port)) {
@@ -157,9 +176,21 @@ public class TestServerFactory {
         return testServerResource.getClient();
     }
 
+    /**
+     * Where a test server is bound: to the whole test plan, a test class or a test method.
+     */
     public enum State {
+        /**
+         * Bound to the test plan.
+         */
         CONTAINER,
+        /**
+         * Bound to a test class.
+         */
         CLASS,
+        /**
+         * Bound to a test method.
+         */
         METHOD;
 
         static State of(TestConfigurationBinding key) {
