@@ -176,7 +176,8 @@ The configuration of a test server is built from these sources, a later one winn
 5. environment variables with the prefix `DC_`, without the prefix.
 
 Tests without a profile or override share one server for the whole run. A test method with a profile or override gets
-a server of its own. Each server listens on a free port between 9000 and 9499.
+a server of its own. Each server listens on a free port that the system chooses when it starts (port 0);
+`getTestServerServicePort()` gives it once the server is started.
 
 The mock data API (`MockDataController`):
 

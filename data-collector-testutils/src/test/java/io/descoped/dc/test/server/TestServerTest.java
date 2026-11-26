@@ -3,7 +3,6 @@ package io.descoped.dc.test.server;
 import io.descoped.config.DynamicConfiguration;
 import org.junit.jupiter.api.Test;
 
-import java.util.Random;
 import java.util.concurrent.Phaser;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -25,13 +24,12 @@ class TestServerTest {
                 .value("http.cors.allow.max-age", "900")
                 .build();
 
-        int testServerServicePort = TestServerFactory.findFreePort(new Random(), 9000, 9499);
         Phaser phaser = new Phaser(1);
-        TestServer testServer = new TestServer(configuration, testServerServicePort);
+        TestServer testServer = new TestServer(configuration, 0);
         testServer.start();
 
         assertEquals("0.0.0.0", testServer.getTestServerHost());
-        assertTrue(testServer.getTestServerServicePort() >= 9000 && testServer.getTestServerServicePort() <= 9499);
+        assertTrue(testServer.getTestServerServicePort() > 0, "the port the server is bound to");
 
         assertDoesNotThrow(() -> {
             assertEquals(String.format("http://0.0.0.0:%s", testServer.getTestServerServicePort()), testServer.testURL(""));

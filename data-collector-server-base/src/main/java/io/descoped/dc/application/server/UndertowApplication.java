@@ -26,6 +26,7 @@ import io.undertow.util.StatusCodes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetSocketAddress;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +46,7 @@ public class UndertowApplication {
 
     private final Undertow server;
     private final String host;
-    private final int port;
+    private volatile int port;
     private final Map<Class<? extends Component>, Component> components;
     private final Map<Class<? extends Service>, Service> services;
     private final HealthApplicationMonitor applicationMonitor;
@@ -223,7 +224,8 @@ public class UndertowApplication {
     }
 
     /**
-     * The port the server listens on.
+     * The port the server listens on. Once the server is started, the port it is bound to, so an application
+     * initialized on port {@code 0} reports the ephemeral port it got.
      *
      * @return the port
      */
@@ -236,6 +238,11 @@ public class UndertowApplication {
      */
     public void start() {
         server.start();
+        // the port the listener got, which differs from the one asked for when that is 0
+        if (server.getListenerInfo().getFirst().getAddress() instanceof InetSocketAddress address) {
+            port = address.getPort();
+            applicationMonitor.setPort(port);
+        }
         enableAllServices();
         applicationMonitor.setServerStatus(HealthApplicationMonitor.ServerStatus.RUNNING);
         LOG.info("Started Data Collector. PID {}", ProcessHandle.current().pid());

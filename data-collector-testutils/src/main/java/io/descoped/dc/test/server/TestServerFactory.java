@@ -3,10 +3,7 @@ package io.descoped.dc.test.server;
 import io.descoped.config.DynamicConfiguration;
 import io.descoped.dc.test.client.TestClient;
 
-import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
@@ -18,7 +15,6 @@ public class TestServerFactory {
 
     private final ConfigurationFactory configurationFactory;
     private final Map<TestConfigurationBinding, Supplier<TestServer>> testServerSuppliers = new ConcurrentHashMap<>();
-    private final Random random = new Random();
 
     /*
      * The TestServerExtension maintains current execution test server target in beforeTestExecution
@@ -36,43 +32,6 @@ public class TestServerFactory {
      */
     public static TestServerFactory instance() {
         return TestServerFactory.TestServerFactorySingleton.INSTANCE;
-    }
-
-    /**
-     * Finds a free port on localhost.
-     *
-     * @param random picks the ports to try
-     * @param from   the lowest port
-     * @param to     the highest port
-     * @return a port that was free when it was tried
-     * @throws IllegalStateException if no port in the range is free
-     */
-    @SuppressWarnings("SameParameterValue")
-    public static int findFreePort(Random random, int from, int to) {
-        int port = pick(random, from, to);
-        for (int i = 0; i < 2 * ((to + 1) - from); i++) {
-            if (isLocalPortFree(port)) {
-                return port;
-            }
-            port = pick(random, from, to);
-        }
-        throw new IllegalStateException("Unable to find any available ports in range: [" + from + ", " + (to + 1) + ")");
-    }
-
-    static int pick(Random random, int from, int to) {
-        return from + random.nextInt((to + 1) - from);
-    }
-
-    // the socket is opened only to see whether the port is free
-    @SuppressWarnings("try")
-    static boolean isLocalPortFree(int port) {
-        try {
-            try (ServerSocket ignore = new ServerSocket(port)) {
-                return true;
-            }
-        } catch (IOException e) {
-            return false;
-        }
     }
 
     State state(TestConfigurationBinding testConfigurationBinding) {
@@ -133,8 +92,7 @@ public class TestServerFactory {
 
             @Override
             public TestServer get() {
-                int availablePort = findFreePort(random, 9000, 9499);
-                return new TestServer(configuration, availablePort);
+                return new TestServer(configuration, 0);
             }
         };
 

@@ -163,6 +163,10 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
 
 ### Fixed
 
+- **`http.port=0` reports the port the server got** (#62): `UndertowApplication.getPort()`, the startup log and the
+  health output give the ephemeral port the listener is bound to, not 0. The test servers of data-collector-testutils
+  use this: they bind port 0 instead of probing for a free port between 9000 and 9499 and binding it later, which
+  could fail with `BindException` when another process took the port in between.
 - **The integrity check runs to the topic's last message** (#60). It stopped at the first message with the last
   message's position, so a topic whose last position also occurs earlier, as a duplicate, was checked only up to
   that occurrence. Recovery then could find no duplicate to recover to and failed with a `NullPointerException`; it

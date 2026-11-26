@@ -9,7 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.net.ServerSocket;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -27,21 +27,6 @@ class CORSHandlerTest {
     private HttpClient client;
     private Undertow server;
     private URI uri;
-
-    /**
-     * Find a free port for the undertow server.
-     */
-    static int findFree() {
-        int port = 0;
-        while (port == 0) {
-            try (ServerSocket socket = new ServerSocket(0)) {
-                port = socket.getLocalPort();
-            } catch (IOException e) {
-                throw new RuntimeException("Failed finding free port", e);
-            }
-        }
-        return port;
-    }
 
     @AfterEach
     void tearDown() {
@@ -68,12 +53,11 @@ class CORSHandlerTest {
         CORSHandler corsHandler = new CORSHandler(httpHandler, patterns, true, 444,
                 123456, Set.of("GET", "PUT"), Set.of("x-foo", "y-bar"));
 
-        int port = findFree();
-        server = Undertow.builder().addHttpListener(port, "localhost").setHandler(corsHandler).build();
+        server = Undertow.builder().addHttpListener(0, "localhost").setHandler(corsHandler).build();
         client = HttpClient.newHttpClient();
         server.start();
 
-        uri = URI.create("http://localhost:" + port);
+        uri = URI.create("http://localhost:" + ((InetSocketAddress) server.getListenerInfo().getFirst().getAddress()).getPort());
     }
 
     private HttpResponse<Void> send(String method, String origin, String... headers) throws IOException {

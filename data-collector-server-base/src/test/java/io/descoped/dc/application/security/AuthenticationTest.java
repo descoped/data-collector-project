@@ -7,8 +7,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.net.ServerSocket;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -26,21 +24,13 @@ class AuthenticationTest {
     static final HttpClient client = HttpClient.newHttpClient();
     static UndertowApplication server;
 
-    static int findFree() {
-        try (ServerSocket socket = new ServerSocket(0)) {
-            return socket.getLocalPort();
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
     @BeforeAll
     static void beforeAll() {
         DynamicConfiguration configuration = DynamicConfiguration.builder()
                 .value("prometheus.defaultExports.disabled", "true")
                 .value("http.authentication.bearer.token", TOKEN)
                 .build();
-        server = UndertowApplication.initializeUndertowApplication(configuration, findFree(), null);
+        server = UndertowApplication.initializeUndertowApplication(configuration, 0, null);
         server.start();
     }
 
@@ -92,9 +82,8 @@ class AuthenticationTest {
         DynamicConfiguration configuration = DynamicConfiguration.builder()
                 .value("prometheus.defaultExports.disabled", "true")
                 .build();
-        int port = findFree();
         IllegalStateException e = assertThrows(IllegalStateException.class,
-                () -> UndertowApplication.initializeUndertowApplication(configuration, port, null));
+                () -> UndertowApplication.initializeUndertowApplication(configuration, 0, null));
         assertTrue(e.getMessage().contains("http.authentication.bearer.token"), e.getMessage());
     }
 
@@ -104,9 +93,8 @@ class AuthenticationTest {
                 .value("prometheus.defaultExports.disabled", "true")
                 .value("http.authentication.bearer.token", "0123456789abcdef0123456789abcde")
                 .build();
-        int port = findFree();
         IllegalStateException e = assertThrows(IllegalStateException.class,
-                () -> UndertowApplication.initializeUndertowApplication(configuration, port, null));
+                () -> UndertowApplication.initializeUndertowApplication(configuration, 0, null));
         assertEquals("http.authentication.bearer.token is shorter than 32 characters", e.getMessage());
     }
 
@@ -116,9 +104,8 @@ class AuthenticationTest {
                 .value("prometheus.defaultExports.disabled", "true")
                 .value("http.authentication.provider", "none")
                 .build();
-        int port = findFree();
         IllegalStateException e = assertThrows(IllegalStateException.class,
-                () -> UndertowApplication.initializeUndertowApplication(configuration, port, null));
+                () -> UndertowApplication.initializeUndertowApplication(configuration, 0, null));
         assertEquals("No authentication provider named: none", e.getMessage());
     }
 
@@ -129,7 +116,7 @@ class AuthenticationTest {
                 .value("http.authentication.bearer.token", TOKEN)
                 .value("http.cors.allow.origin", "https://example\\.org")
                 .build();
-        UndertowApplication corsServer = UndertowApplication.initializeUndertowApplication(configuration, findFree(), null);
+        UndertowApplication corsServer = UndertowApplication.initializeUndertowApplication(configuration, 0, null);
         corsServer.start();
         try {
             String base = "http://" + corsServer.getHost() + ":" + corsServer.getPort();
