@@ -192,7 +192,6 @@ public class WorkerService implements Service {
         return workManager.list();
     }
 
-    // TODO lock prevents onWorkerFinish to complete
     /**
      * Cancels a worker.
      *
@@ -200,6 +199,7 @@ public class WorkerService implements Service {
      * @return true if it was found
      */
     public boolean cancelTask(String workerId) {
+        // TODO lock prevents onWorkerFinish to complete
         WorkManager.JobId jobId = workManager.get(UUID.fromString(workerId));
         if (jobId == null) {
             LOG.warn("Worker '{}' NOT found! Maybe it was already completed.", workerId);

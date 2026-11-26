@@ -140,7 +140,6 @@ public class IntegrityCheckJob {
         }
     }
 
-    // generate a duplicate report in json format
     /**
      * Writes the report of the duplicate positions.
      */

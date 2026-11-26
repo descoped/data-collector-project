@@ -33,7 +33,7 @@ public class LmdbEnvironment implements AutoCloseable {
     private Dbi<ByteBuffer> db;
 
     /**
-     * Creates the environment's directory; the environment opens on first use.
+     * Creates the environment's directory and opens the environment; the topic's database opens on first use.
      *
      * @param configuration the configuration
      * @param databaseDir   the parent directory
