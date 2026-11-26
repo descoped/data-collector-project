@@ -46,12 +46,40 @@ public class ParallelHandler extends AbstractNodeHandler<Parallel> {
      */
     public static final String MAX_NUMBER_OF_ITERATIONS = "MAX_NUMBER_OF_ITERATIONS";
     static final String ADD_BODY_CONTENT = "ADD_BODY_CONTENT";
+
     /**
-     * The number of entries handled, counted while the {@link #MAX_NUMBER_OF_ITERATIONS} state is set; -1 before
-     * counting starts. It is shared by every handler in the JVM.
+     * The counters of a worker's parallel nodes, one per worker, in its services (#66).
      */
-    public static final AtomicLong countNumberOfIterations = new AtomicLong(-1);
-    private static final AtomicLong pageCounter = new AtomicLong(-1);
+    public static final class Counters {
+
+        /**
+         * The number of entries handled, counted while the {@link #MAX_NUMBER_OF_ITERATIONS} state is set; -1 before
+         * counting starts.
+         */
+        final AtomicLong countNumberOfIterations = new AtomicLong(-1);
+        // the pages fanned out with a queue buffer, for its log
+        final AtomicLong pageCounter = new AtomicLong(-1);
+
+        /**
+         * Creates the counters of a worker.
+         */
+        public Counters() {
+            // both start at -1
+        }
+
+        /**
+         * Resets the number of entries handled, so that the worker can run again.
+         */
+        public void resetNumberOfIterations() {
+            countNumberOfIterations.set(-1);
+        }
+    }
+
+    // a handler run without a worker gets fresh counters on each call: only a worker sets MAX_NUMBER_OF_ITERATIONS, so
+    // without one there is no limit to count against
+    private static Counters counters(ExecutionContext input) {
+        return input.services().contains(Counters.class) ? input.services().get(Counters.class) : new Counters();
+    }
 
     /**
      * Creates the handler of a node.
@@ -73,8 +101,9 @@ public class ParallelHandler extends AbstractNodeHandler<Parallel> {
         super.execute(input);
         Response response = input.state(Response.class);
 
+        Counters counters = counters(input);
         if (input.state(MAX_NUMBER_OF_ITERATIONS) != null) {
-            countNumberOfIterations.incrementAndGet();
+            counters.countNumberOfIterations.incrementAndGet();
         }
 
         FixedThreadPool threadPool = input.services().get(FixedThreadPool.class);
@@ -87,7 +116,7 @@ public class ParallelHandler extends AbstractNodeHandler<Parallel> {
         int queueBufferThreshold = configurationMap.contains("data.collector.parallel.queueBuffer.threshold") ?
                 Integer.parseInt(configurationMap.get("data.collector.parallel.queueBuffer.threshold")) : -1;
         LOG.info("Parallel Queue Buffer Threshold: {}", queueBufferThreshold);
-        if (queueBufferThreshold > -1) pageCounter.incrementAndGet();
+        if (queueBufferThreshold > -1) counters.pageCounter.incrementAndGet();
 
         if (response.bodyHandler().isPresent()) {
             fanOutTokenized(input, response, pageContext, parser, threadPool);
@@ -159,7 +188,7 @@ public class ParallelHandler extends AbstractNodeHandler<Parallel> {
             parallelFutures.add(parallelFuture);
 
             if (counter.incrementAndGet() % queueBufferThreshold == 0) {
-                LOG.warn("Wait for buffered futures to complete at: {} / {}", pageCounter.get(), counter.get());
+                LOG.warn("Wait for buffered futures to complete at: {} / {}", counters(input).pageCounter.get(), counter.get());
                 CompletableFuture.allOf(parallelFutures.toArray(new CompletableFuture<?>[0]))
                         .thenApply(v -> {
                             parallelFutures.clear();
@@ -201,7 +230,7 @@ public class ParallelHandler extends AbstractNodeHandler<Parallel> {
 
         if (input.state(MAX_NUMBER_OF_ITERATIONS) != null) {
             long maxNumberOfIterations = Long.parseLong(input.state(MAX_NUMBER_OF_ITERATIONS).toString());
-            if (ParallelHandler.countNumberOfIterations.get() >= maxNumberOfIterations) {
+            if (counters(input).countNumberOfIterations.get() >= maxNumberOfIterations) {
                 pageContext.setEndOfStream(true);
                 cancelCallback.accept(true);
                 return CompletableFuture.completedFuture(ExecutionContext.empty());
@@ -233,8 +262,9 @@ public class ParallelHandler extends AbstractNodeHandler<Parallel> {
         ExecutionContext nodeInput = ExecutionContext.of(input);
         CompletableFuture<ExecutionContext> parallelFuture = createCompletableFuture(input, nodeInput, pageContext, threadPool, pageEntryDocument, serializedItem);
 
-        if (ParallelHandler.countNumberOfIterations.get() > -1) {
-            ParallelHandler.countNumberOfIterations.incrementAndGet();
+        Counters counters = counters(input);
+        if (counters.countNumberOfIterations.get() > -1) {
+            counters.countNumberOfIterations.incrementAndGet();
         }
 
         EngineObservers.instance().entryFannedOut(EngineObservers.nodeEvent(node));

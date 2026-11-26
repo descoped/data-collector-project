@@ -110,8 +110,8 @@ public class IntegrityCheckController implements Controller {
             return;
         }
         service.removeJobIfClosed(topic);
-        service.createJob(topic);
-        exchange.setStatusCode(201);
+        // another request may have started the topic's job since the check above
+        exchange.setStatusCode(service.createJob(topic) ? 201 : HttpStatus.HTTP_CONFLICT.code());
     }
 
     // GET /check-integrity

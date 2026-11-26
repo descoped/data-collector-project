@@ -458,7 +458,7 @@ Start a check. A previous index of the topic is deleted first.
 | Status | When |
 |---|---|
 | `201 Created` | The check started. Empty body. |
-| `409 Conflict` | A check of this topic is running. |
+| `409 Conflict` | A check of this topic is starting or running. |
 | `400 Bad Request` | The path is not `/check-integrity/{topic}`, or the topic is not a topic name. |
 
 ```sh
@@ -566,7 +566,7 @@ Stop a running check. The check stops reading, writes its report and summary, an
 
 | Status | When |
 |---|---|
-| `200 OK` | The check was asked to stop. Empty body. |
+| `200 OK` | The check was asked to stop; one that is still starting stops as soon as it has started. Empty body. |
 | `400 Bad Request` | No check of this topic is running. |
 
 ```sh
@@ -605,7 +605,7 @@ Start a recovery of `topic` into `target`.
 | Status | When |
 |---|---|
 | `201 Created` | The recovery started. Empty body. |
-| `409 Conflict` | A recovery of this source topic is running. |
+| `409 Conflict` | A recovery of this source topic is starting or running. |
 | `400 Bad Request` | `toTopic` is missing, either topic is not a topic name, the LMDB location does not exist, or the request fails otherwise. |
 
 ```sh
@@ -684,7 +684,7 @@ Stop a running recovery.
 
 | Status | When |
 |---|---|
-| `200 OK` | The recovery was asked to stop. Empty body. |
+| `200 OK` | The recovery was asked to stop; one that is still starting stops as soon as it has started. Empty body. |
 | `404 Not Found` | No recovery of this topic is running. |
 
 ```sh

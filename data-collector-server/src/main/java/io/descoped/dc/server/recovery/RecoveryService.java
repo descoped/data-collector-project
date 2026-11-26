@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
@@ -34,6 +35,10 @@ public class RecoveryService implements Service {
     private final RecoveryContentStoreComponent recoveryContentStoreComponent;
     final Map<String, CompletableFuture<RecoveryWorker>> jobFutures = new ConcurrentHashMap<>();
     final Map<String, RecoveryWorker> jobs = new ConcurrentHashMap<>();
+    // the source topics whose recovery is starting or running, claimed before it starts (#67)
+    private final Set<String> active = ConcurrentHashMap.newKeySet();
+    // the source topics asked to stop while their recovery was starting: it stops itself when it registers
+    private final Set<String> cancelWhenRegistered = ConcurrentHashMap.newKeySet();
 
     /**
      * Creates the service.
@@ -76,19 +81,62 @@ public class RecoveryService implements Service {
         }
     }
 
-    void createRecoveryWorker(String fromTopic, String toTopic) {
+    // whether a recovery of the topic is starting or running
+    boolean isActive(String fromTopic) {
+        return active.contains(fromTopic);
+    }
+
+    // false when a recovery of the topic is starting or running
+    boolean createRecoveryWorker(String fromTopic, String toTopic) {
         Path dbLocation = getSequenceDatabaseLocation(configuration);
         LOG.trace("Database path: {}", dbLocation);
         if (!dbLocation.toFile().exists()) {
             throw new IllegalStateException("Lmdb Location does not exist: " + dbLocation.toString());
         }
+        if (!active.add(fromTopic)) {
+            return false;
+        }
+        boolean started = false;
+        try {
+            jobFutures.put(fromTopic, startRecovery(fromTopic, toTopic));
+            started = true;
+        } finally {
+            if (!started) {
+                active.remove(fromTopic);
+            }
+        }
+        return true;
+    }
 
-        CompletableFuture<RecoveryWorker> workerFuture = CompletableFuture.supplyAsync(() -> {
+    // asks the topic's recovery to stop, also one that is still starting
+    void cancel(String fromTopic) {
+        RecoveryWorker worker = jobs.get(fromTopic);
+        if (worker != null && worker.monitor().running.get()) {
+            worker.terminate();
+        } else if (active.contains(fromTopic)) {
+            // not registered yet: it stops itself when it registers; checked again in case it registered in between,
+            // and terminating twice is harmless
+            cancelWhenRegistered.add(fromTopic);
+            RecoveryWorker registered = jobs.get(fromTopic);
+            if (registered != null && registered != worker) {
+                registered.terminate();
+            }
+        }
+    }
+
+    private CompletableFuture<RecoveryWorker> startRecovery(String fromTopic, String toTopic) {
+        return CompletableFuture.supplyAsync(() -> {
             RecoveryWorker recoveryWorker = new RecoveryWorker(configuration, contentStoreComponent, recoveryContentStoreComponent);
             jobs.put(fromTopic, recoveryWorker);
+            if (cancelWhenRegistered.remove(fromTopic)) {
+                recoveryWorker.terminate();
+            }
             recoveryWorker.recover(fromTopic, toTopic);
             LOG.trace("Completed Recovery!");
             return recoveryWorker;
+        }).whenComplete((recoveryWorker, throwable) -> {
+            cancelWhenRegistered.remove(fromTopic);
+            active.remove(fromTopic);
         }).exceptionally(throwable -> {
             LOG.error("Ended exceptionally with error: {}", CommonUtils.captureStackTrace(throwable));
             if (throwable instanceof RuntimeException runtimeException) {
@@ -99,6 +147,5 @@ public class RecoveryService implements Service {
                 throw new RuntimeException(throwable);
             }
         });
-        jobFutures.put(fromTopic, workerFuture);
     }
 }

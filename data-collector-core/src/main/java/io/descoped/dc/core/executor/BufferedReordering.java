@@ -68,15 +68,20 @@ public class BufferedReordering<ELEMENT> {
 
     /**
      * Marks an element completed and releases, in expected order, every completed element at the head of the expected
-     * elements. The callback is called outside the lock, and only when elements are released.
+     * elements. The callback is called only when elements are released, and under the lock: two threads that release
+     * elements one after the other hand them on in that order, whether or not the callback locks anything itself. So the
+     * callback must not wait for another thread that adds expected or completed elements to this instance; it may start
+     * such work asynchronously. While it runs, other threads that add elements wait.
      *
      * @param elements                the completed element
      * @param orderedElementsCallback receives the released elements, in order
      */
     public void addCompleted(ELEMENT elements, Consumer<List<ELEMENT>> orderedElementsCallback) {
-        List<ELEMENT> orderedElements = new ArrayList<>();
+        // the callback runs under the lock: released outside it, a later release could be handed on before an earlier
+        // one, and a store that does not lock its topics (discarding) would publish positions out of order (#69)
         synchronized (lock) {
             completed.add(elements);
+            List<ELEMENT> orderedElements = new ArrayList<>();
             Iterator<ELEMENT> iterator = expected.iterator();
             while (iterator.hasNext()) {
                 ELEMENT element = iterator.next();
@@ -86,9 +91,9 @@ public class BufferedReordering<ELEMENT> {
                 iterator.remove();
                 orderedElements.add(element);
             }
-        }
-        if (!orderedElements.isEmpty()) {
-            orderedElementsCallback.accept(orderedElements);
+            if (!orderedElements.isEmpty()) {
+                orderedElementsCallback.accept(orderedElements);
+            }
         }
     }
 }

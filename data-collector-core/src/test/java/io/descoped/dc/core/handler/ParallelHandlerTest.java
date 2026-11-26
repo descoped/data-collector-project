@@ -19,13 +19,17 @@ import static io.descoped.dc.api.Builders.context;
 import static io.descoped.dc.api.Builders.execute;
 import static io.descoped.dc.api.Builders.get;
 import static io.descoped.dc.api.Builders.paginate;
+import static io.descoped.dc.api.Builders.nextPage;
 import static io.descoped.dc.api.Builders.parallel;
 import static io.descoped.dc.api.Builders.publish;
+import static io.descoped.dc.api.Builders.regex;
 import static io.descoped.dc.api.Builders.sequence;
 import static io.descoped.dc.api.Builders.status;
 import static io.descoped.dc.api.Builders.whenVariableIsNull;
 import static io.descoped.dc.api.Builders.xpath;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(TestServerExtension.class)
@@ -99,5 +103,48 @@ class ParallelHandlerTest {
                 .build();
 
         assertThrows(RuntimeException.class, worker::run);
+    }
+
+    // each worker counts its own entries against its own limit (#66)
+    @Test
+    void thatEachWorkerCountsItsOwnIterations() {
+        String firstRun = runWithIterationLimit();
+        // a second worker, after the first has counted past the limit, ends at the same position
+        String secondRun = runWithIterationLimit();
+        assertNotNull(firstRun);
+        assertNotEquals("100", firstRun);
+        assertEquals(firstRun, secondRun);
+    }
+
+    private String runWithIterationLimit() {
+        SpecificationBuilder specification = Specification.start("test", "pages", "loop")
+                .configure(context()
+                        .topic("topic")
+                        .header("accept", "application/xml")
+                        .variable("nextPosition", "1"))
+                .function(paginate("loop")
+                        .variable("fromPosition", "${nextPosition}")
+                        .iterate(execute("page"))
+                        .prefetchThreshold(5)
+                        .until(whenVariableIsNull("nextPosition")))
+                .function(get("page")
+                        .url(testServer.testURL("/api/events?position=${fromPosition}&pageSize=5&stopAt=100"))
+                        .pipe(sequence(xpath("/feed/entry"))
+                                .expected(xpath("/entry/id")))
+                        .pipe(nextPage()
+                                .output("nextPosition", regex(xpath("/feed/link[@rel=\"next\"]/@href"), "(?<=[?&]position=)[^&]*")))
+                        .pipe(parallel(xpath("/feed/entry"))
+                                .variable("position", xpath("/entry/id"))
+                                .pipe(addContent("${position}", "entry"))
+                                .pipe(publish("${position}")))
+                        .returnVariables("nextPosition"));
+        ContentStore contentStore = ProviderConfigurator.configure(ContentStoreInitializer.class, "discarding", Map.of());
+        Worker.newBuilder()
+                .specification(specification)
+                .contentStore(contentStore)
+                .stopAtNumberOfIterations(12)
+                .build()
+                .run();
+        return contentStore.lastPosition("topic");
     }
 }

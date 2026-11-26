@@ -153,7 +153,9 @@ public class Worker {
      */
     public void resetMaxNumberOfIterations() {
         context.state(ParallelHandler.MAX_NUMBER_OF_ITERATIONS, null);
-        ParallelHandler.countNumberOfIterations.set(-1);
+        if (context.services().contains(ParallelHandler.Counters.class)) {
+            context.services().get(ParallelHandler.Counters.class).resetNumberOfIterations();
+        }
     }
 
     /**
@@ -641,6 +643,7 @@ public class Worker {
 
             services.register(Termination.class, Termination.create());
             services.register(WorkerTasks.class, new WorkerTasks());
+            services.register(ParallelHandler.Counters.class, new ParallelHandler.Counters());
             services.register(BufferedReordering.class, new BufferedReordering<String>());
             services.register(FixedThreadPool.class, FixedThreadPool.newInstance(
                     configurationMap.contains("data.collector.worker.threads") ? Integer.parseInt(configurationMap.get("data.collector.worker.threads")) : -1)

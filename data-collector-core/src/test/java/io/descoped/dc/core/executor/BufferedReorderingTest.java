@@ -3,13 +3,18 @@ package io.descoped.dc.core.executor;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.NavigableSet;
 import java.util.Random;
 import java.util.TreeSet;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BufferedReorderingTest {
 
@@ -101,5 +106,38 @@ class BufferedReorderingTest {
 
             assertEquals(List.of(p1, p2, p3, p4, p5), completedPositionSequence.expected());
         }
+    }
+
+    // a release is handed on before a later one, also when the callback locks nothing (#69): while position 1's
+    // hand-on is held up, position 2 completes on another thread and must not be handed on first. Position 1's
+    // callback waits until position 2 has either been handed on (without the lock) or is blocked on the lock.
+    @Test
+    void thatALaterReleaseWaitsForAnEarlierHandOn() throws Exception {
+        BufferedReordering<String> bufferedReordering = new BufferedReordering<>();
+        bufferedReordering.addExpected(List.of("1", "2"));
+        List<String> handedOn = Collections.synchronizedList(new ArrayList<>());
+        CountDownLatch firstInCallback = new CountDownLatch(1);
+        CountDownLatch secondHandedOn = new CountDownLatch(1);
+        Thread second = new Thread(() -> bufferedReordering.addCompleted("2", released -> {
+            handedOn.addAll(released);
+            secondHandedOn.countDown();
+        }));
+        Thread first = new Thread(() -> bufferedReordering.addCompleted("1", released -> {
+            firstInCallback.countDown();
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+            while (secondHandedOn.getCount() > 0 && second.getState() != Thread.State.BLOCKED
+                    && System.nanoTime() < deadline) {
+                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1));
+            }
+            handedOn.addAll(released);
+        }));
+
+        first.start();
+        assertTrue(firstInCallback.await(10, TimeUnit.SECONDS));
+        second.start();
+        first.join(TimeUnit.SECONDS.toMillis(20));
+        second.join(TimeUnit.SECONDS.toMillis(20));
+
+        assertEquals(List.of("1", "2"), handedOn);
     }
 }
