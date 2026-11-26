@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
  * whose security schemes use headers of their own. A secret header keeps its name; its values become {@value #MASK}.
  * <p>
  * URLs keep scheme, host, path and the names of query parameters; query values and user information are masked, and
- * the fragment is left out. Bodies are described by their length and content type, never by their content.
+ * the fragment is left out. A parameter without {@code =} is kept as a name. Bodies are described by their length and content type, never by their content.
  */
 public final class Masking {
 
@@ -109,16 +109,31 @@ public final class Masking {
      * A copy of the headers with the values of secret headers masked.
      *
      * @param headers the headers by name, or {@code null}
-     * @return the copy, in the same order, or {@code null}
+     * @return the copy, in the same order; empty for {@code null}
      */
     public Map<String, List<String>> headers(Map<String, List<String>> headers) {
         if (headers == null) {
-            return null;
+            return Map.of();
         }
         Map<String, List<String>> masked = new LinkedHashMap<>();
         headers.forEach((name, values) -> masked.put(name, isSecret(name) && values != null
                 ? values.stream().map(value -> MASK).toList()
                 : values));
+        return masked;
+    }
+
+    /**
+     * A copy of the variables for a log, with the values of those whose names are secret masked.
+     *
+     * @param variables the variables by name, or {@code null}
+     * @return the copy, in the same order; empty for {@code null}
+     */
+    public Map<String, Object> variables(Map<String, ?> variables) {
+        if (variables == null) {
+            return Map.of();
+        }
+        Map<String, Object> masked = new LinkedHashMap<>();
+        variables.forEach((name, value) -> masked.put(name, isSecret(name) ? MASK : value));
         return masked;
     }
 

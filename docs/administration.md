@@ -145,9 +145,11 @@ dc keeps secrets out of its logs, exception messages, `/health` and message mani
 - **Bodies and documents** are given by their length and content type, never their content: a failed HTTP status, a
   failed jq, XPath or regular expression query, a retry and a failed `Parallel` variable. The body of a failed HTTP
   status is logged at `DEBUG` by `io.descoped.dc.core.handler.HttpStatusValidationHandler`, for an operator who turns
-  that logger on.
-- **Variables** of a failed expression are logged by name only; the `console()` node masks the values of variables
-  whose names are secret, as for headers.
+  that logger on. A token endpoint's error body can echo the credentials it was sent: turn that logger on only where
+  such a log may hold them. jq's own message for a failed query, which can quote a value, goes to `DEBUG` of
+  `io.descoped.dc.core.handler.JqPathHandler`.
+- **Variables** of a failed expression are logged by name only; the `console()` node and the `INFO` log of a page
+  prefetch mask the values of variables whose names are secret, as for headers.
 - **Configuration values** are masked on `/health`.
 
 ### Client certificate settings

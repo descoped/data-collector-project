@@ -28,8 +28,8 @@ public class ConsoleHandler extends AbstractNodeHandler<Console> {
         PageEntryState pageEntryState = context.state(PageEntryState.class);
 
         Masking masking = Masking.of(context.services().get(ConfigurationMap.class));
-        String variables = context.variables().entrySet().stream()
-                .map(entry -> String.format("%s=%s", entry.getKey(), masking.isSecret(entry.getKey()) ? Masking.MASK : entry.getValue()))
+        String variables = masking.variables(context.variables()).entrySet().stream()
+                .map(entry -> String.format("%s=%s", entry.getKey(), entry.getValue()))
                 .collect(Collectors.joining(", "));
 
         String url = response == null ? "N/A" : Masking.url(response.url());

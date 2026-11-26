@@ -47,10 +47,11 @@ public class HttpStatusValidationHandler extends AbstractHandler<HttpStatusValid
         if (!success) {
             // todo make explicit handling of 3xx redirect, 4xx client error, 5xx server error.
             boolean expectedErrorCodes = node.failed().stream().anyMatch(code -> statusCode == code.code());
+            Masking masking = Masking.of(context.services().get(ConfigurationMap.class));
             if (expectedErrorCodes) {
-                throwHttpErrorException(request, response, statusCode, Masking.of(context.services().get(ConfigurationMap.class)));
+                throwHttpErrorException(request, response, statusCode, masking);
             }
-            throwHttpErrorException(request, response, statusCode, Masking.of(context.services().get(ConfigurationMap.class)));
+            throwHttpErrorException(request, response, statusCode, masking);
         }
 
         return ExecutionContext.empty();

@@ -7,6 +7,8 @@ import io.descoped.dc.api.TerminationException;
 import io.descoped.dc.api.context.ExecutionContext;
 import io.descoped.dc.core.executor.FixedThreadPool;
 import io.descoped.dc.core.health.HealthWorkerMonitor;
+import io.descoped.dc.api.ConfigurationMap;
+import io.descoped.dc.api.security.Masking;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,7 +68,7 @@ class PaginationLifecycle {
     private CompletableFuture<ExecutionContext> preFetchPage(ExecutionContext context, FixedThreadPool threadPool) {
         return CompletableFuture
                 .supplyAsync(() -> {
-                    LOG.info("Pre-fetching next-page. Variables: {}", context.variables());
+                    LOG.info("Pre-fetching next-page. Variables: {}", Masking.of(context.services().get(ConfigurationMap.class)).variables(context.variables()));
 
                     checkTerminationSignal(context.services().get(Termination.class));
 
