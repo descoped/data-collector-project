@@ -14,13 +14,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * When the worker starts, it reads two marks from the content store: the page topic's last position (the last
  * complete page) and the topic's last position (the last committed entry).
  * <ul>
- * <li>A page at the last complete page's position is committed, and so is every entry of it.</li>
- * <li>In the first other page of the run, the entries up to and including the last committed entry, in the page's
- * order, are committed. If that entry is not in the page, none is.</li>
+ * <li>A page at the last complete page's position is committed. Its entries are committed up to and including the
+ * last committed entry, in the page's order, when that entry is in the page: entries after it are new, as when the
+ * source's last page has grown since. When that entry is not in the page, it is in the next page, and every entry of
+ * this page is committed.</li>
+ * <li>In the first page of the run that has not met the entry mark, the entries up to and including the last committed
+ * entry, in the page's order, are committed. If that entry is not in the page, none is.</li>
  * </ul>
- * After that page the entry mark is not used again, so a source that repeats a position later is not affected.
- * Positions are compared by equality and page order only: they need not be sortable. One worker uses an instance;
- * its pages are fetched in order.
+ * Once a page has met the entry mark, it is not used again, so a source that repeats a position later is not
+ * affected. A committed position that buffers no content is never taken, and a repeat of it later in the same run is
+ * then not written either. Positions are compared by equality and page order only: they need not be sortable. One
+ * worker uses an instance; its pages are fetched in order.
  */
 public final class CommittedPositions {
 
@@ -79,13 +83,20 @@ public final class CommittedPositions {
      */
     public Set<String> committedInPage(Object pagePosition, List<String> expectedPositions) {
         Set<String> inPage;
+        String entry = lastEntry;
+        int index = entry == null ? -1 : expectedPositions.indexOf(entry);
         if (isCommittedPage(pagePosition)) {
-            inPage = new LinkedHashSet<>(expectedPositions);
+            if (index < 0) {
+                // the last committed entry is in the next page
+                inPage = new LinkedHashSet<>(expectedPositions);
+            } else {
+                // the page may have grown: what follows the last committed entry is new
+                inPage = new LinkedHashSet<>(expectedPositions.subList(0, index + 1));
+                firstOtherPageSeen.set(true);
+            }
         } else if (!firstOtherPageSeen.compareAndSet(false, true)) {
             inPage = Set.of();
         } else {
-            String entry = lastEntry;
-            int index = entry == null ? -1 : expectedPositions.indexOf(entry);
             inPage = index < 0 ? Set.of() : new LinkedHashSet<>(expectedPositions.subList(0, index + 1));
         }
         committed.addAll(inPage);

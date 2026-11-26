@@ -19,10 +19,10 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.LongStream;
 
@@ -59,6 +59,10 @@ class DurableStreamTest {
 
     // the page's position is the position of its first entry; the page size is 10
     SpecificationBuilder specification(String resumeExpression, NodeBuilder... entrySteps) {
+        return specification(resumeExpression, 10, ENTRIES, entrySteps);
+    }
+
+    SpecificationBuilder specification(String resumeExpression, int pageSize, int stopAt, NodeBuilder... entrySteps) {
         return Specification.start("durable", "pages", "loop")
                 .configure(context()
                         .topic("durable")
@@ -71,7 +75,7 @@ class DurableStreamTest {
                         .prefetchThreshold(15)
                         .until(whenVariableIsNull("nextPosition")))
                 .function(get("page")
-                        .url(testServer.testURL("/api/events?position=${fromPosition}&pageSize=10&stopAt=" + ENTRIES))
+                        .url(testServer.testURL("/api/events?position=${fromPosition}&pageSize=" + pageSize + "&stopAt=" + stopAt))
                         .pipe(sequence(xpath("/feed/entry"))
                                 .expected(xpath("/entry/id")))
                         .pipe(nextPage()
@@ -136,7 +140,7 @@ class DurableStreamTest {
     }
 
     static String difference(List<Long> positions) {
-        java.util.TreeMap<Long, Integer> counts = new java.util.TreeMap<>();
+        TreeMap<Long, Integer> counts = new TreeMap<>();
         positions.forEach(position -> counts.merge(position, 1, Integer::sum));
         long last = positions.isEmpty() ? 0 : positions.getLast();
         List<Long> missing = LongStream.rangeClosed(1, last).filter(position -> !counts.containsKey(position)).boxed().toList();
@@ -175,8 +179,33 @@ class DurableStreamTest {
         stopAndResume("${cast.toLong(contentStream.lastOrInitialPagePosition(1))}");
     }
 
+    // the source's last page grows between runs, and the specification resumes on it: the entries it gained are
+    // written, the ones the earlier run committed are not (a page at position 21 holds 21-30, then 21-40)
     @Test
-    void thatAFailedPageIsNotCommitted() throws TimeoutException, InterruptedException {
+    void thatAGrownLastPageKeepsItsNewEntries() throws InterruptedException {
+        String resumeOnTheLastPage = "${cast.toLong(contentStream.lastOrInitialPagePosition(1))}";
+        ContentStore contentStore = ProviderConfigurator.configure(ContentStoreInitializer.class, "rawdata", CONFIGURATION);
+        try {
+            for (int[] pageSizeAndStopAt : new int[][]{{10, 25}, {20, 45}}) {
+                Worker.newBuilder()
+                        .specification(specification(resumeOnTheLastPage, pageSizeAndStopAt[0], pageSizeAndStopAt[1],
+                                addContent("${position}", "entry")))
+                        .configuration(CONFIGURATION)
+                        .contentStore(contentStore)
+                        .keepContentStoreOpenOnWorkerCompletion(true)
+                        .build()
+                        .run();
+            }
+            List<Long> entries = positions(contentStore, "durable");
+            assertEquals(LongStream.rangeClosed(1, 60).boxed().toList(), entries, () -> "every entry once, in order: " + difference(entries));
+            assertEquals(List.of(1L, 11L, 21L, 41L), positions(contentStore, "durable-pages"));
+        } finally {
+            contentStore.close();
+        }
+    }
+
+    @Test
+    void thatAFailedPageIsNotCommitted() throws InterruptedException {
         ContentStore contentStore = ProviderConfigurator.configure(ContentStoreInitializer.class, "rawdata", CONFIGURATION);
         try {
             Worker worker = Worker.newBuilder()

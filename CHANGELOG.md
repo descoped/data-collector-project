@@ -201,7 +201,7 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
     in flight, a failed page and an empty page are not committed, so the empty page at the head is no longer written.
   - **Repeated pages:** a resumed run wrote the page in flight at the stop again, and a run resumed on its last page
     wrote that page's entries again. At start a worker now reads the last committed page and entry, and writes neither
-    again.
+    again; a last page that has grown since still gets its new entries written.
   - **Stale content:** a stopped run's buffered content stayed in the content store, and a later run of the topic
     could publish it. A worker now discards it when it ends. `ContentStore` has `discard(topic, positions...)` and
     `discard(topic)`.

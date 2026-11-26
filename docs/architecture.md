@@ -307,11 +307,14 @@ A stream is durable, and a position committed in the store is never written agai
 - **A page is committed when it is complete.** `PaginationLifecycle.completePage` joins the page's entries in page
   order, so every entry of the page, and of every page before it, is published. Only then does it write the page's
   document to `<topic>-pages`. A page in flight, a failed page and a page with no entries are not committed, so the
-  page topic's last position is always the last complete page.
+  page topic's last position is always the last complete page. The page's body is held in memory until then, for
+  every page in the prefetch window.
 - **A resumed run skips what an earlier run committed.** When the worker starts, `CommittedPositions` reads the page
   topic's last position and the topic's last position. A page at the last complete page's position is not written
-  again, and neither are its entries. In the first other page, the entries up to and including the last committed
-  entry, in the page's order, are completed without being written. Positions are compared by equality and page order
+  again (the page topic keeps the document as first written). Its entries are not written again up to and including
+  the last committed entry when that entry is in the page, so entries a grown last page gained are written; when it is
+  not, all of them are skipped. In the first page that holds the last committed entry, the entries up to and including
+  it, in the page's order, are completed without being written. Positions are compared by equality and page order
   only, never sorted. A skipped entry still runs its steps and is still expected by the reordering; only
   `publish` leaves it out and `discard`s its content.
 - **An ended worker's unpublished content is discarded.** When a run ends, whatever its status, the worker terminates

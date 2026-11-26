@@ -27,6 +27,8 @@ public class DiscardingContentStore implements ContentStore {
     private static final Logger LOG = LoggerFactory.getLogger(DiscardingContentStore.class);
 
     // the last published position of each topic, pages included (#71)
+    private static final String PAGES_SUFFIX = "-pages";
+
     final Map<String, String> lastPositions = new ConcurrentHashMap<>();
     final Map<ContentStateKey, Set<String>> contentBuffers = new ConcurrentHashMap<>();
     final AtomicBoolean closed = new AtomicBoolean(false);
@@ -67,10 +69,10 @@ public class DiscardingContentStore implements ContentStore {
     @Override
     public void addPaginationDocument(String topic, String position, String contentKey, byte[] content, HttpRequestInfo httpRequestInfo) {
         ContentStream contentStream = new DiscardingContentStream();
-        ContentStreamProducer producer = contentStream.producer(topic + "-pages");
+        ContentStreamProducer producer = contentStream.producer(topic + PAGES_SUFFIX);
         ContentStreamBuffer.Builder bufferBuilder = producer.builder();
 
-        MetadataContent manifest = getMetadataContent(topic + "-pages", position, contentKey, content, MetadataContent.ResourceType.PAGE, httpRequestInfo);
+        MetadataContent manifest = getMetadataContent(topic + PAGES_SUFFIX, position, contentKey, content, MetadataContent.ResourceType.PAGE, httpRequestInfo);
         if (LOG.isTraceEnabled()) {
             LOG.trace("Buffer Page: {}", manifest.toJSON());
         }
@@ -79,7 +81,7 @@ public class DiscardingContentStore implements ContentStore {
         bufferBuilder.buffer(contentKey, content, manifest);
 
         producer.produce(bufferBuilder);
-        lastPositions.put(topic + "-pages", position);
+        lastPositions.put(topic + PAGES_SUFFIX, position);
     }
 
     @Override

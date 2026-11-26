@@ -842,8 +842,10 @@ passing it to an API that returns the entries after a position. `lastOrInitialPa
 topic: the last complete page.
 
 A position that a run committed is never written again. A resumed run that fetches the last complete page again (for
-example by resuming on `lastOrInitialPagePosition` without moving on) does not write it, or its entries, again. In the
-first other page, the entries up to and including the topic's last position are not written again either. A
+example by resuming on `lastOrInitialPagePosition` without moving on) does not write its page document again, and
+writes only the entries after the topic's last position: those the page gained since, when the source's last page
+grows. The page topic keeps the document as it was first written. In the first page that holds the topic's last
+position, the entries up to and including it are not written again either. A
 specification may therefore resume on the last entry, on the next page or on the last page; the stream holds each
 position once.
 

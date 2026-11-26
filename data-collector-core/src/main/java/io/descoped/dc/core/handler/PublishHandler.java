@@ -64,18 +64,7 @@ public class PublishHandler extends AbstractNodeHandler<Publish> {
                         monitor.contentStream().setStartPosition(orderedPositions.get(0));
                     }
 
-                    // a position an earlier run committed is completed without being written again (#71)
-                    List<String> toPublish = new ArrayList<>(orderedPositions.size());
-                    List<String> committed = new ArrayList<>();
-                    for (String orderedPosition : orderedPositions) {
-                        (committedPositions != null && committedPositions.take(orderedPosition) ? committed : toPublish).add(orderedPosition);
-                    }
-                    if (!committed.isEmpty()) {
-                        contentStore.discard(topicName, committed.toArray(new String[0]));
-                    }
-                    if (!toPublish.isEmpty()) {
-                        contentStore.publish(topicName, toPublish.toArray(new String[0]));
-                    }
+                    commit(contentStore, topicName, orderedPositions, committedPositions);
 
                     if (LOG.isInfoEnabled()) {
                         LOG.info("Reordered sequence: [{}] with content [{}]",
@@ -101,4 +90,19 @@ public class PublishHandler extends AbstractNodeHandler<Publish> {
         return ExecutionContext.empty();
     }
 
+
+    // publishes released positions; one an earlier run committed is completed without being written again (#71)
+    private static void commit(ContentStore contentStore, String topicName, List<String> orderedPositions, CommittedPositions committedPositions) {
+        List<String> toPublish = new ArrayList<>(orderedPositions.size());
+        List<String> committed = new ArrayList<>();
+        for (String orderedPosition : orderedPositions) {
+            (committedPositions != null && committedPositions.take(orderedPosition) ? committed : toPublish).add(orderedPosition);
+        }
+        if (!committed.isEmpty()) {
+            contentStore.discard(topicName, committed.toArray(new String[0]));
+        }
+        if (!toPublish.isEmpty()) {
+            contentStore.publish(topicName, toPublish.toArray(new String[0]));
+        }
+    }
 }

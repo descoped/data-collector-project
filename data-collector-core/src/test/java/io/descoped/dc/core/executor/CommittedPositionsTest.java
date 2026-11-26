@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -21,7 +22,7 @@ class CommittedPositionsTest {
     }
 
     static List<String> page(int first) {
-        return java.util.stream.IntStream.range(first, first + 10).mapToObj(String::valueOf).toList();
+        return IntStream.range(first, first + 10).mapToObj(String::valueOf).toList();
     }
 
     @Test
@@ -33,6 +34,15 @@ class CommittedPositionsTest {
         assertEquals(Set.of("21", "22", "23"), committedPositions.committedInPage("21", page(21)));
         // the marks are used once
         assertEquals(Set.of(), committedPositions.committedInPage("31", List.of("23", "31")));
+    }
+
+    // the last page has grown since the earlier run: what follows the last committed entry is new
+    @Test
+    void thatAGrownLastPageKeepsItsNewEntries() {
+        CommittedPositions committedPositions = new CommittedPositions("21", "22");
+        assertEquals(Set.of("21", "22"), committedPositions.committedInPage("21", page(21)));
+        // the mark is used: the next page is not affected
+        assertEquals(Set.of(), committedPositions.committedInPage("31", List.of("22", "31")));
     }
 
     @Test
