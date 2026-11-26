@@ -19,6 +19,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * The content store {@code discarding}, the engine's default: it keeps the last published position in memory and
+ * drops the content.
+ */
 public class DiscardingContentStore implements ContentStore {
 
     private static final Logger LOG = LoggerFactory.getLogger(DiscardingContentStore.class);
@@ -26,6 +30,13 @@ public class DiscardingContentStore implements ContentStore {
     final AtomicReference<String> lastPositionRef = new AtomicReference<>();
     final Map<ContentStateKey, Set<String>> contentBuffers = new ConcurrentHashMap<>();
     final AtomicBoolean closed = new AtomicBoolean(false);
+
+    /**
+     * Creates an empty store.
+     */
+    public DiscardingContentStore() {
+        // the state is in the fields
+    }
 
     @Override
     public void lock(String topic) {
@@ -131,7 +142,7 @@ public class DiscardingContentStore implements ContentStore {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         closed.set(true);
     }
 

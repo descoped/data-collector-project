@@ -9,9 +9,19 @@ import io.descoped.dc.api.content.ContentStreamProducer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * A content stream that keeps nothing: it has no last position or message, and its producers and consumers discard.
+ */
 public class DiscardingContentStream implements ContentStream {
 
     final Map<String, ContentStreamBuffer> buffersByName = new ConcurrentHashMap<>();
+
+    /**
+     * Creates the stream.
+     */
+    public DiscardingContentStream() {
+        // the stream keeps nothing
+    }
 
     @Override
     public String lastPosition(String topic) {
@@ -44,7 +54,7 @@ public class DiscardingContentStream implements ContentStream {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         // nothing to close
     }
 }

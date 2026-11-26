@@ -1,3 +1,7 @@
+/**
+ * The content store provider {@code discarding}, the engine's default: it keeps the last published position in
+ * memory and drops the content.
+ */
 module io.descoped.dc.content.discarding {
 
     requires io.descoped.service.provider.api;

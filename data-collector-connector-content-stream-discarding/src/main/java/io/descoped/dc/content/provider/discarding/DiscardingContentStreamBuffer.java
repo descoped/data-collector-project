@@ -11,10 +11,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * A buffer that holds no content: every accessor answers {@code null} or an empty value.
+ */
 public class DiscardingContentStreamBuffer implements ContentStreamBuffer {
 
     private static final Logger LOG = LoggerFactory.getLogger(DiscardingContentStreamBuffer.class);
 
+    /**
+     * Creates an empty buffer.
+     */
     public DiscardingContentStreamBuffer() {
         // the buffer holds no content
     }
