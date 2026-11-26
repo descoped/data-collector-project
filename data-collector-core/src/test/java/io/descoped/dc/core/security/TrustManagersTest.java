@@ -66,7 +66,9 @@ class TrustManagersTest {
         KeyPair otherKeys = keyPair();
         X509Certificate forged = certificate("CN=api.example.org", otherKeys, "CN=private-ca", otherKeys, false);
 
-        assertThrows(CertificateException.class, () -> TrustManagers.create(null).checkServerTrusted(new X509Certificate[]{server, ca}, "RSA"));
+        X509TrustManager withoutAnchors = TrustManagers.create(null);
+        X509Certificate[] chain = {server, ca};
+        assertThrows(CertificateException.class, () -> withoutAnchors.checkServerTrusted(chain, "RSA"));
 
         X509TrustManager withAnchors = TrustManagers.create(pem(ca));
         assertDoesNotThrow(() -> withAnchors.checkServerTrusted(new X509Certificate[]{server, ca}, "RSA"));
@@ -77,6 +79,7 @@ class TrustManagersTest {
 
     @Test
     void thatTrustCertificatesWithoutACertificateAreRefused() {
-        assertThrows(RuntimeException.class, () -> TrustManagers.create("not a certificate".toCharArray()));
+        char[] notACertificate = "not a certificate".toCharArray();
+        assertThrows(RuntimeException.class, () -> TrustManagers.create(notACertificate));
     }
 }

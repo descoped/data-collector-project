@@ -59,12 +59,12 @@ final class TrustManagers {
         }
     }
 
-    private static Collection<? extends Certificate> parse(char[] pem) throws GeneralSecurityException {
+    private static Collection<? extends Certificate> parse(char[] pem) throws GeneralSecurityException, IOException {
         ByteBuffer encoded = StandardCharsets.UTF_8.encode(CharBuffer.wrap(pem));
         byte[] bytes = new byte[encoded.remaining()];
         encoded.get(bytes);
-        try {
-            return CertificateFactory.getInstance("X.509").generateCertificates(new ByteArrayInputStream(bytes));
+        try (ByteArrayInputStream in = new ByteArrayInputStream(bytes)) {
+            return CertificateFactory.getInstance("X.509").generateCertificates(in);
         } finally {
             Arrays.fill(bytes, (byte) 0);
         }

@@ -106,7 +106,7 @@ public class SecretManagerSSLResource implements BusinessSSLResource {
                     }
                     return certificates;
                 })
-                .orElse(null);
+                .orElse(new char[0]);
     }
 
     @Override

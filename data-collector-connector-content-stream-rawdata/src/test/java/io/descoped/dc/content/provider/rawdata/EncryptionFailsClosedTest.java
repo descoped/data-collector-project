@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
@@ -28,8 +29,8 @@ class EncryptionFailsClosedTest {
     }
 
     static void assertRefused(String message, Map<String, String> configuration) {
-        IllegalStateException e = assertThrows(IllegalStateException.class,
-                () -> new RawdataClientContentStoreInitializer().initialize(configuration));
+        RawdataClientContentStoreInitializer initializer = new RawdataClientContentStoreInitializer();
+        IllegalStateException e = assertThrows(IllegalStateException.class, () -> initializer.initialize(configuration));
         assertEquals(message, e.getMessage());
     }
 
@@ -37,7 +38,7 @@ class EncryptionFailsClosedTest {
     @SuppressWarnings("try") // ContentStore.close() is declared to throw Exception
     void thatNoEncryptionSettingMeansNoEncryption() throws Exception {
         try (ContentStore store = new RawdataClientContentStoreInitializer().initialize(configuration())) {
-            store.contentStream();
+            assertNotNull(store.contentStream());
         }
     }
 
@@ -46,7 +47,7 @@ class EncryptionFailsClosedTest {
     void thatKeyAndSaltEncrypt() throws Exception {
         try (ContentStore store = new RawdataClientContentStoreInitializer().initialize(configuration(
                 "rawdata.encryption.key", "password", "rawdata.encryption.salt", "salt"))) {
-            store.contentStream();
+            assertNotNull(store.contentStream());
         }
     }
 
@@ -82,8 +83,9 @@ class EncryptionFailsClosedTest {
     @Test
     void thatTheStoreRefusesHalfAKey() {
         RawdataClient client = RawdataClient.create(configuration());
-        assertThrows(IllegalArgumentException.class, () -> new RawdataClientContentStore(client, "password".toCharArray(), null));
-        assertThrows(IllegalArgumentException.class,
-                () -> new RawdataClientContentStore(client, null, "salt".getBytes(StandardCharsets.UTF_8)));
+        char[] key = "password".toCharArray();
+        byte[] salt = "salt".getBytes(StandardCharsets.UTF_8);
+        assertThrows(IllegalArgumentException.class, () -> new RawdataClientContentStore(client, key, null));
+        assertThrows(IllegalArgumentException.class, () -> new RawdataClientContentStore(client, null, salt));
     }
 }

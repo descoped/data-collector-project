@@ -58,11 +58,12 @@ class CertificateContextTest {
 
             @Override
             public char[] trustCertificates() {
-                return trustCertificates == null ? null : trustCertificates.clone();
+                return trustCertificates == null ? new char[0] : trustCertificates.clone();
             }
 
             @Override
             public void close() {
+                // nothing to release: the bundle is held in memory
             }
         };
     }
