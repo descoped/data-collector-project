@@ -125,6 +125,13 @@ public class Builders {
         return new ExecuteBuilder(function);
     }
 
+    /**
+     * A processor given by its class, for specifications built in Java. Written as JSON, the specification names the
+     * class's {@link ProcessorProvider}, so it is read back as {@link #process(String)}: the two are not equal.
+     *
+     * @param processorClass the processor's class
+     * @return the builder
+     */
     public static ProcessBuilder process(Class<? extends Processor> processorClass) {
         return new ProcessBuilder(processorClass);
     }

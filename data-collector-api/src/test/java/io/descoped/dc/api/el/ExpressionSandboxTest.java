@@ -57,6 +57,20 @@ class ExpressionSandboxTest {
     }
 
     @Test
+    void thatJavaUtilSubpackagesAreClosed() {
+        Map<String, Object> variables = new LinkedHashMap<>();
+        variables.put("concurrent", new java.util.concurrent.ConcurrentHashMap<>(Map.of("a", "b")));
+        variables.put("map", new LinkedHashMap<>(Map.of("a", "b")));
+        ExpressionLanguage el = el(variables, Map.of());
+        assertEquals("b", el.evaluateExpression("${map.get('a')}"));
+        try {
+            assertNull(el.evaluateExpression("${concurrent.get('a')}"));
+        } catch (RuntimeException expected) {
+            // refused
+        }
+    }
+
+    @Test
     void thatEnvHoldsOnlyTheSpecKeys() {
         assertEquals("client", el().evaluateExpression("${ENV.'ssb.client.id'}"));
         assertNull(el().evaluateExpression("${ENV.'rawdata.encryption.key'}"));

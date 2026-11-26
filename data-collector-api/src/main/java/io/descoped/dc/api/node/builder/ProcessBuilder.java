@@ -97,6 +97,7 @@ public class ProcessBuilder extends NodeBuilder {
         final Class<? extends Processor> processorClass;
         final String processor;
         final Set<String> requiredOutputs;
+        private volatile Class<? extends Processor> resolvedProcessorClass;
 
         ProcessNode(Configurations configurations, Class<? extends Processor> processorClass, String processor, Set<String> requiredOutputs) {
             super(configurations);
@@ -105,14 +106,20 @@ public class ProcessBuilder extends NodeBuilder {
             this.requiredOutputs = requiredOutputs;
         }
 
-        // a named processor is looked up when it runs, so a specification can be read and built without its providers
+        // a named processor is looked up when it first runs, so a specification can be read and built without its
+        // providers; the class is kept, so the providers are not loaded again for every page and entry
         @Override
         public Class<? extends Processor> processorClass() {
             if (processorClass != null) {
                 return processorClass;
             }
-            return ProcessorProvider.find(processor).orElseThrow(() ->
-                    new IllegalStateException("No ProcessorProvider is named: " + processor));
+            Class<? extends Processor> resolved = resolvedProcessorClass;
+            if (resolved == null) {
+                resolved = ProcessorProvider.find(processor).orElseThrow(() ->
+                        new IllegalStateException("No ProcessorProvider is named: " + processor));
+                resolvedProcessorClass = resolved;
+            }
+            return resolved;
         }
 
         @Override

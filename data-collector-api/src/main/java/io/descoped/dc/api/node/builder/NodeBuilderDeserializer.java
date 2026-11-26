@@ -421,6 +421,9 @@ public class NodeBuilderDeserializer extends StdDeserializer<AbstractBuilder> {
         if (currentNode.has("processorClass") || !currentNode.hasNonNull("processor")) {
             throw new IllegalArgumentException("A Process names its processor's provider in 'processor'; 'processorClass' is not read");
         }
+        if (!currentNode.get("processor").isTextual() || currentNode.get("processor").textValue().isBlank()) {
+            throw new IllegalArgumentException("A Process's 'processor' is the name of its provider, a text that is not blank");
+        }
         ProcessBuilder builder = new ProcessBuilder(currentNode.get("processor").textValue());
         if (currentNode.has("requiredOutputs")) {
             currentNode.get("requiredOutputs").forEach(output -> builder.output(output.textValue()));

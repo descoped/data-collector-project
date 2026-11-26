@@ -21,7 +21,6 @@ module io.descoped.dc.core {
     requires transitive net.bytebuddy;
     requires net.bytebuddy.agent;
 
-    requires org.apache.commons.jexl3;
     requires com.fasterxml.jackson.databind;
     requires com.fasterxml.jackson.annotation;
 

@@ -10,8 +10,11 @@ package io.descoped.dc.api.el;
  * <p>A provider is a service: it is registered with {@code provides} in its {@code module-info.java} and in
  * {@code META-INF/services}, and it has a public constructor without parameters. Providers are loaded once; the
  * functions object is shared by every expression of every worker, so it must be thread-safe. A provider whose name is
- * taken, or is {@code ENV}, {@code cast}, {@code convert} or {@code contentStream}, stops the expression language from
- * loading.
+ * not an identifier, is taken, or is {@code ENV}, {@code cast}, {@code convert} or {@code contentStream}, stops every
+ * expression from being evaluated, with an error that names it.
+ *
+ * <p>The name hides a context variable of the same name. JEXL calls the methods reflectively, so the package of the
+ * functions' class is exported (or opened) to {@code org.apache.commons.jexl3}.
  */
 public interface ExpressionFunctions {
 

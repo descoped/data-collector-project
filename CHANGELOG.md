@@ -57,6 +57,11 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
 - **Google credentials:** without a service-account key, the Google Secret Manager provider uses Application Default
   Credentials. 2.x used Compute Engine credentials only.
 
+### Added
+
+- **`io.descoped.dc.api.el.ExpressionFunctions`** and **`io.descoped.dc.api.ProcessorProvider`**: service providers that
+  add functions to expressions and processors to `Process` nodes, each under a name a specification uses.
+
 ### Changed
 
 - **One reactor, one version.**
