@@ -55,7 +55,7 @@
         <!-- The Descoped libraries: rawdata-client 3 needs service-provider-api 3 under the module name 2 used, so these
              move between majors together. -->
         <service-provider-api.version>3.0.1</service-provider-api.version>
-        <dynamic-configuration.version>3.0.1</dynamic-configuration.version>
+        <dynamic-configuration.version>3.0.2</dynamic-configuration.version>
         <secrets-client-api.version>3.0.0</secrets-client-api.version>
         <secrets-provider.version>3.0.0</secrets-provider.version>
         <encryption-util.version>3.0.1</encryption-util.version>
@@ -69,7 +69,7 @@
         <jackson-annotations.version>2.23</jackson-annotations.version>
         <jackson-jq.version>1.6.5</jackson-jq.version>
         <commons-jexl3.version>3.7.1</commons-jexl3.version>
-        <classgraph.version>4.8.200</classgraph.version>
+        <classgraph.version>6.0.2</classgraph.version>
         <methanol.version>1.9.0</methanol.version>
         <byte-buddy.version>1.18.17</byte-buddy.version>
         <prometheus-simpleclient.version>0.16.0</prometheus-simpleclient.version>

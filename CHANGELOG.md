@@ -90,7 +90,7 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
   | Library | Version |
   |---|---|
   | service-provider-api | 3.0.1 |
-  | dynamic-configuration | 3.0.1 |
+  | dynamic-configuration | 3.0.2 |
   | secrets-client | 3.0.0 |
   | encryption-util | 3.0.1 |
   | rawdata-client | 3.1.0 |
@@ -99,9 +99,9 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
   under a taken id is refused. A recovery run repeated over the same source no longer duplicates the target's
   messages (on 3.0.1 the `filesystem` provider stored them twice and `postgres` failed on its key).
 
-  Every other dependency is at its latest version except two:
-  - classgraph stays on 4.8.200, because later versions need Java 25;
-  - commons-jexl3 stays on 3.2.1, because later versions deny the class access that specification expressions use.
+  Every other dependency is at its latest version. classgraph 6 (for JDK 25 and later) scans only the sources it is
+  given and no longer loads classes: dc enables the class path and the module path, as 4.x scanned by default, and
+  loads the handlers and health and metrics resources the scans find itself.
 - **Configuration** keeps the 2.x rules on dynamic-configuration 3:
   - every class path match is read;
   - every `DC_` environment variable and every system property adds a key;

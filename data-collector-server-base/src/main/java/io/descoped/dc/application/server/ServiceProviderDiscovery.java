@@ -30,7 +30,7 @@ class ServiceProviderDiscovery {
 
     static <T> Iterable<Class<T>> discover(Class<T> serviceProviderClass) {
         Set<Class<T>> serviceList = new LinkedHashSet<>();
-        try (ScanResult scanResult = new ClassGraph().acceptPathsNonRecursive("META-INF/services").scan()) {
+        try (ScanResult scanResult = new ClassGraph().enableClasspath().enableNonSystemModules().acceptPathsNonRecursive("META-INF/services").scan()) {
             LOG.trace("serviceProviderClass: {}", serviceProviderClass.getName());
             // as ClassGraph's deprecated forEachByteArray: load, accept and close each resource
             for (Resource res : scanResult.getResourcesWithLeafName(serviceProviderClass.getName())) {
