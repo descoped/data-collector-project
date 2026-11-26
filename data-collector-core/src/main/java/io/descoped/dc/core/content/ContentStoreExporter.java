@@ -1,5 +1,6 @@
 package io.descoped.dc.core.content;
 
+import io.descoped.dc.core.metrics.HistogramBuckets;
 import io.prometheus.metrics.core.datapoints.Timer;
 import io.prometheus.metrics.core.metrics.Counter;
 import io.prometheus.metrics.core.metrics.Histogram;
@@ -21,8 +22,6 @@ import net.bytebuddy.asm.Advice;
  */
 public class ContentStoreExporter {
 
-    // the buckets of the simpleclient histograms of 2.x, so /metrics gives the same series on client_java
-    private static final double[] SIMPLECLIENT_BUCKETS = {.005, .01, .025, .05, .075, .1, .25, .5, .75, 1, 2.5, 5, 7.5, 10};
     private static final String SUBSYSTEM = "content_stream";
     private static final String TOPIC = "topic";
 
@@ -39,7 +38,8 @@ public class ContentStoreExporter {
             .name("dc_" + SUBSYSTEM + "_pagination_page_publish_duration")
             .help("Pagination page write duration")
             .labelNames(TOPIC)
-            .classicUpperBounds(SIMPLECLIENT_BUCKETS)
+            .classicOnly()
+            .classicUpperBounds(HistogramBuckets.simpleclient())
             .register();
 
     static final Counter bufferPaginationPageEntryContent = Counter.builder()
@@ -64,7 +64,8 @@ public class ContentStoreExporter {
             .name("dc_" + SUBSYSTEM + "_pagination_entry_publish_position_duration")
             .help("Published position write duration")
             .labelNames(TOPIC)
-            .classicUpperBounds(SIMPLECLIENT_BUCKETS)
+            .classicOnly()
+            .classicUpperBounds(HistogramBuckets.simpleclient())
             .register();
 
     /**

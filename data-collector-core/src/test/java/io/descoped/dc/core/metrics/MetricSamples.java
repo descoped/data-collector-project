@@ -19,7 +19,7 @@ public final class MetricSamples {
 
     /**
      * The value of a sample, named as {@code /metrics} shows it: a counter with {@code _total}, a histogram's count
-     * with {@code _count}.
+     * with {@code _count}; a histogram's {@code _sum} or {@code _bucket} is not read.
      *
      * @param sampleName  the sample's name
      * @param labelNames  the label names
@@ -41,7 +41,7 @@ public final class MetricSamples {
                     return gauge.getValue();
                 }
                 if (dataPoint instanceof HistogramSnapshot.HistogramDataPointSnapshot histogram) {
-                    return histogram.getCount();
+                    return (double) histogram.getCount();
                 }
             }
         }

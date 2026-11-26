@@ -266,7 +266,7 @@ class GetTest {
     }
 
     @Test
-    void thatPaginateHandlePages() throws Exception {
+    void thatPaginateHandlePages() {
         SpecificationBuilder specificationBuilder = Specification.start("test", "getPage", "page-loop")
                 .configure(context()
                         .topic("topic")

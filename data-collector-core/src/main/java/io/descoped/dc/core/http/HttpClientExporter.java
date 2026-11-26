@@ -3,6 +3,7 @@ package io.descoped.dc.core.http;
 import io.descoped.dc.api.context.ExecutionContext;
 import io.descoped.dc.api.http.Request;
 import io.descoped.dc.api.http.Response;
+import io.descoped.dc.core.metrics.HistogramBuckets;
 import io.prometheus.metrics.core.datapoints.Timer;
 import io.prometheus.metrics.core.metrics.Counter;
 import io.prometheus.metrics.core.metrics.Histogram;
@@ -24,8 +25,6 @@ import java.util.concurrent.CompletableFuture;
  */
 public final class HttpClientExporter {
 
-    // the buckets of the simpleclient histograms of 2.x, so /metrics gives the same series on client_java
-    private static final double[] SIMPLECLIENT_BUCKETS = {.005, .01, .025, .05, .075, .1, .25, .5, .75, 1, 2.5, 5, 7.5, 10};
     private static final String SUBSYSTEM = "client";
     private static final String LOCATION = "location";
 
@@ -54,7 +53,8 @@ public final class HttpClientExporter {
             .name("dc_" + SUBSYSTEM + "_request_duration")
             .help("Request duration")
             .labelNames(LOCATION)
-            .classicUpperBounds(SIMPLECLIENT_BUCKETS)
+            .classicOnly()
+            .classicUpperBounds(HistogramBuckets.simpleclient())
             .register();
 
     // a request being measured: its location label and its timer
