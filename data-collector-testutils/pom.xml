@@ -15,13 +15,6 @@
     <name>Data Collector Testutils</name>
     <description>JUnit test harness for data collector specifications: an embedded test server with mock data, a test client and configuration profiles.</description>
 
-    <properties>
-        <!-- Lint and doclint groups this module still breaks (javac -Xlint:all -Werror, Javadoc doclint all with
-             warnings failing); its revision empties both lists. -->
-        <doclint.exclusions>,-missing</doclint.exclusions>
-        <lint.exclusions>,-deprecation,-serial,-static,-try</lint.exclusions>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>io.descoped.dc</groupId>

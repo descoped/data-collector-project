@@ -13,9 +13,19 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * The mock token endpoint of the test server: it answers a token request with an access token.
+ */
 public class AuthorizationResource extends AbstractResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(AuthorizationResource.class);
+
+    /**
+     * Creates the resource; the test server creates it.
+     */
+    public AuthorizationResource() {
+        // no state
+    }
 
     @Override
     void handle(HttpServerExchange exchange) {

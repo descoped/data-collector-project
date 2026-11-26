@@ -11,7 +11,17 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * The test server's mock data: event lists, events and Atom feeds, as XML or JSON.
+ */
 public class MockDataController implements Controller {
+
+    /**
+     * Creates the controller; the test server creates it.
+     */
+    public MockDataController() {
+        // no state
+    }
 
     static final int ROOT_CONTEXT_PATH_ELEMENT_COUNT = 2; // requestPath is split to: [/, api, events]. Value of 2 means skip [/, api]
 

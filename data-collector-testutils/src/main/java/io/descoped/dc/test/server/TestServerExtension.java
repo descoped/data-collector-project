@@ -38,6 +38,9 @@ public class TestServerExtension implements BeforeAllCallback, BeforeEachCallbac
 
     private final TestServerFactory testServerFactory;
 
+    /**
+     * Creates the extension; JUnit calls it.
+     */
     public TestServerExtension() {
         testServerFactory = TestServerFactory.instance();
     }
@@ -101,7 +104,7 @@ public class TestServerExtension implements BeforeAllCallback, BeforeEachCallbac
     }
 
     private TestServerResource createOrGetTestServerResource(TestConfigurationBinding fallbackTestConfigurationBinding, ExtensionContext.Store store) {
-        TestServerResource testServerResource = store.getOrComputeIfAbsent(
+        TestServerResource testServerResource = store.computeIfAbsent(
                 fallbackTestConfigurationBinding,
                 produce -> {
                     // TODO print console message for server binding
@@ -201,7 +204,8 @@ public class TestServerExtension implements BeforeAllCallback, BeforeEachCallbac
         LOG.trace("END {} # {}", context.getRequiredTestClass().getSimpleName(), context.getRequiredTestMethod().getName());
     }
 
-    class TestServerResource implements ExtensionContext.Store.CloseableResource {
+    // JUnit closes an AutoCloseable value when its store is closed
+    class TestServerResource implements AutoCloseable {
 
         private final TestServer testServer;
         private final TestClient testClient;
@@ -244,7 +248,7 @@ public class TestServerExtension implements BeforeAllCallback, BeforeEachCallbac
         }
 
         @Override
-        public void close() throws Throwable {
+        public void close() {
             stop();
         }
     }

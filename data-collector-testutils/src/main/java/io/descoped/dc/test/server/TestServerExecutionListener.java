@@ -37,6 +37,9 @@ public class TestServerExecutionListener implements TestExecutionListener {
     private final ConfigurationFactory configurationFactory;
     private final TestServerFactory testServerFactory;
 
+    /**
+     * Creates the listener; the JUnit Platform calls it.
+     */
     @SuppressWarnings("unused")
     public TestServerExecutionListener() {
         configurationFactory = ConfigurationFactory.instance();

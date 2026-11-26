@@ -29,22 +29,22 @@ class TestServerFactoryTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestServerFactoryTest.class);
 
+    // the sockets only hold the ports
+    @SuppressWarnings("try")
     @Test
     void thatLocalPortIsFree() throws IOException {
-        TestServerFactory testServerFactory = new TestServerFactory(new ConfigurationFactory());
-
         // the only port in the range is taken
         try (ServerSocket ignored = new ServerSocket(10000)) {
             Random random = new Random();
-            assertThrows(IllegalStateException.class, () -> testServerFactory.findFreePort(random, 10000, 10000));
+            assertThrows(IllegalStateException.class, () -> TestServerFactory.findFreePort(random, 10000, 10000));
         }
-        assertEquals(10000, testServerFactory.findFreePort(new Random(), 10000, 10000));
+        assertEquals(10000, TestServerFactory.findFreePort(new Random(), 10000, 10000));
 
-        int port = testServerFactory.pick(new Random(), 10000, 10500);
+        int port = TestServerFactory.pick(new Random(), 10000, 10500);
         try (ServerSocket ignored = new ServerSocket(port)) {
-            assertFalse(testServerFactory.isLocalPortFree(port));
+            assertFalse(TestServerFactory.isLocalPortFree(port));
         }
-        assertTrue(testServerFactory.isLocalPortFree(port));
+        assertTrue(TestServerFactory.isLocalPortFree(port));
     }
 
     @Test
