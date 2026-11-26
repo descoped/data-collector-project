@@ -15,7 +15,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 
 import static io.descoped.dc.api.util.CommonUtils.captureStackTrace;
-import static io.descoped.dc.application.controller.CORSHandlerTest.findFree;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -35,7 +34,7 @@ class MetricsControllerTest {
                 .value("prometheus.defaultExports.disabled", "true")
                 .value("http.authentication.bearer.token", TOKEN)
                 .build();
-        server = UndertowApplication.initializeUndertowApplication(configuration, findFree(), null);
+        server = UndertowApplication.initializeUndertowApplication(configuration, 0, null);
         server.start();
     }
 

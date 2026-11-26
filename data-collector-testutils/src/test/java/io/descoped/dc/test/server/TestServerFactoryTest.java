@@ -11,41 +11,18 @@ import org.junit.platform.launcher.core.LauncherFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
-import java.net.ServerSocket;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectPackage;
 
 class TestServerFactoryTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestServerFactoryTest.class);
-
-    // the sockets only hold the ports
-    @SuppressWarnings("try")
-    @Test
-    void thatLocalPortIsFree() throws IOException {
-        // the only port in the range is taken
-        try (ServerSocket ignored = new ServerSocket(10000)) {
-            Random random = new Random();
-            assertThrows(IllegalStateException.class, () -> TestServerFactory.findFreePort(random, 10000, 10000));
-        }
-        assertEquals(10000, TestServerFactory.findFreePort(new Random(), 10000, 10000));
-
-        int port = TestServerFactory.pick(new Random(), 10000, 10500);
-        try (ServerSocket ignored = new ServerSocket(port)) {
-            assertFalse(TestServerFactory.isLocalPortFree(port));
-        }
-        assertTrue(TestServerFactory.isLocalPortFree(port));
-    }
 
     @Test
     void explorationTestFallbackConfigurations() {

@@ -8,7 +8,6 @@ import io.descoped.dc.application.ssl.SecretManagerSSLResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.security.SecureRandom;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -24,15 +23,13 @@ public class TestServer implements TestUriResolver {
 
     private final UndertowApplication application;
 
-    private final int testServerServicePort;
-
     private final String authorization;
 
     /**
      * Creates the server; it is not started.
      *
      * @param configuration         the server's configuration
-     * @param testServerServicePort the port
+     * @param testServerServicePort the port, or {@code 0} for a free port that the system chooses when the server starts
      */
     public TestServer(DynamicConfiguration configuration, int testServerServicePort) {
         // the test authenticator with a token of this server's own, unless the configuration names others
@@ -44,7 +41,6 @@ public class TestServer implements TestUriResolver {
                 .build();
         this.configuration = configuration;
         this.authorization = "Bearer " + effective.find(BearerTokenAuthenticator.TOKEN_KEY).orElse(token);
-        this.testServerServicePort = testServerServicePort;
 
         /*
          * Delegated certificate loader from Google Secret Manager is placed here, because we don't won't a
@@ -63,13 +59,13 @@ public class TestServer implements TestUriResolver {
     }
 
     /**
-     * Creates a server on a free port between 9000 and 9499.
+     * Creates a server on a free port, which the system chooses when the server starts.
      *
      * @param configuration the server's configuration
      * @return the server, not started
      */
     public static TestServer create(DynamicConfiguration configuration) {
-        return new TestServer(configuration, TestServerFactory.findFreePort(new SecureRandom(), 9000, 9499));
+        return new TestServer(configuration, 0);
     }
 
     /**
@@ -96,12 +92,13 @@ public class TestServer implements TestUriResolver {
     }
 
     /**
-     * The server's port.
+     * The server's port: once it is started, the port it is bound to; before that, {@code 0} for a server created on
+     * port 0.
      *
      * @return the port
      */
     public int getTestServerServicePort() {
-        return testServerServicePort;
+        return application.getPort();
     }
 
     @Override
