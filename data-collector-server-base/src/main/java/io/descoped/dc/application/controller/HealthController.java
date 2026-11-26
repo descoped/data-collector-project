@@ -15,10 +15,18 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
+/**
+ * Serves {@code /health}, {@code /health/alive} and {@code /health/ready}.
+ */
 public class HealthController implements Controller {
 
     private final HealthResourceFactory healthResourceFactory;
 
+    /**
+     * Creates the controller.
+     *
+     * @param healthResourceFactory the resources it renders
+     */
     public HealthController(HealthResourceFactory healthResourceFactory) {
         this.healthResourceFactory = healthResourceFactory;
     }

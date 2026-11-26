@@ -12,16 +12,27 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Creates and holds the discovered metrics resources.
+ */
 public class MetricsResourceFactory {
 
     private final List<Class<? extends MetricsResource>> metricsResourceClasses;
     private final Map<Class<? extends MetricsResource>, ? extends MetricsResource> metricsResources;
 
+    /**
+     * Creates the factory with the discovered resources.
+     */
     public MetricsResourceFactory() {
         metricsResourceClasses = loadMetricsResources();
         metricsResources = createMetricsResources(metricsResourceClasses);
     }
 
+    /**
+     * Creates the factory.
+     *
+     * @return the factory
+     */
     public static MetricsResourceFactory create() {
         return new MetricsResourceFactory();
     }
@@ -63,8 +74,15 @@ public class MetricsResourceFactory {
         return metricsResourceMap;
     }
 
+    /**
+     * The resource of a class.
+     *
+     * @param metricsResourceClass the class
+     * @param <R>                  the resource's type
+     * @return the resource, or {@code null}
+     */
     public <R extends MetricsResource> R get(Class<R> metricsResourceClass) {
-        return (R) metricsResources.get(metricsResourceClass);
+        return metricsResourceClass.cast(metricsResources.get(metricsResourceClass));
     }
 
 }

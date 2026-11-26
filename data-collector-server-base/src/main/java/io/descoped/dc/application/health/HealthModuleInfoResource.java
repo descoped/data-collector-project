@@ -24,6 +24,9 @@ import java.util.Properties;
 
 import static java.util.Optional.ofNullable;
 
+/**
+ * The modules of the boot layer in the health output, with their Maven coordinates.
+ */
 @HealthRenderPriority(priority = 20)
 public class HealthModuleInfoResource implements HealthResource {
 
@@ -31,6 +34,9 @@ public class HealthModuleInfoResource implements HealthResource {
 
     private final List<ModuleInfo> modules;
 
+    /**
+     * Creates the resource.
+     */
     public HealthModuleInfoResource() {
         modules = scanModules("io.descoped");
     }
@@ -84,13 +90,12 @@ public class HealthModuleInfoResource implements HealthResource {
                     .acceptPaths("META-INF/maven")
                     .scan()
             ) {
-                scanResult.getResourcesWithLeafName("pom.properties")
-                        .nonClassFilesOnly()
-                        .forEachByteArray((Resource resource, byte[] content) -> {
-                            if (isModuleNameEqualToResourceModuleRefName(moduleDescriptor, resource)) {
-                                buildMavenInfo(moduleInfoBuilder, content);
-                            }
-                        });
+                for (Resource resource : scanResult.getResourcesWithLeafName("pom.properties").nonClassFilesOnly()) {
+                    byte[] content = load(resource);
+                    if (isModuleNameEqualToResourceModuleRefName(moduleDescriptor, resource)) {
+                        buildMavenInfo(moduleInfoBuilder, content);
+                    }
+                }
             }
 
             moduleInfoList.add(moduleInfoBuilder.build());
@@ -121,14 +126,29 @@ public class HealthModuleInfoResource implements HealthResource {
         }
     }
 
+    /**
+     * A module and its Maven coordinates.
+     */
     @SuppressWarnings("WeakerAccess")
     public static class ModuleInfo {
+        /**
+         * The module's name.
+         */
         @JsonProperty
         public final String moduleName;
+        /**
+         * The Maven group id.
+         */
         @JsonProperty
         public final String groupId;
+        /**
+         * The Maven artifact id.
+         */
         @JsonProperty
         public final String artifactId;
+        /**
+         * The version.
+         */
         @JsonProperty
         public final String version;
 
@@ -199,6 +219,15 @@ public class HealthModuleInfoResource implements HealthResource {
                         ofNullable(version).orElse("(DEV VERSION)")
                 );
             }
+        }
+    }
+
+    // the resource's content, the resource closed; as ClassGraph's deprecated forEachByteArray
+    private static byte[] load(Resource resource) {
+        try (resource) {
+            return resource.load();
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Could not load resource " + resource, e);
         }
     }
 }

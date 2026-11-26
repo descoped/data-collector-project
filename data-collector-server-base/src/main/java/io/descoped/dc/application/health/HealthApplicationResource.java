@@ -8,11 +8,17 @@ import java.util.Deque;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * The health output of the server itself.
+ */
 @HealthRenderPriority(priority = 1)
 public class HealthApplicationResource implements HealthResource {
 
     private final HealthApplicationMonitor monitor;
 
+    /**
+     * Creates the resource.
+     */
     public HealthApplicationResource() {
         monitor = new HealthApplicationMonitor();
     }
@@ -48,25 +54,61 @@ public class HealthApplicationResource implements HealthResource {
                 monitor.getUptime());
     }
 
+    /**
+     * The monitor the resource reports.
+     *
+     * @return the monitor
+     */
     public HealthApplicationMonitor getMonitor() {
         return monitor;
     }
 
+    /**
+     * The server's health output.
+     */
     @SuppressWarnings("WeakerAccess")
     public static class ServerInfo {
+        /**
+         * The status.
+         */
         @JsonProperty
         public final String status;
+        /**
+         * The host.
+         */
         @JsonProperty
         public final String host;
+        /**
+         * The port.
+         */
         @JsonProperty
         public final Integer port;
+        /**
+         * When the server last started running.
+         */
         @JsonProperty
         public final String since;
+        /**
+         * The current time.
+         */
         @JsonProperty
         public final String now;
+        /**
+         * The time since the server last started running.
+         */
         @JsonProperty
         public final String uptime;
 
+        /**
+         * Creates the output.
+         *
+         * @param status the status
+         * @param host   the host
+         * @param port   the port
+         * @param since  when the server last started running
+         * @param now    the current time
+         * @param uptime the time since the server last started running
+         */
         public ServerInfo(String status, String host, Integer port, String since, String now, String uptime) {
             this.status = status;
             this.host = host;

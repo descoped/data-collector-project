@@ -32,6 +32,9 @@ import java.util.TreeMap;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+/**
+ * The data collector application on Undertow: its controllers, components and services.
+ */
 public class UndertowApplication {
 
     private static final Logger LOG = LoggerFactory.getLogger(UndertowApplication.class);
@@ -84,12 +87,27 @@ public class UndertowApplication {
         );
     }
 
+    /**
+     * Initializes the application on the port in {@code http.port}.
+     *
+     * @param configuration               the configuration
+     * @param businessSSLResourceSupplier the business certificate resource, or {@code null}
+     * @return the application, not started
+     */
     public static UndertowApplication initializeUndertowApplication(DynamicConfiguration configuration,
                                                                     BusinessSSLResourceSupplier businessSSLResourceSupplier) {
         int port = Integer.parseInt(configuration.find("http.port").orElse(null));
         return initializeUndertowApplication(configuration, port, businessSSLResourceSupplier);
     }
 
+    /**
+     * Initializes the application on a port.
+     *
+     * @param configuration               the configuration
+     * @param port                        the port
+     * @param businessSSLResourceSupplier the business certificate resource, or {@code null}
+     * @return the application, not started
+     */
     public static UndertowApplication initializeUndertowApplication(DynamicConfiguration configuration,
                                                                     Integer port,
                                                                     BusinessSSLResourceSupplier businessSSLResourceSupplier) {
@@ -161,14 +179,27 @@ public class UndertowApplication {
         return new UndertowApplication(configuration, host, port, dispatchController, components, services, applicationMonitor);
     }
 
+    /**
+     * The host the server listens on.
+     *
+     * @return the host
+     */
     public String getHost() {
         return host;
     }
 
+    /**
+     * The port the server listens on.
+     *
+     * @return the port
+     */
     public int getPort() {
         return port;
     }
 
+    /**
+     * Starts the server.
+     */
     public void start() {
         server.start();
         enableAllServices();
@@ -177,6 +208,9 @@ public class UndertowApplication {
         LOG.info("Listening on {}:{}", host, port);
     }
 
+    /**
+     * Stops the server, its services and components.
+     */
     public void stop() {
         applicationMonitor.setServerStatus(HealthApplicationMonitor.ServerStatus.SHUTTING_DOWN);
         server.stop();
@@ -194,6 +228,9 @@ public class UndertowApplication {
         LOG.info("Leaving.. Bye!");
     }
 
+    /**
+     * Starts every service.
+     */
     public void enableAllServices() {
         for (Service service : services.values()) {
             LOG.info("Starting: {}", service.getClass().getName());
@@ -201,23 +238,41 @@ public class UndertowApplication {
         }
     }
 
+    /**
+     * Starts a service.
+     *
+     * @param service the service's class
+     */
     public void enable(Class<? extends Service> service) {
         services.get(service).start();
     }
 
+    /**
+     * Stops a service.
+     *
+     * @param service the service's class
+     */
     public void disable(Class<? extends Service> service) {
         services.get(service).stop();
     }
 
+    /**
+     * The server, a component or a service of a class.
+     *
+     * @param clazz the class
+     * @param <R>   the type
+     * @return the object
+     * @throws UnsupportedOperationException if the application has none of the class
+     */
     public <R> R unwrap(Class<R> clazz) {
         if (clazz.isAssignableFrom(server.getClass())) {
-            return (R) server;
+            return clazz.cast(server);
         } else {
             if (components.containsKey(clazz)) {
-                return (R) components.get(clazz);
+                return clazz.cast(components.get(clazz));
             }
             if (services.containsKey(clazz)) {
-                return (R) services.get(clazz);
+                return clazz.cast(services.get(clazz));
             }
             throw new UnsupportedOperationException("Unable to unwrap class: " + clazz);
         }

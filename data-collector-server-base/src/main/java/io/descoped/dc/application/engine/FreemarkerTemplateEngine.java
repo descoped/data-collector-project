@@ -9,11 +9,19 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Map;
 
+/**
+ * Renders FreeMarker templates from the class path.
+ */
 public class FreemarkerTemplateEngine {
 
     private final String basePackagePath;
     private final Configuration config;
 
+    /**
+     * Creates the engine.
+     *
+     * @param basePackagePath the class path location of the templates
+     */
     public FreemarkerTemplateEngine(String basePackagePath) {
         this.basePackagePath = basePackagePath;
         config = configure();
@@ -38,6 +46,13 @@ public class FreemarkerTemplateEngine {
         return configuration;
     }
 
+    /**
+     * Renders a template.
+     *
+     * @param templateFile the template's file name
+     * @param dataModel    the template's data
+     * @param output       where the result is written
+     */
     public void process(String templateFile, Map<String, Object> dataModel, Writer output) {
         try {
             Template template = config.getTemplate(templateFile);

@@ -12,8 +12,18 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * The configuration in the health output, with the values of secret-looking keys masked.
+ */
 @HealthRenderPriority(priority = 30)
 public class HealthConfigResource implements HealthResource {
+
+    /**
+     * Creates the resource; it reports no configuration until one is set.
+     */
+    public HealthConfigResource() {
+        // the state is in the fields
+    }
 
     private final AtomicReference<ObjectNode> configNode = new AtomicReference<>(JsonParser.createJsonParser().createObjectNode());
 
@@ -42,6 +52,11 @@ public class HealthConfigResource implements HealthResource {
         return configNode.get();
     }
 
+    /**
+     * Sets the configuration to report.
+     *
+     * @param configuration the configuration
+     */
     public void setConfiguration(Map<String, String> configuration) {
         Set<String> maskValues = Set.of("pass", "pwd", "secret", "credential", "token", "encryption");
         Map<String, String> map = new LinkedHashMap<>();

@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+/**
+ * Routes a request path and method to the callback bound to the matching path template.
+ */
 public class PathDispatcher {
 
     private final Map<PathPredicate, PathAction> dispatchHandlers = new LinkedHashMap<>();
@@ -16,6 +19,11 @@ public class PathDispatcher {
     private PathDispatcher() {
     }
 
+    /**
+     * Creates a dispatcher with no bindings.
+     *
+     * @return the dispatcher
+     */
     public static PathDispatcher create() {
         return new PathDispatcher();
     }
@@ -31,9 +39,9 @@ public class PathDispatcher {
      * /a/b equals /a/{b} = true
      * /a/b equals /a/{c} = true
      *
-     * @param templatePath
-     * @param method
-     * @param handlerCallback
+     * @param templatePath    the path template, with {@code {variable}} elements
+     * @param method          the method
+     * @param handlerCallback the callback; it returns the status code
      */
     public void bind(String templatePath, Request.Method method, Function<PathHandler, HttpStatus> handlerCallback) {
         PathParser templatePathParser = PathParser.create(templatePath);
@@ -98,6 +106,14 @@ public class PathDispatcher {
         return ceiling;
     }
 
+    /**
+     * Calls the callback bound to the request's path and method.
+     *
+     * @param requestPath the request path
+     * @param method      the method
+     * @param exchange    the exchange
+     * @return the handler, with its status code and outcome
+     */
     public PathHandler dispatch(String requestPath, Request.Method method, HttpServerExchange exchange) {
         PathParser requestPathParser = PathParser.create(requestPath);
         List<String> requestPathElements = requestPathParser.elements();
