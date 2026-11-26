@@ -16,6 +16,7 @@ import io.descoped.dc.api.node.HttpStatusRetryWhile;
 import io.descoped.dc.api.node.Node;
 import io.descoped.dc.api.node.Operation;
 import io.descoped.dc.api.node.Validator;
+import io.descoped.dc.api.security.Masking;
 import io.descoped.dc.api.util.CommonUtils;
 import io.descoped.dc.core.executor.Executor;
 import io.descoped.dc.core.health.HealthWorkerMonitor;
@@ -114,11 +115,13 @@ public abstract class OperationHandler<T extends Operation> extends AbstractNode
         }
 
         if (response == null) {
-            throw new IllegalStateException("No response received. An unhandled error occurred: " + request.url());
+            throw new IllegalStateException("No response received. An unhandled error occurred: " + Masking.url(request.url()));
         }
 
-        // prepare http-request-info used by content producer
-        HttpRequestInfo httpRequestInfo = new HttpRequestInfo(CorrelationIds.create(input), url, response.statusCode(), request.headers(), response.headers(), durationMillisSeconds);
+        // prepare http-request-info used by content producer; the manifest keeps the names of secret headers, not their values
+        Masking masking = Masking.of(configurationMap);
+        HttpRequestInfo httpRequestInfo = new HttpRequestInfo(CorrelationIds.create(input), url, response.statusCode(),
+                masking.headers(request.headers()), masking.headers(response.headers()), durationMillisSeconds);
         input.state(HttpRequestInfo.class, httpRequestInfo);
 
         // add page content
@@ -229,7 +232,7 @@ public abstract class OperationHandler<T extends Operation> extends AbstractNode
                 if (monitor != null) {
                     monitor.request().incrementRequestRetryOnFailureCount();
                 }
-                LOG.error("Request error occurred - retrying {} of {}: {}\nCause: {}", retry + 1, retryCount, request.url(), CommonUtils.captureStackTrace(e));
+                LOG.error("Request error occurred - retrying {} of {}: {}\nCause: {}", retry + 1, retryCount, Masking.url(request.url()), CommonUtils.captureStackTrace(e));
                 nap(napOnRetryInMillis);
             }
         }

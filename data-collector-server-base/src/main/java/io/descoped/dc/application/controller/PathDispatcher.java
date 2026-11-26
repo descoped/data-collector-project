@@ -122,22 +122,22 @@ public class PathDispatcher {
 
         Map.Entry<PathPredicate, PathAction> actionEntry = ceilingEntry(PathPredicate.of(lastRequestPathElementIndex, lastRequestPathElement, method));
         if (actionEntry == null) {
-            throw new IllegalStateException("Unable to resolve action-handler for: " + requestPath);
+            throw new IllegalStateException("Unable to resolve action-handler for: " + escaped(requestPath));
         }
 
         PathPredicate templatePathPredicate = actionEntry.getKey();
         if (!method.equals(templatePathPredicate.method)) {
-            throw new IllegalStateException("Found non-matching verb action-handler for: " + method + " " + requestPath + " -> Found: " + actionEntry);
+            throw new IllegalStateException("Found non-matching verb action-handler for: " + method + " " + escaped(requestPath) + " -> Found: " + actionEntry);
         }
 
         PathParser templateParser = actionEntry.getValue().templateParser;
         if (templateParser == null || lastRequestPathElementIndex != templateParser.elements().size() - 1) {
-            throw new IllegalStateException("Panic! The action-handler for: " + requestPath + " is incorrect! Found: " + actionEntry);
+            throw new IllegalStateException("Panic! The action-handler for: " + escaped(requestPath) + " is incorrect! Found: " + actionEntry);
         }
 
         PathBindings bindings = templateParser.path(requestPath);
         if (!bindings.isSatisfied()) {
-            throw new IllegalStateException(String.format("RequestPath: %s DID NOT satisfy templatePath: %s", requestPath, bindings.template().path()));
+            throw new IllegalStateException(String.format("RequestPath: %s DID NOT satisfy templatePath: %s", escaped(requestPath), bindings.template().path()));
         }
         Map<String, String> variables = bindings.extractVariables();
 
@@ -152,5 +152,21 @@ public class PathDispatcher {
         }
 
         return pathHandler;
+    }
+
+    // control characters of a decoded path are written as \\uXXXX, so a path cannot add lines to a log
+    static String escaped(String requestPath) {
+        if (requestPath == null) {
+            return null;
+        }
+        StringBuilder escaped = new StringBuilder(requestPath.length());
+        requestPath.chars().forEach(c -> {
+            if (Character.isISOControl(c)) {
+                escaped.append(String.format("\\u%04x", c));
+            } else {
+                escaped.append((char) c);
+            }
+        });
+        return escaped.toString();
     }
 }

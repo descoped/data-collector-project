@@ -13,6 +13,15 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
 
 ### Breaking
 
+- **Secrets stay out of logs, exception messages, `/health` and manifests.** Secret headers (`Authorization`,
+  `Proxy-Authorization`, `Cookie`, `Set-Cookie`, names containing `key`, `token`, `secret`, `signature` or
+  `password`, and those named in the new `data.collector.secret-headers`) keep their names with masked values in
+  `manifest.json`, in HTTP error messages and on `/health`. URLs in logs and messages have their query values masked.
+  Bodies and documents are given by length and content type: HTTP errors, failed jq, XPath and regular expression
+  queries, retries and `Parallel` errors. Failed expressions log variable names only. `/health?config` masks every
+  value. Request paths in error messages are escaped. In 2.x all of these could carry tokens and credentials.
+- **`io.descoped.dc` logs at `INFO`** in the image's log configurations (was `DEBUG`) and in the example profiles (was
+  `TRACE`); `LOG4J_LEVEL` still sets it.
 - **Every endpoint requires authentication**, `/ping`, `/health` and `/metrics` included. The authenticator is a
   provider chosen by `http.authentication.provider`; the built-in `bearer` (the default) accepts
   `Authorization: Bearer <token>` with the token in `http.authentication.bearer.token`. The server does not start

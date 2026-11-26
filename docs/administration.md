@@ -50,8 +50,7 @@ services:
       - DC_data.collector.worker.threads=8
 ```
 
-Every key and value is visible in `GET /health?config`. Values of keys whose name contains `pass`, `pwd`, `secret`,
-`credential`, `token` or `encryption` (any case) are masked there. A specification reads only the keys that start with
+Every key is listed in `GET /health?config`, with its value masked: configuration values never reach health output. A specification reads only the keys that start with
 `spec.`, without that prefix: `spec.maskinporten.clientId` is `${ENV.'maskinporten.clientId'}` (see [Specification
 DSL](specification-dsl.md#functions)). Values a specification needs, client ids and credentials of the services it
 reads included, are configured under `spec.`; nothing else is visible to it.
@@ -131,6 +130,25 @@ Read by the engine (`data-collector-core`) when a task is built. Every task gets
 | `data.collector.http.request.napOnRetryInMillis` | `150` | Pause between attempts, in milliseconds. When this key is set, the code reads the value of `data.collector.http.request.retryCount` as the pause, and fails when that key is not set. |
 | `data.collector.parallel.queueBuffer.threshold` | `-1` (off) | A value above `-1` makes a `Parallel` node wait for its running entries to finish after every this many entries of a page, for responses that are not streamed to a body handler. `0` fails with a division by zero. |
 | `data.collector.print-execution-plan` | `false` | `true` logs each task's specification (as YAML) and its execution plan when the task starts. |
+| `data.collector.secret-headers` | not set | Further secret headers, comma-separated, for services whose security schemes use headers of their own. See [Secrets in logs, messages and health](#secrets-in-logs-messages-and-health). |
+
+### Secrets in logs, messages and health
+
+dc keeps secrets out of its logs, exception messages, `/health` and message manifests:
+
+- **Secret headers** keep their names; their values become `****`. A header is secret when it is `Authorization`,
+  `Proxy-Authorization`, `Cookie` or `Set-Cookie`, when its name contains `key`, `token`, `secret`, `signature` or
+  `password` (any case), or when `data.collector.secret-headers` names it. This applies to the request and response
+  headers in `manifest.json`, in the message of a failed HTTP status, and to the specification's headers on `/health`.
+- **URLs** in logs and messages keep scheme, host, path and the names of query parameters; query values and user
+  information become `****`, and the fragment is left out.
+- **Bodies and documents** are given by their length and content type, never their content: a failed HTTP status, a
+  failed jq, XPath or regular expression query, a retry and a failed `Parallel` variable. The body of a failed HTTP
+  status is logged at `DEBUG` by `io.descoped.dc.core.handler.HttpStatusValidationHandler`, for an operator who turns
+  that logger on.
+- **Variables** of a failed expression are logged by name only; the `console()` node masks the values of variables
+  whose names are secret, as for headers.
+- **Configuration values** are masked on `/health`.
 
 ### Client certificate settings
 
@@ -332,7 +350,7 @@ The default configuration is `log4j2.xml` in the server jar:
 
 | Logger | Level | Appenders |
 |---|---|---|
-| `io.descoped.dc` | system property `log4j2.level`, else environment variable `LOG4J_LEVEL`, else `DEBUG` | console, file |
+| `io.descoped.dc` | system property `log4j2.level`, else environment variable `LOG4J_LEVEL`, else `INFO` | console, file |
 | `io.descoped.rawdata` | `INFO` | console, file |
 | root | system property `log4j2.level`, else `LOG4J_LEVEL`, else `INFO` | console, file |
 

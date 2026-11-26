@@ -58,14 +58,10 @@ public class HealthConfigResource implements HealthResource {
      * @param configuration the configuration
      */
     public void setConfiguration(Map<String, String> configuration) {
-        Set<String> maskValues = Set.of("pass", "pwd", "secret", "credential", "token", "encryption");
+        // configuration values never reach health output: every value is masked, the keys stay
         Map<String, String> map = new LinkedHashMap<>();
-        for (Map.Entry<String, String> entry : configuration.entrySet()) {
-            if (maskValues.stream().anyMatch(key -> entry.getKey().toLowerCase().contains(key))) {
-                map.put(entry.getKey(), "************");
-            } else {
-                map.put(entry.getKey(), entry.getValue());
-            }
+        for (String key : configuration.keySet()) {
+            map.put(key, "************");
         }
         JsonParser jsonParser = JsonParser.createJsonParser();
         configNode.set(jsonParser.mapper().convertValue(map, ObjectNode.class));

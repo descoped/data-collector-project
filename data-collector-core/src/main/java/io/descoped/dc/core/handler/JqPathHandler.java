@@ -116,9 +116,9 @@ public class JqPathHandler extends AbstractQueryHandler<JqPath> {
             return null;
 
         } catch (JsonQueryException e) {
+            // the document may hold a token: only its kind and size are given
             throw new IllegalStateException(e.getMessage() + " => Error with query: \"" + node.expression() + "\" " +
-                    "on data:\n" +
-                    ofNullable(jsonNode).map(JsonNode::toPrettyString).orElse(null) + "\n" +
+                    "on data: " + ofNullable(jsonNode).map(n -> n.getNodeType() + " of " + n.size() + " elements").orElse("none") + "\n" +
                     CommonUtils.captureStackTrace(e));
         }
     }

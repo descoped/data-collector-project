@@ -12,6 +12,7 @@ import io.descoped.dc.api.http.Response;
 import io.descoped.dc.api.node.Execute;
 import io.descoped.dc.api.node.Node;
 import io.descoped.dc.api.node.Parallel;
+import io.descoped.dc.api.security.Masking;
 import io.descoped.dc.core.executor.Executor;
 import io.descoped.dc.core.executor.FixedThreadPool;
 import org.slf4j.Logger;
@@ -19,7 +20,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -197,10 +197,10 @@ public class ParallelHandler extends AbstractNodeHandler<Parallel> {
                 String value = Queries.from(input, node.variable(variableKey)).evaluateStringLiteral(pageEntryDocument);
                 input.variable(variableKey, value);
             } catch (RuntimeException | Error e) {
-                LOG.error("Error evaluating variable: {} => {} in document: {}", variableKey, node.variable(variableKey), new String(serializedItem, StandardCharsets.UTF_8));
+                LOG.error("Error evaluating variable: {} => {} in document of {}", variableKey, node.variable(variableKey), Masking.body(serializedItem, (String) null));
                 throw e;
             } catch (Exception e) {
-                LOG.error("Error evaluating variable: {} => {} in document: {}", variableKey, node.variable(variableKey), new String(serializedItem, StandardCharsets.UTF_8));
+                LOG.error("Error evaluating variable: {} => {} in document of {}", variableKey, node.variable(variableKey), Masking.body(serializedItem, (String) null));
                 throw new ParallelException(e);
             }
         });

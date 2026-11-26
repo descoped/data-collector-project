@@ -1,9 +1,11 @@
 package io.descoped.dc.core.handler;
 
+import io.descoped.dc.api.ConfigurationMap;
 import io.descoped.dc.api.context.ExecutionContext;
 import io.descoped.dc.api.handler.Handler;
 import io.descoped.dc.api.http.Response;
 import io.descoped.dc.api.node.Console;
+import io.descoped.dc.api.security.Masking;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,9 +27,12 @@ public class ConsoleHandler extends AbstractNodeHandler<Console> {
         Response response = context.state(Response.class);
         PageEntryState pageEntryState = context.state(PageEntryState.class);
 
-        String variables = context.variables().entrySet().stream().map(entry -> String.format("%s=%s", entry.getKey(), entry.getValue())).collect(Collectors.joining(", "));
+        Masking masking = Masking.of(context.services().get(ConfigurationMap.class));
+        String variables = context.variables().entrySet().stream()
+                .map(entry -> String.format("%s=%s", entry.getKey(), masking.isSecret(entry.getKey()) ? Masking.MASK : entry.getValue()))
+                .collect(Collectors.joining(", "));
 
-        String url = response == null ? "N/A" : response.url();
+        String url = response == null ? "N/A" : Masking.url(response.url());
         int statusCode = response == null ? -1 : response.statusCode();
         byte[] responseBody = response == null ? new byte[0] : response.body();
         byte[] body = pageEntryState == null ? responseBody : pageEntryState.content;

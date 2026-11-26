@@ -15,6 +15,10 @@ Done:
 - JDK 27: the build, CI and the image's runtime.
 - The server image for amd64 and arm64, running as a non-root user, in three variants (regular, distroless, debug),
   released by `release.yml` to Docker Hub (`descoped/data-collector`).
+- Security, to the rules in [`CLAUDE.md`](.claude/CLAUDE.md): expressions in a sandbox and no class loaded by a name
+  from a specification; authentication on every endpoint, with CORS and JMX off by default; TLS chains verified;
+  topic names validated before they reach file paths; encryption that fails closed; secrets kept out of logs,
+  exception messages, health output and manifests.
 - Documentation in `docs/` and the examples in `examples/`.
 - SNAPSHOTs published from CI to `https://maven.descoped.io/`.
 
@@ -25,14 +29,6 @@ Before the release:
   - retry settings read from the wrong key;
   - request headers lost when a specification is read from JSON;
   - integrity check and recovery errors.
-- **Security:** the rules in [`CLAUDE.md`](.claude/CLAUDE.md) that the 2.x code does not meet yet:
-  - specification expressions evaluated in a sandbox with an explicit allow-list (this also unblocks commons-jexl3
-    after 3.2.1), and no class loaded by a name from a specification;
-  - authentication on every server endpoint, with CORS and JMX off by default;
-  - TLS chains verified, never trusted by comparing certificates;
-  - topic names and positions validated before they reach file paths;
-  - encryption that fails closed when a key or secret is missing;
-  - secrets and `Authorization` headers kept out of logs, exception messages and health output.
 - **Build:** test coverage for every module in SonarCloud.
 - **Release:** the images on Docker Hub, with the owner's go-ahead.
 

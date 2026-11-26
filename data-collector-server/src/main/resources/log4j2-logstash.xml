@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN" monitorInterval="0">
     <Properties>
-        <Property name="TEST_LOG_LEVEL">DEBUG</Property>
+        <Property name="TEST_LOG_LEVEL">INFO</Property>
         <Property name="ROOT_LOG_LEVEL">INFO</Property>
     </Properties>
 

@@ -73,7 +73,7 @@ public class RegExHandler extends AbstractQueryHandler<RegEx> {
             }
 
         } catch (PatternSyntaxException e) {
-            throw new QueryException("Error parsing: " + data, e);
+            throw new QueryException("Error parsing the expression: " + node.expression(), e);
         }
         return null;
     }

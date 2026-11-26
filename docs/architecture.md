@@ -320,7 +320,9 @@ checks the keys it requires, and calls `initialize(configuration)`. The name com
 The `rawdata` connector:
 
 - Writes one message per published position. The message holds every content key buffered for the position, and a
-  `manifest.json` entry: a JSON array with the metadata of each content item.
+  `manifest.json` entry: a JSON array with the metadata of each content item. The request and response headers in it
+  keep their names; the values of secret headers are masked (see
+  [Administration](administration.md#secrets-in-logs-messages-and-health)).
 - Writes `addPageContent` pages to `<topic>-pages` and publishes them at once.
 - Encrypts content and manifest with AES-256 (encryption-util) when it finds both an encryption key and salt that are
   not empty. They are read through secrets-client, from the configuration (`rawdata.encryption.key`,

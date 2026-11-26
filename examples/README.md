@@ -47,7 +47,7 @@ Run `make` to list every target. Run only one setup at a time: they all use port
 
 Each compose file mounts `profile/<profile>/conf` as `/conf` and `certs/` as `/certs`, except the Google Secret Manager
 setup, which mounts `profile/filesystem-secrets/certs` as `/certs`. The two filesystem setups also
-pass `-Dlog4j2.configurationFile=/conf/log4j2.xml` in `JAVA_TOOL_OPTIONS`, which logs at `TRACE`.
+pass `-Dlog4j2.configurationFile=/conf/log4j2.xml` in `JAVA_TOOL_OPTIONS`, which logs at `INFO`.
 
 ## Profiles
 
