@@ -11,7 +11,7 @@ public class MetricsApplicationResource implements MetricsResource {
     private static final Gauge uptime = Gauge.build().namespace("dc").subsystem("application").name("uptime").help("Application uptime").register();
 
     public MetricsApplicationResource() {
-        since.set(Instant.now().toEpochMilli());
+        since.set((double) Instant.now().toEpochMilli());
     }
 
     public void trackUptime() {

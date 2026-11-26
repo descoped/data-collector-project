@@ -28,16 +28,14 @@ public class FreemarkerTemplateEngine {
     }
 
     Configuration configure() {
-        Configuration config = new Configuration(Configuration.VERSION_2_3_29);
-        config.setClassLoaderForTemplateLoading(tccl(), basePackagePath);
-        config.setDefaultEncoding("UTF-8");
-        //config.setOutputFormat(XMLOutputFormat.INSTANCE);
-        //config.setWhitespaceStripping(true);
-        config.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
-        config.setLogTemplateExceptions(false);
-        config.setWrapUncheckedExceptions(true);
-        config.setFallbackOnNullLoopVariable(false);
-        return config;
+        Configuration configuration = new Configuration(Configuration.VERSION_2_3_29);
+        configuration.setClassLoaderForTemplateLoading(tccl(), basePackagePath);
+        configuration.setDefaultEncoding("UTF-8");
+        configuration.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
+        configuration.setLogTemplateExceptions(false);
+        configuration.setWrapUncheckedExceptions(true);
+        configuration.setFallbackOnNullLoopVariable(false);
+        return configuration;
     }
 
     public void process(String templateFile, Map<String, Object> dataModel, Writer output) {

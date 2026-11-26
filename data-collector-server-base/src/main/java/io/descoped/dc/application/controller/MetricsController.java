@@ -6,8 +6,6 @@ import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.common.TextFormat;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -20,8 +18,7 @@ import java.util.Set;
 // https://github.com/prometheus/client_java/blob/master/simpleclient_httpserver/src/main/java/io/prometheus/client/exporter/HTTPServer.java
 public class MetricsController implements Controller {
 
-    private static final Logger LOG = LoggerFactory.getLogger(MetricsController.class);
-    private final static String HEALTHY_RESPONSE = "Exporter is Healthy.";
+    private static final String HEALTHY_RESPONSE = "Exporter is Healthy.";
     private final CollectorRegistry collectorRegistry;
 
     public MetricsController() {
@@ -45,11 +42,9 @@ public class MetricsController implements Controller {
             return;
         }
 
-        if ("get".equalsIgnoreCase(exchange.getRequestMethod().toString())) {
-            if (exchange.getRequestPath().startsWith("/metrics")) {
-                dealWithMetrics(exchange);
-                return;
-            }
+        if ("get".equalsIgnoreCase(exchange.getRequestMethod().toString()) && exchange.getRequestPath().startsWith("/metrics")) {
+            dealWithMetrics(exchange);
+            return;
         }
 
         exchange.setStatusCode(400);

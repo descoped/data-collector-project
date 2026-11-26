@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
 
@@ -62,16 +61,16 @@ public class HealthModuleInfoResource implements HealthResource {
     }
 
     private List<ModuleInfo> scanModules(String packageName) {
-        List<Module> modules = ModuleLayer
+        List<Module> bootModules = ModuleLayer
                 .boot()
                 .modules()
                 .stream()
                 .sorted(Comparator.comparing(md -> md.getDescriptor().name()))
                 .filter(md -> md.getDescriptor().name().startsWith(packageName))
-                .collect(Collectors.toList());
+                .toList();
 
         List<ModuleInfo> moduleInfoList = new ArrayList<>();
-        for (Module module : modules) {
+        for (Module module : bootModules) {
             ModuleInfo.Builder moduleInfoBuilder = new ModuleInfo.Builder();
 
             ModuleDescriptor moduleDescriptor = module.getDescriptor();

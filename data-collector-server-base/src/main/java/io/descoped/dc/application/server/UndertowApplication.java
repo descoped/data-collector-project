@@ -30,7 +30,6 @@ import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class UndertowApplication {
@@ -72,7 +71,7 @@ public class UndertowApplication {
 
     private CORSHandler configureCORSHandler(DynamicConfiguration configuration, PathHandler pathHandler) {
         List<Pattern> corsAllowOrigin = Stream.of(configuration.get("http.cors.allow.origin", ".*")
-                .split(",")).map(Pattern::compile).collect(Collectors.toUnmodifiableList());
+                .split(",")).map(Pattern::compile).toList();
         Set<String> corsAllowMethods = Set.of(configuration.get("http.cors.allow.methods", "POST,GET,PUT,DELETE,HEAD")
                 .split(","));
         Set<String> corsAllowHeaders = Set.of(configuration.get("http.cors.allow.header", "Content-Type,Authorization")
@@ -98,7 +97,7 @@ public class UndertowApplication {
             DefaultExports.initialize();
         }
         LOG.info("Initializing Data Collector server ...");
-        if (businessSSLResourceSupplier != null) {
+        if (businessSSLResourceSupplier != null && LOG.isInfoEnabled()) {
             LOG.info("Use delegated certificate provider: {}", configuration.find("data.collector.sslBundle.provider").orElse(null));
         }
 
@@ -130,7 +129,6 @@ public class UndertowApplication {
         // scan and register Services and copy all components to service injection params
         InjectionParameters serviceInjectionParameters = new InjectionParameters();
         serviceInjectionParameters.putAll(componentInjectionParameters);
-        //serviceInjectionParameters.register(DynamicConfiguration.class, configuration);
         serviceInjectionParameters.register(MetricsResourceFactory.class, metricsResourceFactory);
         serviceInjectionParameters.register(HealthResourceFactory.class, healthResourceFactory);
 

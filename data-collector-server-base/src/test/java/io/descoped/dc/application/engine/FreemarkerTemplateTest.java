@@ -1,9 +1,7 @@
 package io.descoped.dc.application.engine;
 
-import freemarker.template.TemplateException;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -18,7 +16,7 @@ class FreemarkerTemplateTest {
     public static final String FREEMARKER_TEMPLATES = "/freemarker-templates";
 
     @Test
-    void renderSimpleModel() throws IOException, TemplateException {
+    void renderSimpleModel() {
         FreemarkerTemplateEngine engine = new FreemarkerTemplateEngine(FREEMARKER_TEMPLATES);
 
         Map<String, Object> dataModel = new HashMap<>();

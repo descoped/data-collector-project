@@ -38,7 +38,6 @@ class PathPredicate implements Comparable<PathPredicate> {
     @Override
     public int compareTo(PathPredicate that) {
         int indexCompare = this.index.compareTo(that.index);
-        //int pathCompare = this.pathElement.compareTo(that.pathElement);
         int methodCompare = this.method.compareTo(that.method);
         return Integer.compare(indexCompare, methodCompare);
     }

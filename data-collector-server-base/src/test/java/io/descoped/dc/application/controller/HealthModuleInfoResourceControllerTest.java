@@ -16,14 +16,15 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class HealthModuleInfoResourceControllerTest {
+class HealthModuleInfoResourceControllerTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(HealthModuleInfoResourceControllerTest.class);
 
     @Test
-    public void thatModuleListHasTheDescopedModulesOfTheBootLayer() {
+    void thatModuleListHasTheDescopedModulesOfTheBootLayer() {
         HealthModuleInfoResource healthModuleInfoResource = new HealthModuleInfoResource();
         @SuppressWarnings("unchecked")
         List<HealthModuleInfoResource.ModuleInfo> modules = (List<HealthModuleInfoResource.ModuleInfo>) healthModuleInfoResource.resource();
@@ -40,13 +41,14 @@ public class HealthModuleInfoResourceControllerTest {
     }
 
     @Test
-    public void thatHealthResourcesAreDiscovered() {
+    void thatHealthResourcesAreDiscovered() {
         List<HealthResource> healthResources = HealthResourceFactory.create().getHealthResources();
         healthResources.forEach(healthResource -> System.out.printf("%s%n", healthResource));
+        assertTrue(healthResources.stream().anyMatch(HealthModuleInfoResource.class::isInstance));
     }
 
     @Test
-    public void testThreadGroups() {
+    void testThreadGroups() {
         Set<Thread> threads = Thread.getAllStackTraces().keySet();
 
         SortedMap<String, List<Thread>> threadGroups = new TreeMap<>(Comparator.comparing(String::toString));
@@ -69,5 +71,6 @@ public class HealthModuleInfoResourceControllerTest {
         for (Map.Entry<String, List<Thread>> threadEntry : threadGroups.entrySet()) {
             System.out.printf("%s -> %s%n", threadEntry.getKey(), threadEntry.getValue().stream().map(Thread::getName).collect(Collectors.joining(", ")));
         }
+        assertFalse(threadGroups.isEmpty());
     }
 }

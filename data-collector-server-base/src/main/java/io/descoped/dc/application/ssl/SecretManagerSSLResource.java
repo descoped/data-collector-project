@@ -27,7 +27,7 @@ public class SecretManagerSSLResource implements BusinessSSLResource {
         this.configuration = configuration;
         this.businessSslResourceProvider = configuration.find("data.collector.sslBundle.provider").orElse(null);
         if (businessSslResourceProvider == null) {
-            throw new RuntimeException("SSL Bundle Provider is NOT defined! Please check your config!");
+            throw new IllegalStateException("SSL Bundle Provider is NOT defined! Please check your config!");
         }
         this.hasBusinessSslResourceProvider = "google-secret-manager".equals(businessSslResourceProvider);
         LOG.info("Create BusinessSSL resource provider: {}", businessSslResourceProvider);
@@ -74,7 +74,7 @@ public class SecretManagerSSLResource implements BusinessSSLResource {
 
     @Override
     public byte[] archiveCertificate() {
-        return !isPEM() ? readBytesOrNull(configuration.find("data.collector.sslBundle.archiveCertificate").orElse(null)) : new byte[0];
+        return isPEM() ? new byte[0] : readBytesOrNull(configuration.find("data.collector.sslBundle.archiveCertificate").orElse(null));
     }
 
     @Override

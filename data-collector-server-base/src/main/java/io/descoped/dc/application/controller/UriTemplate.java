@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 
 public class UriTemplate {
 
-    private static final Pattern PATH_GROUPS_PATTERN = Pattern.compile("(?:[^}{/]+|\\{[^}{]+})+");
+    private static final Pattern PATH_GROUPS_PATTERN = Pattern.compile("(?:[^}{/]++|\\{[^}{]++})++");
 
     private final String path;
     private final List<String> pathElements;
