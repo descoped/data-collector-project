@@ -11,6 +11,7 @@ import io.descoped.dc.api.node.Node;
 import io.descoped.dc.api.node.Query;
 import io.descoped.dc.api.node.Sequence;
 import io.descoped.dc.api.node.XmlToken;
+import io.descoped.dc.core.observer.EngineObservers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +39,16 @@ public class GetHandler extends OperationHandler<Get> {
 
     @Override
     public ExecutionContext execute(ExecutionContext input) {
+        try {
+            return executeGet(input);
+        } catch (RuntimeException | Error e) {
+            // the request's URL, which OperationHandler keeps in the state, is not known when the step fails before it
+            EngineObservers.instance().operationFailed(EngineObservers.requestEvent(input.state("PROMETHEUS_METRICS_REQUEST_URL")), e);
+            throw e;
+        }
+    }
+
+    private ExecutionContext executeGet(ExecutionContext input) {
         super.execute(input);
         int requestTimeout = beforeRequest(input);
 

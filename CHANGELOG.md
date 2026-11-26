@@ -20,6 +20,12 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
   Bodies and documents are given by length and content type: HTTP errors, failed jq, XPath and regular expression
   queries, retries and `Parallel` errors. Failed expressions log variable names only, and the prefetch log masks secret-named variables. `/health?config` masks every
   value. Request paths in error messages are escaped. In 2.x all of these could carry tokens and credentials.
+- **No metrics agent.** The engine reports to engine observers itself (see Added), so the ByteBuddy agents and
+  everything that installed them are removed: `MetricsAgent`, `HttpClientAgent`, `ContentStoreAgent`,
+  `HttpClientExporter`, `ContentStoreExporter`, `ExecutionWrapper` and the switch that would have wrapped every handler.
+  A library user no longer calls `MetricsAgent.premain`; the metrics come with core. Core no longer requires ByteBuddy
+  (it was `requires transitive`) or `java.instrument`, the image starts no `-javaagent`, and its regular runtime has no
+  `java.instrument` (the debug runtime keeps it for diagnostic agents).
 - **`io.descoped.dc` logs at `INFO`** in the image's log configurations (was `DEBUG`) and in the example profiles (was
   `TRACE`); `LOG4J_LEVEL` still sets it.
 - **Every endpoint requires authentication**, `/ping`, `/health` and `/metrics` included. The authenticator is a
@@ -84,6 +90,13 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
 
 ### Added
 
+- **Engine observers** (`io.descoped.dc.api.observer.EngineObserver`): the engine reports workers, node executions,
+  requests and their retries, failed GET steps, completed pages, fanned-out entries and content store writes to every
+  provider `ServiceLoader` finds. An observer that throws is logged once and never fails the engine; the events carry
+  no headers, bodies or configuration values. An event that takes time returns an `Observation`, for a timer or,
+  later, a span. Core's `PrometheusEngineObserver` records the client and content store metrics of 2.x, with the same
+  names, labels and buckets, and new ones: `dc_worker_started`, `dc_worker_finished`, `dc_node_duration`,
+  `dc_node_failure`, `dc_client_request_retry`, `dc_pagination_page` and `dc_parallel_entry`.
 - **`io.descoped.dc.api.el.ExpressionFunctions`** and **`io.descoped.dc.api.ProcessorProvider`**: service providers that
   add functions to expressions and processors to `Process` nodes, each under a name a specification uses.
 
@@ -177,9 +190,9 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
   them, so a `Process` without required outputs always failed and one with several passed when one was present.
 - **The `Execute specification` log of a node is YAML**, as for a specification; `NodeBuilder.serializeAsYaml()` gave
   JSON.
-- **The client and content store metrics are recorded** (#25). The metrics agent's interceptors are ByteBuddy
-  `Advice`; `MethodDelegation` could not define its helper classes on JDK 27, so no `dc_client_*` or
-  `dc_content_stream_*` metric was recorded. A type the agent cannot instrument is now logged as a warning.
+- **The client and content store metrics are recorded** (#25). 2.x's agent used ByteBuddy `MethodDelegation`, which
+  could not define its helper classes on JDK 27, so no `dc_client_*` or `dc_content_stream_*` metric was recorded.
+  They now come from the engine observer, which wraps the client and the content store a worker uses.
 - **Recovery closes its own producer and consumer** (#31): the producer of the target topic and the consumer of the
   source topic; it closed them under each other's topic, so neither was closed.
 - **The rawdata dump stops on the first `stop()`** and waits for its exporter (#32); it waited only on a second call.

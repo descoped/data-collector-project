@@ -20,6 +20,7 @@ import io.descoped.dc.api.security.Masking;
 import io.descoped.dc.api.util.CommonUtils;
 import io.descoped.dc.core.executor.Executor;
 import io.descoped.dc.core.health.HealthWorkerMonitor;
+import io.descoped.dc.core.observer.EngineObservers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,7 +101,7 @@ public abstract class OperationHandler<T extends Operation> extends AbstractNode
         String url = evaluatedUrl(input);
         requestBuilder.url(url);
 
-        // Expose node.url() to ByteBuddy Agent
+        // the URL, for the engine observers when a GET step fails (GetHandler)
         input.state("PROMETHEUS_METRICS_REQUEST_URL", url);
 
         // execute http get
@@ -252,6 +253,7 @@ public abstract class OperationHandler<T extends Operation> extends AbstractNode
                 if (monitor != null) {
                     monitor.request().incrementRequestRetryOnFailureCount();
                 }
+                EngineObservers.instance().requestRetried(EngineObservers.requestEvent(request.url()), retry + 1);
                 LOG.error("Request error occurred - retrying {} of {}: {}\nCause: {}", retry + 1, retryCount, Masking.url(request.url()), CommonUtils.captureStackTrace(e));
                 nap(napOnRetryInMillis);
             }

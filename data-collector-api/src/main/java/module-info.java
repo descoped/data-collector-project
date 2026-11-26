@@ -28,6 +28,7 @@ module io.descoped.dc.api {
     exports io.descoped.dc.api.health;
     exports io.descoped.dc.api.node;
     exports io.descoped.dc.api.node.builder;
+    exports io.descoped.dc.api.observer;
     exports io.descoped.dc.api.el;
     exports io.descoped.dc.api.content;
     exports io.descoped.dc.api.handler;

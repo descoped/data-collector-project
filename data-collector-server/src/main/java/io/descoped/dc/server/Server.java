@@ -5,9 +5,7 @@ import io.descoped.dc.application.server.Configurations;
 import io.descoped.dc.application.server.UndertowApplication;
 import io.descoped.dc.application.ssl.BusinessSSLResourceSupplier;
 import io.descoped.dc.application.ssl.SecretManagerSSLResource;
-import io.descoped.dc.core.metrics.MetricsAgent;
 import io.descoped.dc.core.util.JavaUtilLoggerBridge;
-import net.bytebuddy.agent.ByteBuddyAgent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +33,6 @@ public class Server {
      * @param args not used
      */
     public static void main(String[] args) {
-        MetricsAgent.premain(null, ByteBuddyAgent.install());
         long now = System.currentTimeMillis();
 
         String logbackConfigurationFile = System.getenv("LOGBACK_CONFIGURATION_FILE");

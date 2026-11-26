@@ -13,16 +13,12 @@ module io.descoped.dc.core {
     requires io.descoped.secrets.api;
 
     requires java.logging;
-    requires transitive java.instrument;
     requires java.net.http;
 
     requires methanol;
 
     requires org.slf4j;
     requires jul.to.slf4j;
-
-    requires transitive net.bytebuddy;
-    requires net.bytebuddy.agent;
 
     requires com.fasterxml.jackson.databind;
     requires com.fasterxml.jackson.annotation;
@@ -38,6 +34,9 @@ module io.descoped.dc.core {
 
     requires io.prometheus.metrics.core;
 
+    uses io.descoped.dc.api.observer.EngineObserver;
+
+    provides io.descoped.dc.api.observer.EngineObserver with io.descoped.dc.core.metrics.PrometheusEngineObserver;
     provides Client.Builder with io.descoped.dc.core.http.HttpClientDelegate.ClientBuilder;
     provides Request.Builder with io.descoped.dc.core.http.HttpRequestDelegate.RequestBuilder;
     provides Response.Builder with io.descoped.dc.core.http.HttpResponseDelegate.ResponseBuilder;

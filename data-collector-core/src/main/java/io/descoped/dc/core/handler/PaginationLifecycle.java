@@ -7,6 +7,7 @@ import io.descoped.dc.api.TerminationException;
 import io.descoped.dc.api.context.ExecutionContext;
 import io.descoped.dc.core.executor.FixedThreadPool;
 import io.descoped.dc.core.health.HealthWorkerMonitor;
+import io.descoped.dc.core.observer.EngineObservers;
 import io.descoped.dc.api.ConfigurationMap;
 import io.descoped.dc.api.security.Masking;
 import org.slf4j.Logger;
@@ -135,6 +136,7 @@ class PaginationLifecycle {
         checkTerminationSignal(termination);
 
         ExecutionContext outputContext = pageFuture.join();
+        EngineObservers.instance().pageCompleted(EngineObservers.nodeEvent(paginateHandler.node));
 
         PageContext pageContext = outputContext.state(PageContext.class);
 

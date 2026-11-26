@@ -182,7 +182,6 @@
                     <configuration>
                         <argLine>
                             @{argLine}
-                            -XX:+EnableDynamicAgentLoading
                             -Xmx1500m
                         </argLine>
                     </configuration>

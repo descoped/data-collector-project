@@ -5,13 +5,10 @@ import io.descoped.dc.api.http.HttpStatus;
 import io.descoped.dc.api.node.builder.SpecificationBuilder;
 import io.descoped.dc.api.util.CommonUtils;
 import io.descoped.dc.core.executor.Worker;
-import io.descoped.dc.core.metrics.MetricsAgent;
 import io.descoped.dc.test.client.ResponseHelper;
 import io.descoped.dc.test.client.TestClient;
 import io.descoped.dc.test.server.TestServer;
 import io.descoped.dc.test.server.TestServerExtension;
-import net.bytebuddy.agent.ByteBuddyAgent;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,11 +43,6 @@ class DockerServerTest {
 
     @Inject
     TestClient client;
-
-    @BeforeAll
-    static void beforeAll() {
-        MetricsAgent.premain(null, ByteBuddyAgent.install());
-    }
 
     @Test
     void testPingServer() {

@@ -83,11 +83,8 @@ owner's go-ahead; no jar is released. See [Administration: releasing](administra
 Tests are JUnit 6, run by Maven Surefire. In the named modules, the tests are compiled into the module (patch mode).
 `data-collector-testutils` and `data-collector-samples` are not JPMS modules; their tests run on the class path.
 
-The core, server and samples modules run Surefire with `-XX:+EnableDynamicAgentLoading`, so that tests may install the
-ByteBuddy agent at run time (`MetricsAgent.premain(null, ByteBuddyAgent.install())`); core's metrics tests do. The
-server module also passes
-`--add-opens`, `--add-reads` and `--add-exports` switches; see its POM. Two of them open `java.nio` to lmdbjava, which
-the integrity check and recovery tests need.
+The server module passes `--add-opens`, `--add-reads` and `--add-exports` switches to Surefire; see its POM. Two of
+them open `java.nio` to lmdbjava, which the integrity check and recovery tests need.
 
 A module that gives Surefire an `argLine` starts it with `@{argLine}`: the `coverage` profile puts the JaCoCo agent
 there, and without it the module's tests report no coverage. The root POM defines `argLine` empty, for builds without
@@ -401,21 +398,11 @@ it to each worker with `contentStore(...)`, and close it when you are done. `Con
 
 ### Metrics
 
-The Prometheus metrics of the HTTP client and the content store come from ByteBuddy agents. Install them once, before
-the first worker runs:
-
-```java
-import io.descoped.dc.core.metrics.MetricsAgent;
-import net.bytebuddy.agent.ByteBuddyAgent;
-
-MetricsAgent.premain(null, ByteBuddyAgent.install());
-```
-
-On JDK 21 and later, loading an agent at run time needs `-XX:+EnableDynamicAgentLoading` to run without a warning, or
-start the JVM with `-javaagent:<byte-buddy-agent jar>`. The agent inlines ByteBuddy `Advice` into the client and the
-`ContentStore` implementations, which calls public methods of `io.descoped.dc.core.http.HttpClientExporter` and
-`io.descoped.dc.core.content.ContentStoreExporter`; it gives a connector module on the module path a read edge to
-`io.descoped.dc.core` itself, and retransforms classes that were loaded before it.
+The Prometheus metrics come with core: the engine reports to the engine observers that `ServiceLoader` finds, and
+core provides `PrometheusEngineObserver`, which records in Prometheus' default registry. Nothing is installed. Another
+observer, for example one that writes traces, implements `io.descoped.dc.api.observer.EngineObserver`, overrides
+the events it needs, and is registered with `provides` in its module (and `META-INF/services` on the class path).
+It must not block, since the engine calls it on its own threads.
 The metric names are listed in [Architecture](architecture.md#metrics-and-monitoring).
 
 ## The HTTP client

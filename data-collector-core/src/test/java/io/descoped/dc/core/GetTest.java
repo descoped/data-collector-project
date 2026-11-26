@@ -17,13 +17,10 @@ import io.descoped.dc.core.executor.Executor;
 import io.descoped.dc.core.executor.Worker;
 import io.descoped.dc.core.handler.Queries;
 import io.descoped.dc.core.metrics.MetricSamples;
-import io.descoped.dc.core.metrics.MetricsAgent;
 import io.descoped.dc.test.server.TestServer;
 import io.descoped.dc.test.server.TestServerExtension;
 import io.descoped.service.provider.api.ProviderConfigurator;
-import net.bytebuddy.agent.ByteBuddyAgent;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -79,11 +76,6 @@ class GetTest {
 
     @Inject
     TestServer testServer;
-
-    @BeforeAll
-    static void beforeAll() {
-        MetricsAgent.premain(null, ByteBuddyAgent.install());
-    }
 
     @AfterAll
     static void afterAll() {
