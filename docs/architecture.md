@@ -22,8 +22,7 @@ an API, and publishes each entry as a position on a content stream. A content st
 
 Prerequisites:
 
-- Java 17 or later. Every class file targets Java 17 (`maven.compiler.release` 17). CI builds and tests on JDK 17 and
-  JDK 27.
+- JDK 27. Every class file targets Java 27 (`maven.compiler.release` 27), and CI builds and tests on JDK 27.
 - Docker with Compose v2, to build and run the server image and the setups in [`examples/`](../examples/README.md).
   The image (`data-collector-server/Dockerfile`) is Eclipse Temurin 17 on Ubuntu, for amd64 and arm64.
 

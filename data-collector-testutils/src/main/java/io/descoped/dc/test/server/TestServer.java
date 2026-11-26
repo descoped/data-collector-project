@@ -7,8 +7,6 @@ import io.descoped.dc.application.ssl.SecretManagerSSLResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.security.SecureRandom;
 import java.util.function.Supplier;
 
@@ -95,12 +93,13 @@ public class TestServer implements TestUriResolver {
 
     @Override
     public String testURL(String uri) {
-        try {
-            URL url = new URL("http", application.getHost(), application.getPort(), uri);
-            return url.toExternalForm();
-        } catch (MalformedURLException e) {
-            throw new TestServerException(e);
+        // as URL(protocol, host, port, file).toExternalForm() wrote it: the path is not parsed, since it may hold
+        // ${..} expressions
+        String host = application.getHost();
+        if (host.indexOf(':') >= 0 && !host.startsWith("[")) {
+            host = "[" + host + "]";
         }
+        return "http://" + host + ":" + application.getPort() + uri;
     }
 
     /**

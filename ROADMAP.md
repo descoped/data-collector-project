@@ -5,14 +5,14 @@ here. What has shipped is in the [changelog](CHANGELOG.md); this page is what co
 
 ## 3.0.0: the migration (in progress)
 
-3.0.0 makes dc fully operational again on the Descoped 3.x libraries, current dependencies and Java 17, with the
+3.0.0 makes dc fully operational again on the Descoped 3.x libraries, current dependencies and JDK 27, with the
 behaviour of 2.x.
 
 Done:
 - One repository and one Maven reactor; the old repositories redirect here.
 - The Descoped libraries on 3.x (rawdata-client, dynamic-configuration, secrets-client, encryption-util,
   service-provider-api) and every other dependency at its latest version.
-- CI on JDK 17 and 27.
+- JDK 27: the build, CI and the image's runtime.
 - The server image for amd64 and arm64, running as a non-root user, in three variants (regular, distroless, debug),
   released by `release.yml` to Docker Hub (`descoped/data-collector`).
 - Documentation in `docs/` and the examples in `examples/`.
@@ -38,7 +38,7 @@ Before the release:
 
 ## After 3.0.0
 
-- **Java 27** for the engine and the server, including their concurrency. Until then the code stays on Java 17.
+- **Structured concurrency** (a preview feature of JDK 27) for the engine and the server.
 
 ## Open from 2.x
 

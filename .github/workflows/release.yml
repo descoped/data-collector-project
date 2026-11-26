@@ -13,7 +13,7 @@ name: Release
 # the SBOM and the provenance are made anew on every run.
 #
 # What is released is master as it is: its POMs must already have the version, CHANGELOG.md a section for it with its
-# date (## [3.0.0] - 2026-12-01), and CI must have passed on the commit on JDK 17 and 27 (the release builds the jars
+# date (## [3.0.0] - 2026-12-01), and CI must have passed on the commit (on JDK 27) (the release builds the jars
 # again, but does not test them again). The tag must not exist, and no dependency may be a SNAPSHOT. Three images,
 # each for linux/amd64 and linux/arm64, with an SBOM and the provenance of the build, and signed with cosign (keyless,
 # by this workflow's identity on GitHub):
@@ -61,7 +61,7 @@ jobs:
       - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880  # v6.3.0
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '27'
           cache: maven
 
       # Everything that can be found wrong is found before anything is published.
@@ -78,11 +78,9 @@ jobs:
           # A SNAPSHOT dependency (from maven.descoped.io) would make the release whatever that SNAPSHOT was that day.
           ./mvnw --batch-mode --quiet enforcer:enforce -Denforcer.rules=requireReleaseDeps \
             || { echo "::error::A release has no SNAPSHOT dependency"; exit 1; }
-          for java in 17 27; do
-            ci="$(gh api "repos/$GITHUB_REPOSITORY/commits/$(git rev-parse HEAD)/check-runs?check_name=Build%20(JDK%20$java)" \
-                --jq '.check_runs[0].conclusion')"
-            [ "$ci" = "success" ] || { echo "::error::CI (JDK $java) on $(git rev-parse HEAD) is '$ci', not success"; exit 1; }
-          done
+          ci="$(gh api "repos/$GITHUB_REPOSITORY/commits/$(git rev-parse HEAD)/check-runs?check_name=Build%20(JDK%2027)" \
+              --jq '.check_runs[0].conclusion')"
+          [ "$ci" = "success" ] || { echo "::error::CI (JDK 27) on $(git rev-parse HEAD) is '$ci', not success"; exit 1; }
           {
             echo "SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)"
             echo "MINOR=${VERSION%.*}"

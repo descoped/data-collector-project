@@ -8,11 +8,14 @@ All notable changes to Data Collector are recorded here. The format follows
 
 The first release from this repository. Until 2.x, every module was a repository of its own; they are now one Maven
 reactor with one version, and the old repositories redirect here. 3.0.0 runs dc on the Descoped 3.x libraries, current
-dependencies and Java 17. dc's own behaviour stays as in 2.x, except for the changes the libraries force, listed under
+dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the changes the libraries force, listed under
 **Breaking**.
 
 ### Breaking
 
+- **JDK 27:** dc is built for, tested on and runs on JDK 27 (class files of Java 27); 2.x ran on Java 17. The server
+  image's runtime is Temurin 27, and its `java` allows native access for the class path (jffi) and lmdbjava's use of
+  `sun.misc.Unsafe`, which JDK 27 would otherwise warn about.
 - **Server image settings:** JVM options and system properties go in `JAVA_TOOL_OPTIONS`, which the JVM reads itself.
   The 2.x variables `JAVA_OPTS`, `PROXY_HTTP_HOST`, `PROXY_HTTP_PORT`, `PROXY_HTTPS_HOST`, `PROXY_HTTPS_PORT` and
   `ENABLE_JMX_REMOTE_DEBUGGING` and the script `/run.sh` are gone: give `-Dhttp.proxyHost=...` and the JMX options in
@@ -30,7 +33,6 @@ dependencies and Java 17. dc's own behaviour stays as in 2.x, except for the cha
   lookup.
 - **Google credentials:** without a service-account key, the Google Secret Manager provider uses Application Default
   Credentials. 2.x used Compute Engine credentials only.
-- **Java 17** is the minimum.
 
 ### Changed
 
@@ -64,7 +66,7 @@ dependencies and Java 17. dc's own behaviour stays as in 2.x, except for the cha
 - **Server image**, `descoped/data-collector` on Docker Hub, in three variants from one `Dockerfile`:
   - regular (`X.Y.Z`, `latest`), with a shell (busybox); distroless (`X.Y.Z-distroless`), no shell and no program but
     `java`; debug (`X.Y.Z-debug`), with the JDK's diagnostic tools;
-  - Temurin 17 linked with `jlink` to the modules dc uses, on distroless Debian 13 (glibc), for `linux/amd64` and
+  - Temurin 27 linked with `jlink` to the modules dc uses, on distroless Debian 13 (glibc), for `linux/amd64` and
     `linux/arm64`, every base pinned by digest;
   - runs as user `dc` (uid 10001); `java` is the container's process, started with `/opt/dc/java.args`;
   - only runtime jars, with no test jars or mock API, split between module path and class path the way the tests run;

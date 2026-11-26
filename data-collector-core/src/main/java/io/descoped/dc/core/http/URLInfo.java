@@ -1,6 +1,7 @@
 package io.descoped.dc.core.http;
 
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.Optional;
 
@@ -9,7 +10,8 @@ public class URLInfo {
 
     public URLInfo(String url) {
         try {
-            this.url = (url != null ? new URL(url) : null);
+            // parsed as the request was sent (HttpRequestDelegate: URI.create), then read as a URL as before
+            this.url = (url != null ? URI.create(url).toURL() : null);
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }

@@ -258,7 +258,7 @@ docker build -t data-collector:debug --target debug data-collector-server
 `-dev` targets of `examples/` use. `data-collector-server/run-dev.sh` runs it with JMX remote on port 9992 of this
 machine only, and mounts `./certs` on `/opt/dc/certs`.
 
-CI builds the three images on every build on JDK 17 and starts each until it is ready; it pushes none.
+CI builds the three images on every build and starts each until it is ready; it pushes none.
 
 ### Releasing
 
@@ -269,7 +269,7 @@ CI, and nothing goes to Maven Central. A release is made with the owner's go-ahe
 1. A pull request sets the version (`./mvnw versions:set -DnewVersion=X.Y.Z -DgenerateBackupPoms=false
    -DprocessAllModules=true`), sets `project.build.outputTimestamp` in the root POM to the time of the release, and
    gives the version's section in `CHANGELOG.md` its date (`## [X.Y.Z] - YYYY-MM-DD`). No dependency may be a SNAPSHOT.
-2. When it is merged and CI has passed on JDK 17 and 27, the owner starts the release, and approves it in the
+2. When it is merged and CI has passed, the owner starts the release, and approves it in the
    environment `release`:
 
    ```sh

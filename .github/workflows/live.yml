@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   live:
-    name: Live tests (JDK 17)
+    name: Live tests (JDK 27)
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
@@ -29,7 +29,7 @@ jobs:
 
       - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880  # v6.3.0
         with:
-          java-version: '17'
+          java-version: '27'
           distribution: temurin
           cache: maven
 

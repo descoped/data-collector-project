@@ -13,7 +13,7 @@ a public API, follow the task, and check the topic it wrote. It ends with pointe
 
 ## What you need
 
-- JDK 17 or later. The Maven Wrapper (`./mvnw`) downloads Maven itself.
+- JDK 27. The Maven Wrapper (`./mvnw`) downloads Maven itself.
 - Docker with Compose v2, for the image and the `examples/` setups.
 - Network access to `https://data.brreg.no`, the public API the example specification reads.
 

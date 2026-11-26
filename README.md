@@ -19,7 +19,7 @@ You can use dc in two ways:
 
 ## Quick start
 
-You need JDK 17 or later and Docker with Compose v2.
+You need JDK 27 and Docker with Compose v2.
 
 ```sh
 # Build the server and its development image (data-collector:dev)
@@ -78,7 +78,7 @@ Import `data-collector-bom` to align their versions.
 ./mvnw verify -P coverage        # JaCoCo report per module
 ```
 
-The code is Java 17. CI builds and tests on JDK 17 and JDK 27. See the [developer guide](docs/developer-guide.md).
+The code is Java 27. CI builds and tests on JDK 27. See the [developer guide](docs/developer-guide.md).
 
 ## History
 

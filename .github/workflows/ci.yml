@@ -1,10 +1,9 @@
 name: CI
 
-# Every build compiles with `release 17`, the baseline, so the bytecode does not depend on the JDK. It is built and tested
-# on JDK 17, the oldest runtime, and on JDK 27, the runtime the server is headed for. Every run: build, tests and Javadoc
-# of every module. Pushes to master and release tags, and pull requests from this repository, add coverage and the
-# SonarCloud analysis on JDK 17 (not gating; pull requests from forks get no token); the build on JDK 17 also builds
-# the three server images and starts each, without pushing them. Nothing in this repository publishes to Maven Central
+# Every build compiles with `release 27` and is built and tested on JDK 27, the baseline (see .claude/CLAUDE.md). Every
+# run: build, tests and Javadoc of every module, and the three server images, each built and started without being
+# pushed. Pushes to master and release tags, and pull requests from this repository, add coverage and the SonarCloud
+# analysis (not gating; pull requests from forks get no token). Nothing in this repository publishes to Maven Central
 # (see .claude/CLAUDE.md). After a green build, a push to master, or a run by hand on a branch, publishes SNAPSHOTs to
 # maven.descoped.io (job snapshot), never a release; images are released only by release.yml.
 on:
@@ -41,17 +40,12 @@ concurrency:
 
 jobs:
   build:
-    name: Build (JDK ${{ matrix.java }})
+    name: Build (JDK 27)
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        java: ['17', '27']
     env:
-      # Coverage and SonarCloud: once, on the baseline JDK, for pushes and pull requests from this repository (a
-      # fork's gets no secrets).
-      ANALYSE: ${{ matrix.java == '17' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) }}
+      # Coverage and SonarCloud: for pushes and pull requests from this repository (a fork's gets no secrets).
+      ANALYSE: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
@@ -61,7 +55,7 @@ jobs:
 
       - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880  # v6.3.0
         with:
-          java-version: ${{ matrix.java }}
+          java-version: '27'
           distribution: temurin
           cache: maven
 
@@ -78,7 +72,6 @@ jobs:
       # found here, not at a release. The example writes rawdata under /target, which the container's user (10001)
       # must be able to write.
       - name: Images
-        if: matrix.java == '17'
         run: |
           for target in regular distroless debug; do
             docker build --quiet --target "$target" --tag "data-collector:$target" data-collector-server
@@ -134,7 +127,7 @@ jobs:
 
       - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880  # v6.3.0
         with:
-          java-version: '17'
+          java-version: '27'
           distribution: temurin
           cache: maven
 

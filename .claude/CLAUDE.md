@@ -35,11 +35,12 @@ this repository. The plan and its order of work are in the owner's notes; the wo
 
 ## Invariants (never violate)
 
-- **Java 17 baseline** (`maven.compiler.release` 17): every class file is Java 17 whatever JDK builds it. CI builds and
-  tests on JDK 17 and JDK 27 (`ci.yml`). Nothing above Java 17 in main or test code until the owner moves the engine
-  and server to JDK 27 (planned, after the migration).
+- **JDK 27 baseline** (`maven.compiler.release` 27; owner's decision, 2026-11-26): dc is built for, tested on and runs
+  on JDK 27 only (`ci.yml`, the image). JDK 17 and JDK 28 are out of scope. Preview features are off until the first
+  pull request that uses structured concurrency turns `--enable-preview` on everywhere (javac, javadoc, Surefire, the
+  image); then they are used only for `StructuredTaskScope`, each use with `@SuppressWarnings("preview")`.
 - **3.0.0 keeps the behaviour of 2.x.** The migration makes dc work on the 3.x libraries, current dependencies and
-  JDK 17; it changes no feature. Where a library changed its rules, dc keeps its own: configuration is read through
+  JDK 27; it changes no feature. Where a library changed its rules, dc keeps its own: configuration is read through
   `io.descoped.dc.application.server.Configurations` (every class path match, environment variables and system
   properties add keys, values are literal), the content key is derived as encryption-util 2.0.1 did, and the
   `discarding` connector is the engine's default. A behaviour change needs the owner's decision first.
@@ -59,11 +60,12 @@ this repository. The plan and its order of work are in the owner's notes; the wo
   `requires transitive` it. No `requires` a module does not use. Services are registered with `provides` in
   `module-info.java` and in `META-INF/services`.
 - **Lint.** `-Xlint:all -Werror` and Javadoc doclint `all` with warnings failing are the rule, with standing
-  exceptions: `-classfile` (dependencies' class files that reference annotation classes they do not ship) and, on JDK 21
-  and later only (profile `jdk21-lint`; javac 17 rejects the name), `-this-escape`, so the 2.x classes keep their
-  constructors and stay open for subclassing. No annotation processors run (`-proc:none`). A module not yet revised
-  lists the categories it still breaks in `lint.exclusions` / `doclint.exclusions` in its POM; its revision empties
-  them, and nothing is added to them. Only categories javac 17 knows may be listed there.
+  exceptions: `-classfile` (dependencies' class files that reference annotation classes they do not ship) and
+  `-this-escape`, so the 2.x classes keep their constructors and stay open for subclassing. No annotation processors
+  run (`-proc:none`). A module lists in `lint.exclusions` in its POM, with the reason, what it cannot change:
+  `requires-automatic` / `requires-transitive-automatic` for a dependency without a `module-info` (dropped when an
+  upgrade gives it one) and `opens` for a package of resources only. Anything else a module still breaks is listed in
+  `lint.exclusions` / `doclint.exclusions` until its revision empties it, and nothing is added.
 - **Undertow 2.4.x** stays the HTTP server for 3.0.0 (owner's decision, 2026-11-18).
 - **Security.** Specification expressions are evaluated only in a sandbox with an explicit allow-list; classes named in
   a specification are never loaded by name; every server endpoint requires authentication, and CORS and JMX are off by
@@ -80,9 +82,9 @@ this repository. The plan and its order of work are in the owner's notes; the wo
   decision, 2026-11-23): dc is an application. `release.yml`, started by hand by the owner in the environment
   `release`, checks the version, the dated `CHANGELOG.md` section, that no dependency is a SNAPSHOT and that CI passed,
   then pushes the three variants (regular, distroless, debug; amd64 and arm64; SBOM, provenance, cosign) and makes the
-  tag and the GitHub release. The image follows LDS's scheme: one `Dockerfile`, a `jlink` runtime of Temurin 17 on
+  tag and the GitHub release. The image follows LDS's scheme: one `Dockerfile`, a `jlink` runtime of Temurin 27 on
   distroless Debian 13, every base pinned by digest, `java` as the container's process, no remote access on in any
-  variant (`JAVA_TOOL_OPTIONS` turns it on). CI builds and starts the three images on every build on JDK 17.
+  variant (`JAVA_TOOL_OPTIONS` turns it on). CI builds and starts the three images on every build.
 - **SNAPSHOTs go to Descoped's AWS CodeArtifact repository** only (read publicly at `https://maven.descoped.io/`),
   from CI's job `snapshot`: on a push to `master`, and on a run by hand on a branch under `X.Y.Z-<branch>-SNAPSHOT`.
   The job names the target on its command line (`-DaltSnapshotDeploymentRepository`, which applies to SNAPSHOTs

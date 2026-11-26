@@ -60,7 +60,7 @@ public class HealthThreadsResource implements HealthResource {
             String type = thread.isDaemon() ? "Daemon" : "Normal";
             List<String> stackTraceList = List.of(thread.getStackTrace()).stream().map(StackTraceElement::toString).toList();
             threadInfoList.add(new ThreadInfo(
-                    thread.getId(),
+                    thread.threadId(),
                     name,
                     state,
                     priority,
