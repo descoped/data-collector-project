@@ -3,8 +3,9 @@ package io.descoped.dc.core.http;
 import io.descoped.dc.api.context.ExecutionContext;
 import io.descoped.dc.api.http.Request;
 import io.descoped.dc.api.http.Response;
-import io.prometheus.client.Counter;
-import io.prometheus.client.Histogram;
+import io.prometheus.metrics.core.datapoints.Timer;
+import io.prometheus.metrics.core.metrics.Counter;
+import io.prometheus.metrics.core.metrics.Histogram;
 import net.bytebuddy.asm.Advice;
 
 import java.util.concurrent.CompletableFuture;
@@ -23,38 +24,41 @@ import java.util.concurrent.CompletableFuture;
  */
 public final class HttpClientExporter {
 
+    // the buckets of the simpleclient histograms of 2.x, so /metrics gives the same series on client_java
+    private static final double[] SIMPLECLIENT_BUCKETS = {.005, .01, .025, .05, .075, .1, .25, .5, .75, 1, 2.5, 5, 7.5, 10};
     private static final String SUBSYSTEM = "client";
     private static final String LOCATION = "location";
 
     private HttpClientExporter() {
     }
 
-    static final Counter requestStartedCount = Counter.build("request_started", "Started requests")
-            .namespace("dc")
-            .subsystem(SUBSYSTEM)
+    static final Counter requestStartedCount = Counter.builder()
+            .name("dc_" + SUBSYSTEM + "_request_started")
+            .help("Started requests")
             .labelNames(LOCATION)
             .register();
 
-    static final Counter requestCompletedCount = Counter.build("request_completed", "Completed requests")
-            .namespace("dc")
-            .subsystem(SUBSYSTEM)
+    static final Counter requestCompletedCount = Counter.builder()
+            .name("dc_" + SUBSYSTEM + "_request_completed")
+            .help("Completed requests")
             .labelNames(LOCATION, "statusCode", "emptyResponse")
             .register();
 
-    static final Counter requestFailureCount = Counter.build("request_failure", "Failed requests")
-            .namespace("dc")
-            .subsystem(SUBSYSTEM)
+    static final Counter requestFailureCount = Counter.builder()
+            .name("dc_" + SUBSYSTEM + "_request_failure")
+            .help("Failed requests")
             .labelNames(LOCATION)
             .register();
 
-    static final Histogram requestDurationHistogram = Histogram.build("request_duration", "Request duration")
-            .namespace("dc")
-            .subsystem(SUBSYSTEM)
+    static final Histogram requestDurationHistogram = Histogram.builder()
+            .name("dc_" + SUBSYSTEM + "_request_duration")
+            .help("Request duration")
             .labelNames(LOCATION)
+            .classicUpperBounds(SIMPLECLIENT_BUCKETS)
             .register();
 
     // a request being measured: its location label and its timer
-    private record Observation(String location, Histogram.Timer timer) {
+    private record Observation(String location, Timer timer) {
     }
 
     /**
@@ -66,8 +70,8 @@ public final class HttpClientExporter {
     public static Object started(Request request) {
         // prometheus: default to empty location so it doesn't throw NPE
         String location = new URLInfo(request == null ? null : request.url()).getLocation().orElse("");
-        Histogram.Timer timer = requestDurationHistogram.labels(location).startTimer();
-        requestStartedCount.labels(location).inc();
+        Timer timer = requestDurationHistogram.labelValues(location).startTimer();
+        requestStartedCount.labelValues(location).inc();
         return new Observation(location, timer);
     }
 
@@ -79,14 +83,14 @@ public final class HttpClientExporter {
      * @param thrown      what the request threw, or {@code null}
      */
     public static void completed(Object observation, Response response, Throwable thrown) {
-        if (!(observation instanceof Observation(String location, Histogram.Timer timer))) {
+        if (!(observation instanceof Observation(String location, Timer timer))) {
             return;
         }
         try {
             if (thrown != null) {
-                requestFailureCount.labels(location).inc();
+                requestFailureCount.labelValues(location).inc();
             } else {
-                requestCompletedCount.labels(location, statusCode(response), emptyResponse(response)).inc();
+                requestCompletedCount.labelValues(location, statusCode(response), emptyResponse(response)).inc();
             }
         } finally {
             timer.observeDuration();
@@ -120,7 +124,7 @@ public final class HttpClientExporter {
         }
         String url = context != null ? context.state("PROMETHEUS_METRICS_REQUEST_URL") : null;
         // prometheus: default to empty location so it doesn't throw NPE
-        requestFailureCount.labels(new URLInfo(url).getLocation().orElse("")).inc();
+        requestFailureCount.labelValues(new URLInfo(url).getLocation().orElse("")).inc();
     }
 
     private static String statusCode(Response response) {

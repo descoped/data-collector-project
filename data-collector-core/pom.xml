@@ -16,7 +16,7 @@
     <description>The data collector engine: executes specifications with the HTTP client, the node handlers, client certificates and metrics.</description>
 
     <properties>
-        <!-- requires-automatic: jackson-jq and the Prometheus simpleclient are automatic modules,
+        <!-- requires-automatic: jackson-jq and the Prometheus client (client_java) are automatic modules,
              so javac warns on every requires of them, which this module cannot change. -->
         <lint.exclusions>,-requires-automatic</lint.exclusions>
     </properties>
@@ -76,18 +76,14 @@
         </dependency>
         <dependency>
             <groupId>io.prometheus</groupId>
-            <artifactId>simpleclient</artifactId>
-            <version>${prometheus-simpleclient.version}</version>
+            <artifactId>prometheus-metrics-core</artifactId>
+            <version>${prometheus-client.version}</version>
         </dependency>
         <dependency>
             <groupId>io.prometheus</groupId>
-            <artifactId>simpleclient_common</artifactId>
-            <version>${prometheus-simpleclient.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.prometheus</groupId>
-            <artifactId>simpleclient_hotspot</artifactId>
-            <version>${prometheus-simpleclient.version}</version>
+            <artifactId>prometheus-metrics-exposition-textformats</artifactId>
+            <version>${prometheus-client.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>

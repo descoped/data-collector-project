@@ -36,9 +36,7 @@ module io.descoped.dc.core {
 
     requires com.auth0.jwt;
 
-    requires simpleclient.common;
-    requires simpleclient;
-    requires simpleclient.hotspot;
+    requires io.prometheus.metrics.core;
 
     provides Client.Builder with io.descoped.dc.core.http.HttpClientDelegate.ClientBuilder;
     provides Request.Builder with io.descoped.dc.core.http.HttpRequestDelegate.RequestBuilder;

@@ -13,9 +13,10 @@ module io.descoped.dc.application {
     requires com.fasterxml.jackson.databind;
 
     requires transitive undertow.core;
-    requires simpleclient.common;
-    requires simpleclient;
-    requires simpleclient.hotspot;
+    requires io.prometheus.metrics.core;
+    requires io.prometheus.metrics.model;
+    requires io.prometheus.writer.text;
+    requires io.prometheus.metrics.instrumentation.jvm;
 
     requires freemarker;
 

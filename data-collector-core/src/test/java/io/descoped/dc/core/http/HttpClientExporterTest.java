@@ -3,7 +3,7 @@ package io.descoped.dc.core.http;
 import io.descoped.dc.api.http.Client;
 import io.descoped.dc.api.http.Request;
 import io.descoped.dc.core.metrics.MetricsAgent;
-import io.prometheus.client.CollectorRegistry;
+import io.descoped.dc.core.metrics.MetricSamples;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -46,9 +46,8 @@ class HttpClientExporterTest {
     }
 
     static double completed(String location) {
-        Double value = CollectorRegistry.defaultRegistry.getSampleValue("dc_client_request_completed_total",
+        return MetricSamples.value("dc_client_request_completed_total",
                 new String[]{"location", "statusCode", "emptyResponse"}, new String[]{location, "200", "false"});
-        return value == null ? 0 : value;
     }
 
     @Test

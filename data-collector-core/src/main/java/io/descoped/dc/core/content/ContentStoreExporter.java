@@ -1,7 +1,8 @@
 package io.descoped.dc.core.content;
 
-import io.prometheus.client.Counter;
-import io.prometheus.client.Histogram;
+import io.prometheus.metrics.core.datapoints.Timer;
+import io.prometheus.metrics.core.metrics.Counter;
+import io.prometheus.metrics.core.metrics.Histogram;
 import net.bytebuddy.asm.Advice;
 
 
@@ -20,46 +21,50 @@ import net.bytebuddy.asm.Advice;
  */
 public class ContentStoreExporter {
 
+    // the buckets of the simpleclient histograms of 2.x, so /metrics gives the same series on client_java
+    private static final double[] SIMPLECLIENT_BUCKETS = {.005, .01, .025, .05, .075, .1, .25, .5, .75, 1, 2.5, 5, 7.5, 10};
     private static final String SUBSYSTEM = "content_stream";
     private static final String TOPIC = "topic";
 
     private ContentStoreExporter() {
     }
 
-    static final Counter writePaginationPageContent = Counter.build("pagination_page_publish_count", "Number of written pagination pages")
-            .namespace("dc")
-            .subsystem(SUBSYSTEM)
+    static final Counter writePaginationPageContent = Counter.builder()
+            .name("dc_" + SUBSYSTEM + "_pagination_page_publish_count")
+            .help("Number of written pagination pages")
             .labelNames(TOPIC)
             .register();
 
-    static final Histogram writePaginationPageContentDuration = Histogram.build("pagination_page_publish_duration", "Pagination page write duration")
-            .namespace("dc")
-            .subsystem(SUBSYSTEM)
+    static final Histogram writePaginationPageContentDuration = Histogram.builder()
+            .name("dc_" + SUBSYSTEM + "_pagination_page_publish_duration")
+            .help("Pagination page write duration")
+            .labelNames(TOPIC)
+            .classicUpperBounds(SIMPLECLIENT_BUCKETS)
+            .register();
+
+    static final Counter bufferPaginationPageEntryContent = Counter.builder()
+            .name("dc_" + SUBSYSTEM + "_buffer_pagination_entry_count")
+            .help("Buffer pagination entry count")
             .labelNames(TOPIC)
             .register();
 
-    static final Counter bufferPaginationPageEntryContent = Counter.build("buffer_pagination_entry_count", "Buffer pagination entry count")
-            .namespace("dc")
-            .subsystem(SUBSYSTEM)
+    static final Counter bufferPageEntryDocumentContent = Counter.builder()
+            .name("dc_" + SUBSYSTEM + "_buffer_entry_document_count")
+            .help("Buffer entry document count")
             .labelNames(TOPIC)
             .register();
 
-    static final Counter bufferPageEntryDocumentContent = Counter.build("buffer_entry_document_count", "Buffer entry document count")
-            .namespace("dc")
-            .subsystem(SUBSYSTEM)
+    static final Counter publishPositionContent = Counter.builder()
+            .name("dc_" + SUBSYSTEM + "_pagination_entry_publish_position_count")
+            .help("Number of published positions")
             .labelNames(TOPIC)
             .register();
 
-    static final Counter publishPositionContent = Counter.build("pagination_entry_publish_position_count", "Number of published positions")
-            .namespace("dc")
-            .subsystem(SUBSYSTEM)
+    static final Histogram publishPositionContentDuration = Histogram.builder()
+            .name("dc_" + SUBSYSTEM + "_pagination_entry_publish_position_duration")
+            .help("Published position write duration")
             .labelNames(TOPIC)
-            .register();
-
-    static final Histogram publishPositionContentDuration = Histogram.build("pagination_entry_publish_position_duration", "Published position write duration")
-            .namespace("dc")
-            .subsystem(SUBSYSTEM)
-            .labelNames(TOPIC)
+            .classicUpperBounds(SIMPLECLIENT_BUCKETS)
             .register();
 
     /**
@@ -174,7 +179,7 @@ public class ContentStoreExporter {
      * @return the timer
      */
     public static Object paginationStarted(String topic) {
-        return writePaginationPageContentDuration.labels(topic).startTimer();
+        return writePaginationPageContentDuration.labelValues(topic).startTimer();
     }
 
     /**
@@ -185,7 +190,7 @@ public class ContentStoreExporter {
      */
     public static void paginationCompleted(Object timer, String topic) {
         observe(timer);
-        writePaginationPageContent.labels(topic).inc();
+        writePaginationPageContent.labelValues(topic).inc();
     }
 
     /**
@@ -196,7 +201,7 @@ public class ContentStoreExporter {
      */
     public static void entryBuffered(String topic, Throwable thrown) {
         if (thrown == null) {
-            bufferPaginationPageEntryContent.labels(topic).inc();
+            bufferPaginationPageEntryContent.labelValues(topic).inc();
         }
     }
 
@@ -208,7 +213,7 @@ public class ContentStoreExporter {
      */
     public static void documentBuffered(String topic, Throwable thrown) {
         if (thrown == null) {
-            bufferPageEntryDocumentContent.labels(topic).inc();
+            bufferPageEntryDocumentContent.labelValues(topic).inc();
         }
     }
 
@@ -219,7 +224,7 @@ public class ContentStoreExporter {
      * @return the timer
      */
     public static Object publishStarted(String topic) {
-        return publishPositionContentDuration.labels(topic).startTimer();
+        return publishPositionContentDuration.labelValues(topic).startTimer();
     }
 
     /**
@@ -231,11 +236,11 @@ public class ContentStoreExporter {
      */
     public static void publishCompleted(Object timer, String topic, String[] positions) {
         observe(timer);
-        publishPositionContent.labels(topic).inc(positions.length);
+        publishPositionContent.labelValues(topic).inc(positions.length);
     }
 
     private static void observe(Object timer) {
-        if (timer instanceof Histogram.Timer histogramTimer) {
+        if (timer instanceof Timer histogramTimer) {
             histogramTimer.observeDuration();
         }
     }

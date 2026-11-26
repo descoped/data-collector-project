@@ -397,12 +397,12 @@ curl -H "Authorization: Bearer $DC_TOKEN" -i localhost:9990/ping
 
 ### GET /metrics
 
-The Prometheus text format, version 0.0.4, from the default Prometheus `CollectorRegistry`. The controller serves every
+The Prometheus text format, version 0.0.4, from the default Prometheus `PrometheusRegistry`. The controller serves every
 `GET` path that starts with `/metrics`.
 
 | Parameter | In | Meaning |
 |---|---|---|
-| `name[]` | query, repeatable | Return only the samples with these names, as written in the output (for example `dc_client_request_started_total` or `dc_client_request_duration_count`; a family name such as `dc_client_request_duration` alone matches nothing). Without it, everything is returned. |
+| `name[]` | query, repeatable | Return only these metrics, named by the metric (`dc_client_request_duration`) or by one of its samples as written in the output (`dc_client_request_started_total`, `dc_client_request_duration_count`); a match returns the whole metric. Without it, everything is returned. |
 
 | | |
 |---|---|

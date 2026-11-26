@@ -345,7 +345,7 @@ on the server's module path are `filesystem`, `gcs` and `postgres` (run-time dep
 `io.descoped.dc.application.server.UndertowApplication.initializeUndertowApplication(...)` builds the application from
 a `DynamicConfiguration`:
 
-1. Initializes the Prometheus JVM collectors (`DefaultExports`), unless `prometheus.defaultExports.disabled` is
+1. Registers the Prometheus JVM and process metrics (`JvmMetrics`), unless `prometheus.defaultExports.disabled` is
    `true`.
 2. Creates the `MetricsResourceFactory` and `HealthResourceFactory`. Both scan the packages under `io.descoped.dc`
    with ClassGraph for implementations of `MetricsResource` and `HealthResource`.
@@ -386,7 +386,7 @@ and also reads `http.cors.allow.methods`, `http.cors.allow.header`, `http.cors.a
   that agrees to render for the query parameters, sorted by `@HealthRenderPriority`. The status is `UP` when every
   resource that reports `isUp()` is up. The `configuration` resource masks values whose key contains `pass`, `pwd`,
   `secret`, `credential`, `token` or `encryption`.
-- `MetricsController` on `/metrics`: the Prometheus text format of the default `CollectorRegistry`, filtered by
+- `MetricsController` on `/metrics`: the Prometheus text format of the default `PrometheusRegistry`, filtered by
   `name[]` query parameters.
 
 `io.descoped.dc.application.server.Configurations` builds the configuration sources: class path and file properties,
@@ -467,9 +467,10 @@ whose helper classes ByteBuddy cannot define in a named module on JDK 27, so no 
 | `dc_application_since` | gauge | | Start time of the application, in epoch milliseconds |
 | `dc_application_uptime` | gauge | | Set only by `MetricsApplicationResource.trackUptime()`, which no main code calls, so it stays 0 |
 
-`location` is the scheme, host and (when not 80 or 443) port of the request URL. The Prometheus client (simpleclient
-0.16) adds `_total` to counter names in the text format, and `_bucket`, `_count` and `_sum` to histograms. The JVM
-collectors of `DefaultExports` are also exported.
+`location` is the scheme, host and (when not 80 or 443) port of the request URL. The Prometheus client (client_java
+1.x) adds `_total` to counter names in the text format, and `_bucket`, `_count` and `_sum` to histograms. The
+histograms are classic histograms with the buckets of simpleclient, 0.005 to 10 seconds. The JVM and process metrics
+of `JvmMetrics` are also exported.
 
 ### Health
 

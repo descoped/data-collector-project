@@ -7,15 +7,12 @@ import io.descoped.dc.api.content.HttpRequestInfo;
 import io.descoped.dc.api.context.ExecutionContext;
 import io.descoped.dc.api.http.Headers;
 import io.descoped.service.provider.api.ProviderConfigurator;
-import io.prometheus.client.CollectorRegistry;
-import io.prometheus.client.exporter.common.TextFormat;
+import io.descoped.dc.core.metrics.MetricSamples;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.io.StringWriter;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -30,10 +27,8 @@ class ContentStoreExporterTest {
     }
 
     @AfterAll
-    static void afterAll() throws IOException {
-        StringWriter sw = new StringWriter();
-        TextFormat.write004(sw, CollectorRegistry.defaultRegistry.metricFamilySamples());
-        System.out.printf("%s%n", sw);
+    static void afterAll() {
+        System.out.printf("%s%n", MetricSamples.text());
     }
 
     @Test
@@ -52,8 +47,7 @@ class ContentStoreExporterTest {
     }
 
     static double sample(String name, String topic) {
-        Double value = CollectorRegistry.defaultRegistry.getSampleValue(name, new String[]{"topic"}, new String[]{topic});
-        return value == null ? 0 : value;
+        return MetricSamples.value(name, new String[]{"topic"}, new String[]{topic});
     }
 
     @Test

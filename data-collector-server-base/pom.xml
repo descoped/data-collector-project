@@ -16,7 +16,7 @@
     <description>The Undertow application of the data collector server: service discovery, routing, CORS, health and Prometheus metrics.</description>
 
     <properties>
-        <!-- Undertow, the Prometheus simpleclient and FreeMarker are automatic modules: javac warns on every
+        <!-- Undertow, the Prometheus client (client_java) and FreeMarker are automatic modules: javac warns on every
              requires of them, which this module cannot change. -->
         <lint.exclusions>,-requires-automatic,-requires-transitive-automatic</lint.exclusions>
     </properties>
@@ -61,18 +61,18 @@
         </dependency>
         <dependency>
             <groupId>io.prometheus</groupId>
-            <artifactId>simpleclient</artifactId>
-            <version>${prometheus-simpleclient.version}</version>
+            <artifactId>prometheus-metrics-core</artifactId>
+            <version>${prometheus-client.version}</version>
         </dependency>
         <dependency>
             <groupId>io.prometheus</groupId>
-            <artifactId>simpleclient_common</artifactId>
-            <version>${prometheus-simpleclient.version}</version>
+            <artifactId>prometheus-metrics-exposition-textformats</artifactId>
+            <version>${prometheus-client.version}</version>
         </dependency>
         <dependency>
             <groupId>io.prometheus</groupId>
-            <artifactId>simpleclient_hotspot</artifactId>
-            <version>${prometheus-simpleclient.version}</version>
+            <artifactId>prometheus-metrics-instrumentation-jvm</artifactId>
+            <version>${prometheus-client.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
