@@ -1,5 +1,6 @@
 package io.descoped.dc.core.handler;
 
+import io.descoped.dc.api.security.Masking;
 import io.descoped.dc.api.handler.DocumentParserFeature;
 import io.descoped.dc.api.handler.QueryException;
 import io.descoped.dc.api.handler.SupportHandler;
@@ -95,7 +96,7 @@ public class XPathParser implements DocumentParserFeature {
             }
 
         } catch (SAXException | IOException e) {
-            throw new QueryException(new String(source), e);
+            throw new QueryException("Error parsing " + Masking.body(source, (String) null), e);
         }
     }
 

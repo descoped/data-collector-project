@@ -443,7 +443,8 @@ none of `requiredOutputs` is among the processor's output variables; with an emp
 #### Console
 
 Logs the current state (`ConsoleBuilder`, `ConsoleHandler`). No fields. At log level DEBUG it logs the response status
-and URL, all variables and the current body (the entry inside `Parallel`, else the response body).
+and URL (query values masked), all variables (the values of those whose names are secret masked, as for headers) and the
+current body (the entry inside `Parallel`, else the response body).
 
 #### AddContent
 

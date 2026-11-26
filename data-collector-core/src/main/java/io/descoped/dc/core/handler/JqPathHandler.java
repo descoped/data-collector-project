@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.descoped.dc.api.handler.DocumentParserFeature;
 import io.descoped.dc.api.handler.Handler;
 import io.descoped.dc.api.node.JqPath;
-import io.descoped.dc.api.util.CommonUtils;
 import net.thisptr.jackson.jq.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.JsonQuery;
 import net.thisptr.jackson.jq.Scope;
@@ -116,10 +115,13 @@ public class JqPathHandler extends AbstractQueryHandler<JqPath> {
             return null;
 
         } catch (JsonQueryException e) {
-            throw new IllegalStateException(e.getMessage() + " => Error with query: \"" + node.expression() + "\" " +
-                    "on data:\n" +
-                    ofNullable(jsonNode).map(JsonNode::toPrettyString).orElse(null) + "\n" +
-                    CommonUtils.captureStackTrace(e));
+            // the document may hold a token, and jq's message may render a value from it: the message gives the kind
+            // and size of the document, and jq's own message goes to DEBUG
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("jq error with query \"{}\": {}", node.expression(), e.getMessage());
+            }
+            throw new IllegalStateException(e.getClass().getSimpleName() + " => Error with query: \"" + node.expression() + "\" " +
+                    "on data: " + ofNullable(jsonNode).map(n -> n.getNodeType() + " of " + n.size() + " elements").orElse("none"));
         }
     }
 }

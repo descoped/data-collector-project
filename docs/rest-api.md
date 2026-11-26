@@ -277,7 +277,9 @@ The sections, in the order they are written:
 | `runtime` | `runtime`, `all` | see above |
 | `thread-info` | `threads`, `all` | see above |
 
-`request-info.request-headers` lists the request headers the specification sets globally, with their values.
+`request-info.request-headers` lists the request headers the specification sets globally, with the values of secret
+headers masked (see [Administration](administration.md#secrets-in-logs-messages-and-health)). `configuration` lists
+every configuration key, each value masked.
 
 | Status | When |
 |---|---|

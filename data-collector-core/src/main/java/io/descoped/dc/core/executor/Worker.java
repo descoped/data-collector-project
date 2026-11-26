@@ -16,6 +16,7 @@ import io.descoped.dc.api.node.Security;
 import io.descoped.dc.api.node.builder.NodeBuilder;
 import io.descoped.dc.api.node.builder.SpecificationBuilder;
 import io.descoped.dc.api.security.BusinessSSLResource;
+import io.descoped.dc.api.security.Masking;
 import io.descoped.dc.api.services.Services;
 import io.descoped.dc.api.ids.TimeOrderedIds;
 import io.descoped.dc.api.util.CommonUtils;
@@ -273,11 +274,11 @@ public class Worker {
 
         Headers globalRequestHeaders = context.state(Headers.class);
         if (globalRequestHeaders != null) {
-            monitor.request().setHeaders(globalRequestHeaders.asMap());
+            monitor.request().setHeaders(Masking.of(configurationMap).headers(globalRequestHeaders.asMap()));
         } else {
             Headers globalConfigurationContextRequestHeaders = node.configurations().flowContext().globalContext().state(Headers.class);
             if (globalConfigurationContextRequestHeaders != null) {
-                monitor.request().setHeaders(globalConfigurationContextRequestHeaders.asMap());
+                monitor.request().setHeaders(Masking.of(configurationMap).headers(globalConfigurationContextRequestHeaders.asMap()));
             }
         }
 

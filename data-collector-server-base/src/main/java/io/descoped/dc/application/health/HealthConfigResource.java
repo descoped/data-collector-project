@@ -3,6 +3,7 @@ package io.descoped.dc.application.health;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.descoped.dc.api.health.HealthRenderPriority;
 import io.descoped.dc.api.health.HealthResource;
+import io.descoped.dc.api.security.Masking;
 import io.descoped.dc.api.util.JsonParser;
 
 import java.util.Deque;
@@ -58,14 +59,10 @@ public class HealthConfigResource implements HealthResource {
      * @param configuration the configuration
      */
     public void setConfiguration(Map<String, String> configuration) {
-        Set<String> maskValues = Set.of("pass", "pwd", "secret", "credential", "token", "encryption");
+        // configuration values never reach health output: every value is masked, the keys stay
         Map<String, String> map = new LinkedHashMap<>();
-        for (Map.Entry<String, String> entry : configuration.entrySet()) {
-            if (maskValues.stream().anyMatch(key -> entry.getKey().toLowerCase().contains(key))) {
-                map.put(entry.getKey(), "************");
-            } else {
-                map.put(entry.getKey(), entry.getValue());
-            }
+        for (String key : configuration.keySet()) {
+            map.put(key, Masking.MASK);
         }
         JsonParser jsonParser = JsonParser.createJsonParser();
         configNode.set(jsonParser.mapper().convertValue(map, ObjectNode.class));

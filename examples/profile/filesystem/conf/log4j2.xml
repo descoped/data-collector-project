@@ -8,11 +8,11 @@
     </Appenders>
 
     <Loggers>
-        <Logger name="io.descoped.dc" level="TRACE"/>
-        <Logger name="io.descoped.dc.content" level="TRACE"/>
-        <Logger name="io.descoped.rawdata.api" level="TRACE"/>
+        <Logger name="io.descoped.dc" level="INFO"/>
+        <Logger name="io.descoped.dc.content" level="INFO"/>
+        <Logger name="io.descoped.rawdata.api" level="INFO"/>
 
-        <Root level="TRACE">
+        <Root level="INFO">
             <AppenderRef ref="Console"/>
         </Root>
     </Loggers>
