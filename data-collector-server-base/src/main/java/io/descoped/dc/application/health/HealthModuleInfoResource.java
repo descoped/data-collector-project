@@ -83,9 +83,11 @@ public class HealthModuleInfoResource implements HealthResource {
             moduleInfoBuilder.moduleName(moduleDescriptor.name());
 
             try (ScanResult scanResult = new ClassGraph()
+                    .enableClassLoaders(module.getClassLoader())
+                    .enableClasspath()
                     .ignoreParentClassLoaders()
-                    .addClassLoader(module.getClassLoader())
-                    .addModuleLayer(module.getLayer())
+                    .enableModuleLayers(module.getLayer())
+                    .enableNonSystemModules()
                     .enableClassInfo()
                     .acceptPaths("META-INF/maven")
                     .scan()
@@ -105,10 +107,10 @@ public class HealthModuleInfoResource implements HealthResource {
     }
 
     private boolean isModuleNameEqualToResourceModuleRefName(ModuleDescriptor moduleDescriptor, Resource resource) {
-        if (resource.getModuleRef() == null) {
+        if (resource.getModuleReference() == null) {
             return false;
         }
-        return moduleDescriptor.name().equals(resource.getModuleRef().getName());
+        return moduleDescriptor.name().equals(resource.getModuleReference().descriptor().name());
     }
 
     private void buildMavenInfo(ModuleInfo.Builder moduleInfoBuilder, byte[] content) {

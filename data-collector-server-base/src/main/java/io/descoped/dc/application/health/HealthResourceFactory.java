@@ -5,6 +5,7 @@ import io.descoped.dc.api.health.HealthResource;
 import io.descoped.dc.api.health.HealthResourceExclude;
 import io.descoped.dc.application.server.ApplicationException;
 import io.github.classgraph.ClassGraph;
+import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ClassInfoList;
 import io.github.classgraph.ScanResult;
 
@@ -71,15 +72,19 @@ public class HealthResourceFactory {
 
     private List<Class<? extends HealthResource>> loadHealthResources() {
         List<Class<? extends HealthResource>> classes = new ArrayList<>();
+        // ClassGraph 6 scans only the sources it is given: the class path and the module path, as 4.x did
         try (ScanResult scanResult = new ClassGraph()
+                .enableClasspath()
+                .enableNonSystemModules()
                 .enableClassInfo()
                 .acceptPackages("io.descoped.dc")
                 .scan()
         ) {
-            ClassInfoList classInfoList = scanResult.getClassesImplementing(HealthResource.class.getName());
-            classInfoList.forEach(ci -> {
-                classes.add(ci.loadClass(HealthResource.class));
-            });
+            ClassInfoList classInfoList = scanResult.getAllClassesImplementing(HealthResource.class.getName());
+            // ClassGraph 6 does not load classes; these are dc's own, found by the scan
+            for (ClassInfo ci : classInfoList) {
+                classes.add(loadClass(ci.getName()));
+            }
         }
         return classes;
     }
@@ -178,4 +183,12 @@ public class HealthResourceFactory {
         }
     }
 
+    // the factory's loader: dc's modules share the application loader on the module path and the class path
+    private static Class<? extends HealthResource> loadClass(String name) {
+        try {
+            return Class.forName(name, false, HealthResourceFactory.class.getClassLoader()).asSubclass(HealthResource.class);
+        } catch (ClassNotFoundException e) {
+            throw new IllegalStateException("Could not load " + name, e);
+        }
+    }
 }

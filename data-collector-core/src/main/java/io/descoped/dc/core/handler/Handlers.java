@@ -6,6 +6,7 @@ import io.descoped.dc.api.handler.Handler;
 import io.descoped.dc.api.handler.SupportHandler;
 import io.descoped.dc.api.node.Base;
 import io.github.classgraph.ClassGraph;
+import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ClassInfoList;
 import io.github.classgraph.ScanResult;
 import net.bytebuddy.ByteBuddy;
@@ -171,7 +172,9 @@ public class Handlers {
         }
 
         static Set<Class<?>> nodeHandlerDiscovery(String... packageNames) {
-            try (ScanResult scanResult = new ClassGraph().enableAnnotationInfo().acceptPackages(packageNames).scan()) {
+            // ClassGraph 6 scans only the sources it is given: the class path and the module path, as 4.x did
+            try (ScanResult scanResult = new ClassGraph().enableClasspath().enableNonSystemModules().enableClassInfo().enableAnnotationInfo()
+                    .acceptPackages(packageNames).scan()) {
 
                 ClassInfoList classInfoHandlerList = scanResult.getClassesWithAnnotation(Handler.class.getName());
                 ClassInfoList classInfoSupportHandlerList = scanResult.getClassesWithAnnotation(SupportHandler.class.getName());
@@ -179,18 +182,27 @@ public class Handlers {
 
                 Set<Class<?>> classes = new HashSet<>();
 
-                for (Class<?> clazz : classInfoHandlerList.loadClasses()) {
-                    classes.add(clazz);
+                for (ClassInfo classInfo : classInfoHandlerList) {
+                    classes.add(loadClass(classInfo.getName()));
                 }
 
-                for (Class<?> clazz : classInfoSupportHandlerList.loadClasses()) {
-                    classes.add(clazz);
+                for (ClassInfo classInfo : classInfoSupportHandlerList) {
+                    classes.add(loadClass(classInfo.getName()));
                 }
 
-                for (Class<?> clazz : classInfoCompositionHandlerList.loadClasses()) {
-                    classes.add(clazz);
+                for (ClassInfo classInfo : classInfoCompositionHandlerList) {
+                    classes.add(loadClass(classInfo.getName()));
                 }
                 return classes;
+            }
+        }
+
+        // ClassGraph 6 does not load classes; these are dc's own handlers, found by the scan
+        private static Class<?> loadClass(String name) {
+            try {
+                return Class.forName(name, false, Handlers.class.getClassLoader());
+            } catch (ClassNotFoundException e) {
+                throw new IllegalStateException("Could not load " + name, e);
             }
         }
     }

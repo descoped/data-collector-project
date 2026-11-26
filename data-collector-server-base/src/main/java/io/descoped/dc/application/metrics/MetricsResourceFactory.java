@@ -3,6 +3,7 @@ package io.descoped.dc.application.metrics;
 import io.descoped.dc.api.metrics.MetricsResource;
 import io.descoped.dc.application.server.ApplicationException;
 import io.github.classgraph.ClassGraph;
+import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ClassInfoList;
 import io.github.classgraph.ScanResult;
 
@@ -39,15 +40,19 @@ public class MetricsResourceFactory {
 
     private List<Class<? extends MetricsResource>> loadMetricsResources() {
         List<Class<? extends MetricsResource>> classes = new ArrayList<>();
+        // ClassGraph 6 scans only the sources it is given: the class path and the module path, as 4.x did
         try (ScanResult scanResult = new ClassGraph()
+                .enableClasspath()
+                .enableNonSystemModules()
                 .enableClassInfo()
                 .acceptPackages("io.descoped.dc")
                 .scan()
         ) {
-            ClassInfoList classInfoList = scanResult.getClassesImplementing(MetricsResource.class.getName());
-            classInfoList.forEach(ci -> {
-                classes.add(ci.loadClass(MetricsResource.class));
-            });
+            ClassInfoList classInfoList = scanResult.getAllClassesImplementing(MetricsResource.class.getName());
+            // ClassGraph 6 does not load classes; these are dc's own, found by the scan
+            for (ClassInfo ci : classInfoList) {
+                classes.add(loadClass(ci.getName()));
+            }
         }
         return classes;
     }
@@ -85,4 +90,12 @@ public class MetricsResourceFactory {
         return metricsResourceClass.cast(metricsResources.get(metricsResourceClass));
     }
 
+    // the factory's loader: dc's modules share the application loader on the module path and the class path
+    private static Class<? extends MetricsResource> loadClass(String name) {
+        try {
+            return Class.forName(name, false, MetricsResourceFactory.class.getClassLoader()).asSubclass(MetricsResource.class);
+        } catch (ClassNotFoundException e) {
+            throw new IllegalStateException("Could not load " + name, e);
+        }
+    }
 }
