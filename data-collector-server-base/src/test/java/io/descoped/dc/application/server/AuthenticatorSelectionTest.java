@@ -22,8 +22,9 @@ class AuthenticatorSelectionTest {
             }
         };
         assertSame(bearer, UndertowApplication.select(List.of(other, bearer), "bearer"));
+        List<Authenticator> once = List.of(bearer);
         assertEquals("No authentication provider named: none",
-                assertThrows(IllegalStateException.class, () -> UndertowApplication.select(List.of(bearer), "none")).getMessage());
+                assertThrows(IllegalStateException.class, () -> UndertowApplication.select(once, "none")).getMessage());
         List<Authenticator> twice = List.of(bearer, new BearerTokenAuthenticator());
         assertEquals("More than one authentication provider named: bearer",
                 assertThrows(IllegalStateException.class, () -> UndertowApplication.select(twice, "bearer")).getMessage());
