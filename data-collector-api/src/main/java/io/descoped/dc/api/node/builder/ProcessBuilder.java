@@ -1,8 +1,10 @@
 package io.descoped.dc.api.node.builder;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.descoped.dc.api.Processor;
+import io.descoped.dc.api.ProcessorProvider;
 import io.descoped.dc.api.node.Base;
 import io.descoped.dc.api.node.Configurations;
 import io.descoped.dc.api.node.Node;
@@ -12,18 +14,32 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class ProcessBuilder extends NodeBuilder {
 
-    @JsonProperty
+    // a class from the Java DSL, or the name of a ProcessorProvider; a specification only ever names a provider
+    @JsonIgnore
     Class<? extends Processor> processorClass;
+    @JsonIgnore
+    String processor;
     @JsonProperty
     Set<String> requiredOutputs = new LinkedHashSet<>();
 
     public ProcessBuilder(Class<? extends Processor> processorClass) {
         super(BuilderType.Process);
-        this.processorClass = processorClass;
+        this.processorClass = Objects.requireNonNull(processorClass, "processorClass");
+    }
+
+    /**
+     * Creates the builder of a processor registered under a name ({@link ProcessorProvider}).
+     *
+     * @param processor the provider's name
+     */
+    public ProcessBuilder(String processor) {
+        super(BuilderType.Process);
+        this.processor = Objects.requireNonNull(processor, "processor");
     }
 
     public ProcessBuilder output(String variable) {
@@ -31,10 +47,25 @@ public class ProcessBuilder extends NodeBuilder {
         return this;
     }
 
+    /**
+     * The provider's name, as a specification gives it.
+     *
+     * @return the name
+     * @throws IllegalStateException if the builder has a class that no {@link ProcessorProvider} registers
+     */
+    @JsonProperty("processor")
+    String processorName() {
+        if (processor != null) {
+            return processor;
+        }
+        return ProcessorProvider.nameOf(processorClass).orElseThrow(() -> new IllegalStateException(
+                "A specification names a processor by its provider; no ProcessorProvider registers " + processorClass.getName()));
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     <R extends Base> R build(BuildContext buildContext) {
-        return (R) new ProcessNode(buildContext.getInstance(SpecificationBuilder.GLOBAL_CONFIGURATION), processorClass, requiredOutputs);
+        return (R) new ProcessNode(buildContext.getInstance(SpecificationBuilder.GLOBAL_CONFIGURATION), processorClass, processor, requiredOutputs);
     }
 
     @Override
@@ -43,19 +74,21 @@ public class ProcessBuilder extends NodeBuilder {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         ProcessBuilder that = (ProcessBuilder) o;
-        return processorClass.equals(that.processorClass) &&
+        return Objects.equals(processorClass, that.processorClass) &&
+                Objects.equals(processor, that.processor) &&
                 Objects.equals(requiredOutputs, that.requiredOutputs);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), processorClass, requiredOutputs);
+        return Objects.hash(super.hashCode(), processorClass, processor, requiredOutputs);
     }
 
     @Override
     public String toString() {
         return "ProcessBuilder{" +
                 "processorClass=" + processorClass +
+                ", processor=" + processor +
                 ", requiredOutputs=" + requiredOutputs +
                 '}';
     }
@@ -63,17 +96,36 @@ public class ProcessBuilder extends NodeBuilder {
     static class ProcessNode extends FlowNode implements Process {
 
         final Class<? extends Processor> processorClass;
+        final String processor;
         final Set<String> requiredOutputs;
+        private final AtomicReference<Class<? extends Processor>> resolvedProcessorClass = new AtomicReference<>();
 
-        ProcessNode(Configurations configurations, Class<? extends Processor> processorClass, Set<String> requiredOutputs) {
+        ProcessNode(Configurations configurations, Class<? extends Processor> processorClass, String processor, Set<String> requiredOutputs) {
             super(configurations);
             this.processorClass = processorClass;
+            this.processor = processor;
             this.requiredOutputs = requiredOutputs;
         }
 
+        // a named processor is looked up when it first runs, so a specification can be read and built without its
+        // providers; the class is kept, so the providers are not loaded again for every page and entry
         @Override
         public Class<? extends Processor> processorClass() {
-            return processorClass;
+            if (processorClass != null) {
+                return processorClass;
+            }
+            Class<? extends Processor> resolved = resolvedProcessorClass.get();
+            if (resolved == null) {
+                resolved = ProcessorProvider.find(processor).orElseThrow(() ->
+                        new IllegalStateException("No ProcessorProvider is named: " + processor));
+                resolvedProcessorClass.compareAndSet(null, resolved);
+            }
+            return resolved;
+        }
+
+        @Override
+        public String processor() {
+            return processor != null ? processor : processorClass.getSimpleName();
         }
 
         @Override
@@ -91,19 +143,21 @@ public class ProcessBuilder extends NodeBuilder {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             ProcessNode that = (ProcessNode) o;
-            return processorClass.equals(that.processorClass) &&
+            return Objects.equals(processorClass, that.processorClass) &&
+                    Objects.equals(processor, that.processor) &&
                     Objects.equals(requiredOutputs, that.requiredOutputs);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(processorClass, requiredOutputs);
+            return Objects.hash(processorClass, processor, requiredOutputs);
         }
 
         @Override
         public String toString() {
             return "ProcessNode{" +
                     "processorClass=" + processorClass +
+                    ", processor=" + processor +
                     ", requiredOutputs=" + requiredOutputs +
                     '}';
         }

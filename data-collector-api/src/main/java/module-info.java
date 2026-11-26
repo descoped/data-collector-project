@@ -4,7 +4,7 @@ module io.descoped.dc.api {
     requires transitive com.fasterxml.jackson.databind;
 
     requires org.slf4j;
-    requires commons.jexl3;
+    requires org.apache.commons.jexl3;
     requires com.fasterxml.jackson.annotation;
     requires transitive com.fasterxml.jackson.dataformat.yaml;
 
@@ -12,6 +12,8 @@ module io.descoped.dc.api {
     opens io.descoped.dc.api.node.builder;
     opens io.descoped.dc.api.http to com.fasterxml.jackson.databind;
 
+    uses io.descoped.dc.api.ProcessorProvider;
+    uses io.descoped.dc.api.el.ExpressionFunctions;
     uses io.descoped.dc.api.http.Client.Builder;
     uses io.descoped.dc.api.http.Request.Builder;
     uses io.descoped.dc.api.http.Response.Builder;

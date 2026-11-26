@@ -68,7 +68,7 @@
         <jackson.version>2.23.0</jackson.version>
         <jackson-annotations.version>2.23</jackson-annotations.version>
         <jackson-jq.version>1.6.5</jackson-jq.version>
-        <commons-jexl3.version>3.2.1</commons-jexl3.version>
+        <commons-jexl3.version>3.7.1</commons-jexl3.version>
         <classgraph.version>4.8.200</classgraph.version>
         <methanol.version>1.9.0</methanol.version>
         <byte-buddy.version>1.18.17</byte-buddy.version>

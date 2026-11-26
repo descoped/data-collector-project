@@ -1,9 +1,9 @@
 #
 # Service configuration
 #
-maskinporten.clientId=
-maskinporten.jwtGrant.expiration=30
-ssb.altinn.appId=
+spec.maskinporten.clientId=
+spec.maskinporten.jwtGrant.expiration=30
+spec.ssb.altinn.appId=
 
 #
 # BusinessSSL Google Secret Configuration

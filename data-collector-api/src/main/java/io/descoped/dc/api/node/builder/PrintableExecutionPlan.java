@@ -55,8 +55,8 @@ class PrintableExecutionPlan {
             });
 
             visitNode.given(ProcessBuilder.ProcessNode.class, handled, node -> {
-                builder.append(String.format("%s(%s) process(Class<%s>) produces required-variables: %s%n", indent, ancestors.size(),
-                        node.processorClass().getSimpleName(),
+                builder.append(String.format("%s(%s) process(%s) produces required-variables: %s%n", indent, ancestors.size(),
+                        node.processor(),
                         node.requiredOutputs())
                 );
             });

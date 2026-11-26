@@ -79,7 +79,7 @@ public class MoveItDeleteTest {
                         // global configuration
                         .configure(context()
                                 .topic("moveit-test-delete")
-                                .variable("baseURL", configuration.find("moveIt.server.url").orElse(null))
+                                .variable("baseURL", configuration.find("spec.moveIt.server.url").orElse(null))
                                 .variable("rootFolder", "/Home/moveitapi")
                                 .variable("pageSize", "5")
                                 .variable("nextPage", "${cast.toLong(contentStream.lastOrInitialPagePosition(1))}") // resume page position
@@ -155,10 +155,10 @@ public class MoveItDeleteTest {
     void uploadMoveItFiles() throws IOException {
         Map<String, String> configMap = new LinkedHashMap<>(configuration.asMap());
         String accessToken = authorizeAndGetAccessToken();
-        configMap.put("accessToken", accessToken);
+        configMap.put("spec.accessToken", accessToken);
 
         String folderId = getFolderId(configMap);
-        configMap.put("folderId", folderId);
+        configMap.put("spec.folderId", folderId);
 
         Path testDataPath = CommonUtils.currentPath().resolve("src/test/resources/tempFiles");
         if (!testDataPath.toFile().exists()) {

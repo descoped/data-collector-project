@@ -51,9 +51,10 @@ services:
 ```
 
 Every key and value is visible in `GET /health?config`. Values of keys whose name contains `pass`, `pwd`, `secret`,
-`credential`, `token` or `encryption` (any case) are masked there. A specification can read every configuration value,
-masked or not, with `${ENV.'key'}` (see [Specification DSL](specification-dsl.md)); this is how specifications get
-values such as `maskinporten.clientId`.
+`credential`, `token` or `encryption` (any case) are masked there. A specification reads only the keys that start with
+`spec.`, without that prefix: `spec.maskinporten.clientId` is `${ENV.'maskinporten.clientId'}` (see [Specification
+DSL](specification-dsl.md#functions)). Values a specification needs, client ids and credentials of the services it
+reads included, are configured under `spec.`; nothing else is visible to it.
 
 ## Configuration reference
 

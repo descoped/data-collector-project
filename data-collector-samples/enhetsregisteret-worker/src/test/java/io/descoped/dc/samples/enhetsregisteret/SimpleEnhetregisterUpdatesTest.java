@@ -121,7 +121,7 @@ public class SimpleEnhetregisterUpdatesTest {
         {
             ExecutionContext context = ExecutionContext.empty();
             Map<String, String> map = new LinkedHashMap<>();
-            map.put("updateId", null);
+            map.put("spec.updateId", null);
             ConfigurationMap config = new ConfigurationMap(map);
             context.services().register(ConfigurationMap.class, config);
             ExpressionLanguage el = new ExpressionLanguage(context);
@@ -132,7 +132,7 @@ public class SimpleEnhetregisterUpdatesTest {
         {
             ExecutionContext context = ExecutionContext.empty();
             Map<String, String> map = new LinkedHashMap<>();
-            map.put("updateId", "1");
+            map.put("spec.updateId", "1");
             ConfigurationMap config = new ConfigurationMap(map);
             context.services().register(ConfigurationMap.class, config);
             ExpressionLanguage el = new ExpressionLanguage(context);

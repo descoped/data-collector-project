@@ -1,6 +1,5 @@
 package io.descoped.dc.api;
 
-import io.descoped.dc.api.context.ExecutionContext;
 import io.descoped.dc.api.node.FlowContext;
 import io.descoped.dc.api.node.builder.GetBuilder;
 import io.descoped.dc.api.node.builder.NodeBuilder;
@@ -56,8 +55,8 @@ class BuilderTest {
             )
             .function(get("getstartposition")
                     .url("http://com.company/getstartposition")
-                    .pipe(process(A.class).output("next-position"))
-                    .pipe(process(B.class).output("another-position").output("yet-another"))
+                    .pipe(process("a").output("next-position"))
+                    .pipe(process("b").output("another-position").output("yet-another"))
                     .pipe(execute("page-loop").requiredInput("next-position"))
             )
             .function(paginate("page-loop")
@@ -124,7 +123,7 @@ class BuilderTest {
                             // publish completed position. Sequencing should occur in core
                             .pipe(publish("${position}"))
                     )
-                    .pipe(process(ItemList.class).output("next-position")) // alternative to sequence() and parallel()
+                    .pipe(process("item-list").output("next-position")) // alternative to sequence() and parallel()
             )
             .function(delete("delete-something")
                     .url("http://com.company/resource/1")
@@ -136,16 +135,16 @@ class BuilderTest {
                             .storeState("stateInt", 10)
                             .storeState("stateBoolean", true)
                     )
-                    .pipe(process(Processor.class).output("person-id"))
+                    .pipe(process("processor").output("person-id"))
             )
             .function(get("event-doc")
                     .url("http://com.company/endpoint/event/${event-id}}")
-                    .pipe(process(Processor.class).output("event-id"))
+                    .pipe(process("processor").output("event-id"))
             )
             .function(get("event-doc-404-error")
                     .url("http://com.company/endpoint/event/${event-id}}?404withResponseError")
                     .validate(status().success(200).success(404, bodyContains(jqpath(".kode"), "SP-002")))
-                    .pipe(process(Processor.class).output("event-id"))
+                    .pipe(process("processor").output("event-id"))
             );
 
     @Test
@@ -196,20 +195,6 @@ class BuilderTest {
         assertNotNull(deserialized);
 
         assertEquals(actual, deserialized);
-    }
-
-    static class A implements Processor {
-        @Override
-        public ExecutionContext process(ExecutionContext input) {
-            return null;
-        }
-    }
-
-    static class B implements Processor {
-        @Override
-        public ExecutionContext process(ExecutionContext input) {
-            return null;
-        }
     }
 
 }

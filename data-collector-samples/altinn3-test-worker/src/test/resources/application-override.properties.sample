@@ -1,5 +1,5 @@
-ssb.jwtGrant.expiration=30
-ssb.altinn.app-id=
-ssb.altinn.test.clientId=
-ssb.altinn.prod.clientId=
+spec.ssb.jwtGrant.expiration=30
+spec.ssb.altinn.app-id=
+spec.ssb.altinn.test.clientId=
+spec.ssb.altinn.prod.clientId=
 gcp.service-account.file=
