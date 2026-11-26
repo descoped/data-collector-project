@@ -33,7 +33,7 @@ class HttpClientExporterTest {
                 try (Socket socket = server.accept()) {
                     socket.getInputStream().read(new byte[8192]);
                     socket.getOutputStream().write("HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\nok".getBytes(StandardCharsets.US_ASCII));
-                } catch (IOException e) {
+                } catch (IOException _) {
                     // the server is closed
                 }
             }

@@ -79,17 +79,17 @@ public final class HttpClientExporter {
      * @param thrown      what the request threw, or {@code null}
      */
     public static void completed(Object observation, Response response, Throwable thrown) {
-        if (!(observation instanceof Observation started)) {
+        if (!(observation instanceof Observation(String location, Histogram.Timer timer))) {
             return;
         }
         try {
             if (thrown != null) {
-                requestFailureCount.labels(started.location()).inc();
+                requestFailureCount.labels(location).inc();
             } else {
-                requestCompletedCount.labels(started.location(), statusCode(response), emptyResponse(response)).inc();
+                requestCompletedCount.labels(location, statusCode(response), emptyResponse(response)).inc();
             }
         } finally {
-            started.timer().observeDuration();
+            timer.observeDuration();
         }
     }
 

@@ -26,7 +26,6 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.descoped.dc.server.db.SequenceDbHelper.getSequenceDatabaseLocation;
@@ -171,7 +170,7 @@ public class IntegrityCheckService implements Service {
                 .map(job -> {
                     IntegrityCheckJobSummary.Summary summary = job.getSummary();
                     return new JobStatus(summary.topic, summary.status);
-                }).collect(Collectors.toList());
+                }).toList();
 
         return merge(jobStatusList, getPreviouslyCompletedJobs());
     }

@@ -2,6 +2,7 @@ package io.descoped.dc.core.content;
 
 import io.descoped.dc.api.content.ContentStore;
 import net.bytebuddy.agent.builder.AgentBuilder;
+import io.descoped.dc.core.http.HttpClientAgent;
 import net.bytebuddy.asm.Advice;
 
 import java.lang.instrument.Instrumentation;
@@ -24,17 +25,24 @@ public class ContentStoreAgent {
         }
         // Advice, inlined into the content stores (as HttpClientAgent); a store in a connector module is given a read
         // edge to this one
-        new AgentBuilder.Default()
-                .disableClassFormatChanges()
-                .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
-                .assureReadEdgeTo(inst, ContentStoreExporter.class)
-                .type(hasSuperType(named(ContentStore.class.getName())))
-                .transform((builder, typeDescription, classLoader, javaModule, loaded) -> builder
-                        .visit(Advice.to(ContentStoreExporter.Paginate.class).on(named("addPaginationDocument")))
-                        .visit(Advice.to(ContentStoreExporter.Entry.class).on(named("bufferPaginationEntryDocument")))
-                        .visit(Advice.to(ContentStoreExporter.Document.class).on(named("bufferDocument")))
-                        .visit(Advice.to(ContentStoreExporter.Publish.class).on(named("publish")))
-                )
-                .installOn(inst);
+        try {
+            new AgentBuilder.Default()
+                    .disableClassFormatChanges()
+                    .with(HttpClientAgent.errorLogger())
+                    .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+                    .assureReadEdgeTo(inst, ContentStoreExporter.class)
+                    .type(hasSuperType(named(ContentStore.class.getName())))
+                    .transform((builder, typeDescription, classLoader, javaModule, loaded) -> builder
+                            .visit(Advice.to(ContentStoreExporter.Paginate.class).on(named("addPaginationDocument")))
+                            .visit(Advice.to(ContentStoreExporter.Entry.class).on(named("bufferPaginationEntryDocument")))
+                            .visit(Advice.to(ContentStoreExporter.Document.class).on(named("bufferDocument")))
+                            .visit(Advice.to(ContentStoreExporter.Publish.class).on(named("publish")))
+                    )
+                    .installOn(inst);
+        } catch (RuntimeException | Error e) {
+            // not installed: a later call may try again
+            INSTALLED.set(false);
+            throw e;
+        }
     }
 }

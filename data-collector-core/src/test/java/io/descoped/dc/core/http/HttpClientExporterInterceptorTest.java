@@ -11,11 +11,8 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /*
  * The advice is called directly, as the code the agent inlines into Client.send, Client.sendAsync and
@@ -71,7 +68,7 @@ class HttpClientExporterInterceptorTest {
     }
 
     @Test
-    void thatSendCountsStartedAndCompletedRequests() throws Exception {
+    void thatSendCountsStartedAndCompletedRequests() {
         double started = sample("dc_client_request_started_total", LOCATION);
         double completed = sample("dc_client_request_completed_total", LOCATION, "200", "false");
         Response response = response(200, "body".getBytes());
@@ -93,7 +90,7 @@ class HttpClientExporterInterceptorTest {
     }
 
     @Test
-    void thatSendAsyncCountsCompletedRequests() throws Exception {
+    void thatSendAsyncCountsCompletedRequests() {
         double completed = sample("dc_client_request_completed_total", LOCATION, "204", "true");
 
         Object observation = HttpClientExporter.SendAsync.enter(request());
@@ -103,7 +100,7 @@ class HttpClientExporterInterceptorTest {
     }
 
     @Test
-    void thatSendAsyncCountsFailedRequests() throws Exception {
+    void thatSendAsyncCountsFailedRequests() {
         double failed = sample("dc_client_request_failure_total", LOCATION);
 
         CompletableFuture<Response> future = new CompletableFuture<>();

@@ -57,7 +57,7 @@ class ContentStoreExporterTest {
     }
 
     @Test
-    void thatInterceptorsCountContentStoreWrites() throws Exception {
+    void thatInterceptorsCountContentStoreWrites() {
         String topic = "interceptor-topic";
         double pages = sample("dc_content_stream_pagination_page_publish_count_total", topic);
         double entries = sample("dc_content_stream_buffer_pagination_entry_count_total", topic);

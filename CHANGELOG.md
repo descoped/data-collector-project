@@ -154,7 +154,7 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
 
 - **The client and content store metrics are recorded** (#25). The metrics agent's interceptors are ByteBuddy
   `Advice`; `MethodDelegation` could not define its helper classes on JDK 27, so no `dc_client_*` or
-  `dc_content_stream_*` metric was recorded.
+  `dc_content_stream_*` metric was recorded. A type the agent cannot instrument is now logged as a warning.
 - **Recovery closes its own producer and consumer** (#31): the producer of the target topic and the consumer of the
   source topic; it closed them under each other's topic, so neither was closed.
 - **The rawdata dump stops on the first `stop()`** and waits for its exporter (#32); it waited only on a second call.
