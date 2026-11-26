@@ -316,7 +316,8 @@ values are taken from the page's `NextPage` outputs. The list does not filter th
 produced by the steps are returned.
 
 When a `Sequence` in `pipes` splits with `QueryJsonToken` or `QueryXmlToken`, `GetHandler` writes the response body to a
-temporary file (`TempFileBodyHandler`) so that `Sequence` and `Parallel` can stream it.
+temporary file (`TempFileBodyHandler`) so that `Sequence` and `Parallel` can stream it. The file belongs to that
+request: a request in its steps (an `Execute` from a `Parallel` entry) reads its own response.
 
 Request handling, common to all HTTP functions (`OperationHandler`):
 
@@ -697,7 +698,9 @@ both nodes read it from there.
 - `QueryXmlToken` (`XmlTokenParser`) reads the document with StAX and gives each child element of the root as an
   entry: a document of its own whose root is that element, read without namespaces as `QueryXPath` reads a body. Query
   the entries with `QueryXPath` from their own root: `<hendelser><hendelse>...</hendelse></hendelser>` gives each
-  `hendelse`, queried as `/hendelse/sekvensnummer`.
+  `hendelse`, queried as `/hendelse/sekvensnummer`. Each entry carries the namespace declarations (`xmlns`,
+  `xmlns:*`) of the root, so a prefixed entry serializes as a document of its own. A DOCTYPE fails, as with
+  `QueryXPath`.
 
 ## Expression language
 

@@ -165,6 +165,10 @@ public abstract class OperationHandler<T extends Operation> extends AbstractNode
         for (Node step : node.steps()) {
             ExecutionContext stepInput = ExecutionContext.of(input).merge(accumulated);
             stepInput.state(PageContext.Builder.class, pageContextBuilder);
+            // the body handler belongs to this operation: a request in a step reads its own response, and must not
+            // take over (and restart) the file this operation's response is streamed from; the steps read that file
+            // through the response
+            stepInput.releaseState(io.descoped.dc.api.http.BodyHandler.class);
 
             try {
                 ExecutionContext stepOutput = Executor.execute(step, stepInput);
@@ -241,17 +245,22 @@ public abstract class OperationHandler<T extends Operation> extends AbstractNode
         return response;
     }
 
-    private Response executeRequest(ExecutionContext context, Client client, Request request, int requestTimeout, boolean inRetryWhileState) {
-        AtomicReference<Throwable> failureCause = new AtomicReference<>();
-
-        // propagate bodyHandler; a file handler receives one request's body, so a retry gets a new one of the same file
+    // propagate bodyHandler; a file handler receives one request's body, so a retry gets a new one of the same file
+    private static io.descoped.dc.api.http.BodyHandler<?> bodyHandler(ExecutionContext context) {
         io.descoped.dc.api.http.BodyHandler<?> bodyHandler = context.state(io.descoped.dc.api.http.BodyHandler.class);
         if (bodyHandler instanceof FileBodyHandler fileBodyHandler && !fileBodyHandler.claim()) {
             FileBodyHandler next = fileBodyHandler.restart();
             next.claim();
             context.state(io.descoped.dc.api.http.BodyHandler.class, next);
-            bodyHandler = next;
+            return next;
         }
+        return bodyHandler;
+    }
+
+    private Response executeRequest(ExecutionContext context, Client client, Request request, int requestTimeout, boolean inRetryWhileState) {
+        AtomicReference<Throwable> failureCause = new AtomicReference<>();
+
+        io.descoped.dc.api.http.BodyHandler<?> bodyHandler = bodyHandler(context);
 
         CompletableFuture<Response> requestFuture = (bodyHandler == null ? client.sendAsync(request) : client.sendAsync(request, bodyHandler))
                 .exceptionally(throwable -> {

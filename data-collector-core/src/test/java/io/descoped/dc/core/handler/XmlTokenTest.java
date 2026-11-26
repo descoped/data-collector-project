@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class XmlTokenTest {
@@ -32,9 +33,12 @@ class XmlTokenTest {
 
     @Test
     void thatNamespacesAttributesAndTextAreKept() {
-        String xml = "<?xml version='1.0' encoding='UTF-8'?>\n<hendelser xmlns=\"urn:no:example\">\n"
-                + "  <hendelse type=\"a\"><sekvensnummer>41</sekvensnummer><tekst><![CDATA[x < y]]></tekst></hendelse>\n"
-                + "  <hendelse type=\"b\"><sekvensnummer>42</sekvensnummer></hendelse>\n</hendelser>";
+        String xml = """
+                <?xml version='1.0' encoding='UTF-8'?>
+                <hendelser xmlns="urn:no:example">
+                  <hendelse type="a"><sekvensnummer>41</sekvensnummer><tekst><![CDATA[x < y]]></tekst></hendelse>
+                  <hendelse type="b"><sekvensnummer>42</sekvensnummer></hendelse>
+                </hendelser>""";
         DocumentParserFeature parser = Queries.parserFor(XmlToken.class);
         List<Object> entries = new ArrayList<>();
         parser.tokenDeserializer(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)), entries::add);
@@ -43,7 +47,35 @@ class XmlTokenTest {
         assertEquals("b", Queries.from(Builders.xpath("/hendelse/@type").build()).evaluateStringLiteral(entries.get(1)));
         assertEquals("x < y", Queries.from(Builders.xpath("/hendelse/tekst").build()).evaluateStringLiteral(entries.get(0)));
         String serialized = new String(parser.serialize(entries.get(1)), StandardCharsets.UTF_8);
-        assertTrue(serialized.contains("<hendelse type=\"b\"><sekvensnummer>42</sekvensnummer></hendelse>"), serialized);
+        // the entry carries the root's namespace declaration
+        assertTrue(serialized.contains("<hendelse xmlns=\"urn:no:example\" type=\"b\"><sekvensnummer>42</sekvensnummer></hendelse>"), serialized);
+    }
+
+    // namespace-unaware, as deserialize(): a prefixed element or attribute keeps its prefix in its name, and the entry
+    // carries the root's namespace declarations
+    @Test
+    void thatPrefixedNamesAreKeptAsDeserializeKeepsThem() {
+        String xml = "<a:hendelser xmlns:a=\"urn:a\"><a:hendelse a:type=\"x\"><a:id>1</a:id></a:hendelse></a:hendelser>";
+        String element = "<a:hendelse a:type=\"x\" xmlns:a=\"urn:a\"><a:id>1</a:id></a:hendelse>";
+        DocumentParserFeature parser = Queries.parserFor(XmlToken.class);
+        List<Object> entries = new ArrayList<>();
+        parser.tokenDeserializer(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)), entries::add);
+        assertEquals(1, entries.size());
+        Object alone = parser.deserialize(element.getBytes(StandardCharsets.UTF_8));
+        assertEquals(new String(parser.serialize(alone), StandardCharsets.UTF_8),
+                new String(parser.serialize(entries.get(0)), StandardCharsets.UTF_8));
+    }
+
+    // a DOCTYPE fails, as deserialize() refuses it
+    @Test
+    void thatADoctypeFails() {
+        String xml = "<!DOCTYPE feed [<!ENTITY x \"y\">]><feed><entry/></feed>";
+        DocumentParserFeature parser = Queries.parserFor(XmlToken.class);
+        List<Object> entries = new ArrayList<>();
+        byte[] source = xml.getBytes(StandardCharsets.UTF_8);
+        assertThrows(RuntimeException.class, () -> parser.tokenDeserializer(new ByteArrayInputStream(source), entries::add));
+        assertThrows(RuntimeException.class, () -> parser.deserialize(source));
+        assertTrue(entries.isEmpty());
     }
 
     @Test

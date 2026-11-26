@@ -31,6 +31,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 
 @SupportHandler(forClass = XmlToken.class, selectorClass = DocumentParserFeature.class)
@@ -124,11 +126,19 @@ public class XmlTokenParser implements DocumentParserFeature {
                 if (!toNextElement(reader)) {
                     throw new IllegalStateException("Root element NOT found!");
                 }
+                Map<String, String> namespaceDeclarations = namespaceDeclarations(reader);
                 DocumentBuilder documentBuilder = createDocumentBuilder();
                 reader.next();
                 while (toNextElement(reader)) {
                     Document entry = documentBuilder.newDocument();
-                    entry.appendChild(readElement(reader, entry));
+                    Element element = readElement(reader, entry);
+                    // the root's namespace declarations go with each entry, so a prefixed entry is a document of its own
+                    namespaceDeclarations.forEach((name, value) -> {
+                        if (!element.hasAttribute(name)) {
+                            element.setAttribute(name, value);
+                        }
+                    });
+                    entry.appendChild(element);
                     entryCallback.accept(entry);
                     reader.next();
                 }
@@ -149,6 +159,18 @@ public class XmlTokenParser implements DocumentParserFeature {
         return factory;
     }
 
+    // the xmlns and xmlns:* attributes of the element the reader is at (namespace-unaware, they are attributes)
+    private static Map<String, String> namespaceDeclarations(XMLStreamReader reader) {
+        Map<String, String> declarations = new LinkedHashMap<>();
+        for (int i = 0; i < reader.getAttributeCount(); i++) {
+            String name = reader.getAttributeLocalName(i);
+            if ("xmlns".equals(name) || name.startsWith("xmlns:")) {
+                declarations.put(name, reader.getAttributeValue(i));
+            }
+        }
+        return declarations;
+    }
+
     // moves to the next start element at this level; false at the end of the enclosing element or the document
     private static boolean toNextElement(XMLStreamReader reader) throws XMLStreamException {
         while (true) {
@@ -157,6 +179,9 @@ public class XmlTokenParser implements DocumentParserFeature {
                     return true;
                 case XMLStreamConstants.END_ELEMENT, XMLStreamConstants.END_DOCUMENT:
                     return false;
+                case XMLStreamConstants.DTD:
+                    // a DOCTYPE fails, as the DOM parser of xpath() refuses it
+                    throw new XMLStreamException("DOCTYPE is disallowed", reader.getLocation());
                 default:
                     reader.next();
             }
