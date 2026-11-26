@@ -20,7 +20,7 @@ public class MockDataController implements Controller {
      * Creates the controller; the test server creates it.
      */
     public MockDataController() {
-        // the state is in the fields
+        // no state
     }
 
     static final int ROOT_CONTEXT_PATH_ELEMENT_COUNT = 2; // requestPath is split to: [/, api, events]. Value of 2 means skip [/, api]

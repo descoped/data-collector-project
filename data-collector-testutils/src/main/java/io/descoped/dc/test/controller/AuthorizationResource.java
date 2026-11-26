@@ -18,14 +18,14 @@ import java.util.Map;
  */
 public class AuthorizationResource extends AbstractResource {
 
+    private static final Logger LOG = LoggerFactory.getLogger(AuthorizationResource.class);
+
     /**
      * Creates the resource; the test server creates it.
      */
     public AuthorizationResource() {
-        // the state is in the fields
+        // no state
     }
-
-    private static final Logger LOG = LoggerFactory.getLogger(AuthorizationResource.class);
 
     @Override
     void handle(HttpServerExchange exchange) {

@@ -15,7 +15,6 @@
     <name>Data Collector Testutils</name>
     <description>JUnit test harness for data collector specifications: an embedded test server with mock data, a test client and configuration profiles.</description>
 
-
     <dependencies>
         <dependency>
             <groupId>io.descoped.dc</groupId>
