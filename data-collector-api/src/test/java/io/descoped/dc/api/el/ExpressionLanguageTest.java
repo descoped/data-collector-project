@@ -32,7 +32,7 @@ class ExpressionLanguageTest {
     void testCustomContext() {
         ExecutionContext context = ExecutionContext.empty();
         Map<String, String> map = new LinkedHashMap<>();
-        map.put("foo.bar", "bar");
+        map.put("spec.foo.bar", "bar");
         ConfigurationMap config = new ConfigurationMap(map);
         context.services().register(ConfigurationMap.class, config);
         ExpressionLanguage el = new ExpressionLanguage(context);
@@ -48,7 +48,7 @@ class ExpressionLanguageTest {
 
         ExecutionContext context = ExecutionContext.empty();
         Map<String, String> map = new LinkedHashMap<>();
-        map.put("datePosition", "2020-10-05T00:00:00.000Z");
+        map.put("spec.datePosition", "2020-10-05T00:00:00.000Z");
         ConfigurationMap config = new ConfigurationMap(map);
         context.services().register(ConfigurationMap.class, config);
         ExpressionLanguage el = new ExpressionLanguage(context);

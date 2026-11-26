@@ -35,12 +35,12 @@ public class SimpleMoveItTest {
     private static final byte[] AUTHORIZATION_DATA;
 
     static {
-        AUTHORIZATION_DATA = String.format("grant_type=password&username=%s&password=%s", configuration.find("moveIt.server.username").orElse(null), configuration.find("moveIt.server.password").orElse(null)).getBytes();
+        AUTHORIZATION_DATA = String.format("grant_type=password&username=%s&password=%s", configuration.find("spec.moveIt.server.username").orElse(null), configuration.find("spec.moveIt.server.password").orElse(null)).getBytes();
     }
 
     static Response GET(String url, String accessToken) {
         Request request = Request.newRequestBuilder()
-                .url(configuration.find("moveIt.server.url").orElse(null) + url)
+                .url(configuration.find("spec.moveIt.server.url").orElse(null) + url)
                 .header("Authorization", "Bearer " + accessToken)
                 .GET()
                 .build();
@@ -52,7 +52,7 @@ public class SimpleMoveItTest {
 
     static Response POST(String url, byte[] payload) {
         Request request = Request.newRequestBuilder()
-                .url(configuration.find("moveIt.server.url").orElse(null) + url)
+                .url(configuration.find("spec.moveIt.server.url").orElse(null) + url)
                 .POST(payload)
                 .build();
 
@@ -67,7 +67,7 @@ public class SimpleMoveItTest {
 
     static Response POST(String url, String accessToken, byte[] payload, String contentType) {
         Request.Builder requestBuilder = Request.newRequestBuilder()
-                .url(configuration.find("moveIt.server.url").orElse(null) + url)
+                .url(configuration.find("spec.moveIt.server.url").orElse(null) + url)
                 .header("Authorization", "Bearer " + accessToken);
         if (contentType != null) {
             requestBuilder.header("Content-Type", contentType);
@@ -83,7 +83,7 @@ public class SimpleMoveItTest {
 
     static Response POST(String url, String accessToken, Flow.Publisher<ByteBuffer> bodyPublisher, String boundary) {
         Request.Builder requestBuilder = Request.newRequestBuilder()
-                .url(configuration.find("moveIt.server.url").orElse(null) + url)
+                .url(configuration.find("spec.moveIt.server.url").orElse(null) + url)
                 .header("Authorization", "Bearer " + accessToken);
         requestBuilder
                 .header("Content-Type", "multipart/form-data;boundary=" + boundary);

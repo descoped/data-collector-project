@@ -149,7 +149,7 @@ class MoveItDownloadTest {
     void consumeMoveItFiles() {
         Worker.newBuilder()
                 .configuration(configuration.asMap())
-                .specification(createSpecification(configuration.find("moveIt.server.url").orElse(null)))
+                .specification(createSpecification(configuration.find("spec.moveIt.server.url").orElse(null)))
                 .build()
                 .run();
     }
@@ -157,7 +157,7 @@ class MoveItDownloadTest {
     @Disabled("Round-trip equality fails: equals is broken on some builders (a known 2.x defect, see ROADMAP.md)")
     @Test
     void validateDeserializer() {
-        SpecificationBuilder actualSpecificationBuilder = createSpecification(configuration.find("moveIt.server.url").orElse(null));
+        SpecificationBuilder actualSpecificationBuilder = createSpecification(configuration.find("spec.moveIt.server.url").orElse(null));
         String serialized = actualSpecificationBuilder.serialize();
         SpecificationBuilder expectedSpecificationBuilder = Specification.deserialize(serialized);
         assertEquals(actualSpecificationBuilder, expectedSpecificationBuilder);
@@ -174,7 +174,7 @@ class MoveItDownloadTest {
             throw new RuntimeException(String.format("Couldn't locate '%s' under currentPath: %s%n", targetPath.toFile().getName(), currentPath.toAbsolutePath().toString()));
         }
 
-        Files.writeString(targetPath.resolve("specs").resolve("moveit-test-spec.json"), createSpecification(configuration.find("moveIt.server.url").orElse(null)).serialize());
+        Files.writeString(targetPath.resolve("specs").resolve("moveit-test-spec.json"), createSpecification(configuration.find("spec.moveIt.server.url").orElse(null)).serialize());
     }
 
 }

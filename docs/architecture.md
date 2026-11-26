@@ -181,9 +181,10 @@ Query nodes (`jqpath`, `xpath`, `regex`, `eval`, `body`, `jsonToken`, `xmlToken`
 `evaluateList`, `evaluateObject` and `evaluateStringLiteral`. `Queries.parserFor(queryClass)` returns the
 `DocumentParserFeature` that serializes and deserializes a document of that query type.
 
-Expressions (`${...}`) are evaluated by `io.descoped.dc.api.el.ExpressionLanguage`, which uses Apache Commons JEXL. An
-expression sees the context variables, `ENV` (the configuration map), `cast` (`ELCast`), `convert` (`ELConvert`) and
-`contentStream` (`ELContentStream`, which reads the last position of the topic).
+Expressions (`${...}`) are evaluated by `io.descoped.dc.api.el.ExpressionLanguage`, which uses Apache Commons JEXL in a
+sandbox (closed-world permissions, no `new`). An expression sees the context variables, `ENV` (the `spec.` keys of the
+configuration map, without the prefix), `cast` (`ELCast`), `convert` (`ELConvert`), `contentStream` (`ELContentStream`,
+which reads the last position of the topic) and the functions of the `ExpressionFunctions` providers.
 
 ### Operations
 
@@ -566,6 +567,7 @@ classDiagram
     <<interface>> Execute
     class Process {
         processorClass()
+        processor()
         requiredOutputs()
     }
     <<interface>> Process

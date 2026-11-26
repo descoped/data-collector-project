@@ -26,6 +26,16 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
 - **The rawdata dump** writes each position and content key as one file name, percent-encoding anything but letters,
   digits and `. - * _`; in 2.x a position or key could name a path outside the dump directory. It does not start when
   `data.collector.rawdata.dump.topic` is not a topic name.
+- **Expressions run in a sandbox** (Apache Commons JEXL 3.7.1, from 3.2.1). They can call only the methods of strings,
+  numbers, booleans, `java.util` collections, `cast`, `convert`, `contentStream` and registered expression functions.
+  `new(...)`, imports, pragmas, loops and scripts are off. A call of anything else gives `null`, as navigation through
+  `null` does; in 2.x an expression could run any code with the rights of the process.
+- **`ENV` holds only the configuration keys that start with `spec.`**, without the prefix: configure
+  `spec.maskinporten.clientId` for `${ENV.'maskinporten.clientId'}`. In 2.x `ENV` was the whole configuration, secrets
+  included.
+- **A `Process` names its processor's provider** (`"processor": "<name>"`), registered as an
+  `io.descoped.dc.api.ProcessorProvider`; `processorClass` is no longer read, so no class is loaded by a name from a
+  specification. The Java DSL keeps `process(Class)` and adds `process(String)`.
 - **JDK 27:** dc is built for, tested on and runs on JDK 27 (class files of Java 27); 2.x ran on Java 17. The server
   image's runtime is Temurin 27, and its `java` allows native access for the class path (jffi) and lmdbjava's use of
   `sun.misc.Unsafe`, which JDK 27 would otherwise warn about.

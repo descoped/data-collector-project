@@ -16,11 +16,8 @@
     <description>The data collector specification DSL (builders and nodes), its expression language, and the service interfaces for HTTP, content stores and health.</description>
 
     <properties>
-        <!-- doclint missing: the Javadoc of the public API follows in a pull request of its own.
-             requires-automatic: commons-jexl3 is an automatic module, so javac warns on its requires, which this
-             module cannot change. -->
+        <!-- doclint missing: the Javadoc of the public API follows in a pull request of its own. -->
         <doclint.exclusions>,-missing</doclint.exclusions>
-        <lint.exclusions>,-requires-automatic</lint.exclusions>
     </properties>
 
     <dependencies>

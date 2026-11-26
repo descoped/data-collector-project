@@ -52,13 +52,6 @@
       "groupName": "Descoped libraries (major)"
     },
     {
-      "description": "commons-jexl3 stays on 3.2.1 until the expression sandbox is introduced: 3.3 restricts permissions by default, which changes what specifications may evaluate. Lift this rule in that pull request.",
-      "matchPackageNames": [
-        "org.apache.commons:commons-jexl3"
-      ],
-      "allowedVersions": "3.2.1"
-    },
-    {
       "description": "JDK versions in the workflows are deliberate: every workflow uses JDK 27, the baseline. They are changed by hand, never bumped.",
       "matchManagers": [
         "github-actions"

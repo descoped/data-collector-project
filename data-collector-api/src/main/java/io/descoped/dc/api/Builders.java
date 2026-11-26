@@ -129,6 +129,16 @@ public class Builders {
         return new ProcessBuilder(processorClass);
     }
 
+    /**
+     * A processor registered under a name by a {@link ProcessorProvider}.
+     *
+     * @param processor the provider's name
+     * @return the builder
+     */
+    public static ProcessBuilder process(String processor) {
+        return new ProcessBuilder(processor);
+    }
+
     public static AddContentBuilder addContent(String positionVariable, String contentKey) {
         return new AddContentBuilder(positionVariable, contentKey);
     }

@@ -384,7 +384,8 @@ public class Collect {
 | `data.collector.http.request.napOnRetryInMillis` | 150 | Pause between attempts. When the key is set, the pause is read from the value of `data.collector.http.request.retryCount`. |
 | `data.collector.parallel.queueBuffer.threshold` | not set | `parallel` waits for its running tasks after this many entries. |
 
-The whole map is also passed to the content store provider, and expressions see it as `ENV`.
+The whole map is also passed to the content store provider; expressions see its `spec.` keys, without the prefix, as
+`ENV`.
 
 ### Choosing a content store
 

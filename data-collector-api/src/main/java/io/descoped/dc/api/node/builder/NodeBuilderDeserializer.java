@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import io.descoped.dc.api.Processor;
 import io.descoped.dc.api.Specification;
 
 import java.io.IOException;
@@ -417,15 +416,16 @@ public class NodeBuilderDeserializer extends StdDeserializer<AbstractBuilder> {
         return builder;
     }
 
-    @SuppressWarnings("unchecked") // the processor class is named by the specification (see the security audit)
+    // a specification names a ProcessorProvider, never a class: no class is loaded by a name from a specification
     private AbstractBuilder buildProcess(JsonNode currentNode) {
-        try {
-            ProcessBuilder builder = new ProcessBuilder((Class<? extends Processor>) Class.forName(currentNode.get("processorClass").textValue()));
-            currentNode.get("requiredOutputs").forEach(output -> builder.output(output.textValue()));
-            return builder;
-        } catch (ClassNotFoundException e) {
-            throw new IllegalArgumentException(e);
+        if (currentNode.has("processorClass") || !currentNode.hasNonNull("processor")) {
+            throw new IllegalArgumentException("A Process names its processor's provider in 'processor'; 'processorClass' is not read");
         }
+        ProcessBuilder builder = new ProcessBuilder(currentNode.get("processor").textValue());
+        if (currentNode.has("requiredOutputs")) {
+            currentNode.get("requiredOutputs").forEach(output -> builder.output(output.textValue()));
+        }
+        return builder;
     }
 
     private AbstractBuilder buildQueryEval(int depth, DeserializationContext context, Deque<JsonNode> ancestors, JsonNode currentNode) {

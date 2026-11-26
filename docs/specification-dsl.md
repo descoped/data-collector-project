@@ -157,7 +157,7 @@ The table lists every node type, its Java builder and where it may appear.
 | `NextPage` | `nextPage()` | `pipes` of an HTTP function | `NextPageHandler` |
 | `Parallel` | `parallel(splitQuery)` | `pipes` | `ParallelHandler` |
 | `ForEach` | `forEach(splitQuery)` | `pipes` | `ForEachHandler` |
-| `Process` | `process(Class)` | `pipes` | `ProcessHandler` |
+| `Process` | `process(String)`, `process(Class)` | `pipes` | `ProcessHandler` |
 | `Console` | `console()` | `pipes` | `ConsoleHandler` |
 | `AddContent` | `addContent(positionExpression, contentKey)` | `pipes` | `AddContentHandler` |
 | `Publish` | `publish(positionExpression)` | `pipes` | `PublishHandler` |
@@ -427,10 +427,15 @@ Runs a Java `io.descoped.dc.api.Processor` (`ProcessBuilder`, `ProcessHandler`).
 
 | JSON field | Java method | Description |
 |---|---|---|
-| `processorClass` | `process(Class<? extends Processor>)` | Fully qualified class name. |
+| `processor` | `process(String)` | The name of an `io.descoped.dc.api.ProcessorProvider`. |
 | `requiredOutputs` | `output(name)` | Variables the processor is expected to return. |
 
-The reader loads `processorClass` with `Class.forName`. `ProcessHandler` creates the processor with
+A specification names the processor's provider, never a class: the reader refuses `processorClass`, and no class is
+loaded by a name from a specification. A provider is a service (`provides io.descoped.dc.api.ProcessorProvider with
+...` in its `module-info.java`, and `META-INF/services`) whose `name()` and `processorClass()` register a processor on
+the server's module path or class path. The name is looked up when the step runs, so an unknown name fails the step
+(`No ProcessorProvider is named: ...`). In Java, `process(Class)` passes the class itself; such a specification is
+written as JSON only when a provider registers the class. `ProcessHandler` creates the processor with
 `ObjectCreator.newInstance`, which fills constructor parameters from the worker's services, and calls
 `process(ExecutionContext)` with the current context and response. The step fails with `A variable is missing!` when
 none of `requiredOutputs` is among the processor's output variables; with an empty list it always fails.
@@ -741,11 +746,12 @@ exception), and the error is logged together with all current variables.
 
 ### Functions
 
-`ExpressionLanguage` registers four objects in every evaluation:
+`ExpressionLanguage` registers four objects in every evaluation, and the functions of every
+`io.descoped.dc.api.el.ExpressionFunctions` provider under its name:
 
 | Name | Class | Members |
 |---|---|---|
-| `ENV` | JEXL `MapContext` | The worker's configuration map. In the server this is the whole server configuration (configuration files, environment variables with the prefix `DC_`, keyed without it, and system properties). Keys with dots are quoted: `ENV.'maskinporten.clientId'`. |
+| `ENV` | `Map` | The keys of the worker's configuration that start with `spec.`, without that prefix: `spec.maskinporten.clientId` is read as `ENV.'maskinporten.clientId'` (keys with dots are quoted). No other configuration value is visible. In the server the configuration is the server's: configuration files, environment variables with the prefix `DC_` (keyed without it) and system properties. |
 | `cast` | `ELCast` | `toInteger(String)`, `toLong(String)`, `toFloat(String)`, `toDouble(String)`. A `null` argument gives `null`. |
 | `convert` | `ELConvert` | `utcDateToEpoc(String)`. In 3.0 it ignores its argument and returns the epoch second of `2020-10-05T00:00:00Z`. |
 | `contentStream` | `ELContentStream` | See below. |
@@ -765,12 +771,25 @@ exception), and the error is logged together with all current variables.
 These functions fail with `Topic is null!` when no topic is set, and with `ContentStore is null or closed!` when there
 is no open content store.
 
+A deployment adds functions of its own, for example to sign requests for a service with a security scheme of its own,
+as a provider of `ExpressionFunctions` (`provides` in its `module-info.java` and `META-INF/services`): `name()` is the
+name expressions use, and the public methods of the object `functions()` returns can be called, as
+`${sign.hmac(body)}`. The object is shared by every expression of every worker, so it must be thread-safe. A name that
+is taken, or is one of the four above, stops the expression language from loading.
+
 ### Security of expressions
 
-`ExpressionLanguage` builds the JEXL engine with `cache(512)`, `strict(true)` and `silent(false)`, and configures no
-sandbox or permissions. An expression can call public methods on any object it reaches, and `ENV` exposes every
-configuration value of the process, including secrets. The `Process` node loads the class named in `processorClass`.
-A specification therefore runs with the rights of the dc process.
+Expressions run in a sandbox. `ExpressionLanguage` builds the JEXL engine (Apache Commons JEXL 3.7) with
+`cache(512)`, `strict(true)`, `silent(false)` and closed-world permissions (`JexlPermissions.create`): an expression can
+call only
+
+- the methods of `String`, `CharSequence`, the number classes, `Boolean` and `Character` (`java.lang`), `BigInteger`
+  and `BigDecimal`, and `java.util` (the collections that variables hold);
+- `cast`, `convert`, `contentStream` and the registered `ExpressionFunctions`.
+
+`new(...)`, imports, pragmas, annotations, loops and scripts are turned off, so an expression cannot create an object
+or reach a class. A call of anything else is not made: like navigation through `null` (JEXL's default, as in 2.x), it
+gives `null`. `ENV` holds only the `spec.` keys, so secrets and dc's own settings are out of reach.
 
 ## Positions and the content stream
 
