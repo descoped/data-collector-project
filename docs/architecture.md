@@ -453,8 +453,9 @@ Nobody installs anything: a specification, a library user and the server get the
 | a page completes, an entry fans out | `PaginationLifecycle`, `ParallelHandler` |
 | the content store adds a page, buffers, publishes | `ObservedContentStore`, which `Worker` wraps around the store it registers |
 
-The engine calls the observers synchronously, on its own thread, in the order of their class names. An exception an
-observer throws is logged once per observer and event, with its class only, and never fails the engine. The events
+The engine calls the observers synchronously, on its own thread, in the order of their class names. A
+`RuntimeException` an observer throws is logged once per observer and event, with its class only, and never fails the
+engine; an `Error` is not caught. The events
 carry ids, node types, the request's location and topics; never headers, bodies or configuration values. An event
 that takes time returns an `Observation`, closed when the work ends: a timer here, a span for a tracing provider.
 

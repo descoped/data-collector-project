@@ -67,8 +67,11 @@ class ObservedContentStoreTest {
 
         ContentStore contentStore = ObservedContentStore.of(rawdataStore());
         contentStore.close();
-        assertThrows(RuntimeException.class, () -> contentStore.addPaginationDocument(topic, "1", "page", "PAGE".getBytes(), HTTP_REQUEST_INFO));
-        assertThrows(RuntimeException.class, () -> contentStore.bufferPaginationEntryDocument(topic, "1", "page", "ENTRY".getBytes(), HTTP_REQUEST_INFO, new LinkedHashMap<>()));
+        byte[] page = "PAGE".getBytes();
+        byte[] entry = "ENTRY".getBytes();
+        Map<String, Object> state = new LinkedHashMap<>();
+        assertThrows(RuntimeException.class, () -> contentStore.addPaginationDocument(topic, "1", "page", page, HTTP_REQUEST_INFO));
+        assertThrows(RuntimeException.class, () -> contentStore.bufferPaginationEntryDocument(topic, "1", "page", entry, HTTP_REQUEST_INFO, state));
 
         assertEquals(pages + 1, sample("dc_content_stream_pagination_page_publish_count_total", topic));
         assertEquals(entries, sample("dc_content_stream_buffer_pagination_entry_count_total", topic));

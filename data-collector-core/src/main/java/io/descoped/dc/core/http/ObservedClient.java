@@ -45,7 +45,7 @@ public final class ObservedClient implements Client {
             Response response = delegate.send(request);
             responded(observation, response);
             return response;
-        } catch (RuntimeException | Error e) {
+        } catch (RuntimeException e) {
             observation.failed(e);
             throw e;
         } finally {
@@ -60,7 +60,7 @@ public final class ObservedClient implements Client {
             Response response = delegate.send(request, bodyHandler);
             responded(observation, response);
             return response;
-        } catch (RuntimeException | Error e) {
+        } catch (RuntimeException e) {
             observation.failed(e);
             throw e;
         } finally {
@@ -74,7 +74,7 @@ public final class ObservedClient implements Client {
         CompletableFuture<Response> future;
         try {
             future = delegate.sendAsync(request);
-        } catch (RuntimeException | Error e) {
+        } catch (RuntimeException e) {
             observation.failed(e);
             observation.close();
             throw e;
@@ -88,7 +88,7 @@ public final class ObservedClient implements Client {
         CompletableFuture<Response> future;
         try {
             future = delegate.sendAsync(request, bodyHandler);
-        } catch (RuntimeException | Error e) {
+        } catch (RuntimeException e) {
             observation.failed(e);
             observation.close();
             throw e;

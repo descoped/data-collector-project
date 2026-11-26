@@ -4,8 +4,9 @@ package io.descoped.dc.api.observer;
  * Observes the engine. A provider is registered as a service of this interface ({@code provides} in its module, and
  * {@code META-INF/services}); the engine calls every provider it finds.
  * <p>
- * The engine calls an observer synchronously, on the thread that does the work, so an observer must not block. An
- * exception an observer throws is logged and never fails the engine. Every method does nothing by default, so a
+ * The engine calls an observer synchronously, on the thread that does the work, so an observer must not block. A
+ * {@link RuntimeException} an observer throws is logged and never fails the engine; an {@link Error} is not caught.
+ * Every method does nothing by default, so a
  * provider overrides what it needs. The events carry no headers, bodies or configuration values.
  */
 public interface EngineObserver {

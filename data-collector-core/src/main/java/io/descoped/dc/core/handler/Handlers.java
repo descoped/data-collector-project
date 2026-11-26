@@ -1,6 +1,5 @@
 package io.descoped.dc.core.handler;
 
-import io.descoped.dc.api.context.ExecutionContext;
 import io.descoped.dc.api.handler.CompositionHandler;
 import io.descoped.dc.api.handler.Handler;
 import io.descoped.dc.api.handler.SupportHandler;

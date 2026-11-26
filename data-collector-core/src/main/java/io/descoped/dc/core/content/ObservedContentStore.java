@@ -66,7 +66,7 @@ public final class ObservedContentStore implements ContentStore {
         Observation observation = observer.addingPage(new ContentEvent(topic));
         try {
             delegate.addPaginationDocument(topic, position, contentKey, content, httpRequestInfo);
-        } catch (RuntimeException | Error e) {
+        } catch (RuntimeException e) {
             observation.failed(e);
             throw e;
         } finally {
@@ -91,7 +91,7 @@ public final class ObservedContentStore implements ContentStore {
         Observation observation = observer.publishing(new ContentEvent(topic), position == null ? 0 : position.length);
         try {
             delegate.publish(topic, position);
-        } catch (RuntimeException | Error e) {
+        } catch (RuntimeException e) {
             observation.failed(e);
             throw e;
         } finally {

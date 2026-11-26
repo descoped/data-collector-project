@@ -253,7 +253,9 @@ public abstract class OperationHandler<T extends Operation> extends AbstractNode
                 if (monitor != null) {
                     monitor.request().incrementRequestRetryOnFailureCount();
                 }
-                EngineObservers.instance().requestRetried(EngineObservers.requestEvent(request.url()), retry + 1);
+                if (retry + 1 < retryCount) {
+                    EngineObservers.instance().requestRetried(EngineObservers.requestEvent(request.url()), retry + 1);
+                }
                 LOG.error("Request error occurred - retrying {} of {}: {}\nCause: {}", retry + 1, retryCount, Masking.url(request.url()), CommonUtils.captureStackTrace(e));
                 nap(napOnRetryInMillis);
             }

@@ -92,7 +92,7 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
 
 - **Engine observers** (`io.descoped.dc.api.observer.EngineObserver`): the engine reports workers, node executions,
   requests and their retries, failed GET steps, completed pages, fanned-out entries and content store writes to every
-  provider `ServiceLoader` finds. An observer that throws is logged once and never fails the engine; the events carry
+  provider `ServiceLoader` finds. A `RuntimeException` an observer throws is logged once and never fails the engine; the events carry
   no headers, bodies or configuration values. An event that takes time returns an `Observation`, for a timer or,
   later, a span. Core's `PrometheusEngineObserver` records the client and content store metrics of 2.x, with the same
   names, labels and buckets, and new ones: `dc_worker_started`, `dc_worker_finished`, `dc_node_duration`,

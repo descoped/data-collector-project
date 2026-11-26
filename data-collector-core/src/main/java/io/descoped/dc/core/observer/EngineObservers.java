@@ -26,8 +26,8 @@ import java.util.function.Function;
 
 /**
  * The engine observers found with {@link ServiceLoader}, as one observer. Every call reaches every observer, in the
- * order of their class names; an exception an observer throws is logged once for that observer and event, with its
- * class only, and does not reach the engine.
+ * order of their class names. A {@link RuntimeException} an observer throws is logged once for that observer and event,
+ * with its class only, and does not reach the engine; an {@link Error} does.
  */
 public final class EngineObservers implements EngineObserver {
 
@@ -92,7 +92,7 @@ public final class EngineObservers implements EngineObserver {
     public static RequestEvent requestEvent(String url) {
         try {
             return new RequestEvent(new URLInfo(url).getLocation().orElse(""));
-        } catch (RuntimeException e) {
+        } catch (RuntimeException _) {
             return new RequestEvent("");
         }
     }

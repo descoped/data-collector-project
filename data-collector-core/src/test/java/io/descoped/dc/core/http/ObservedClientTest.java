@@ -16,6 +16,8 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -128,7 +130,8 @@ class ObservedClientTest {
             throw new UncheckedIOException(new IOException("refused"));
         }, null);
 
-        assertThrows(UncheckedIOException.class, () -> client.send(request()));
+        Request request = request();
+        assertThrows(UncheckedIOException.class, () -> client.send(request));
 
         assertEquals(failed + 1, sample("dc_client_request_failure_total", LOCATION));
     }
@@ -187,7 +190,7 @@ class ObservedClientTest {
 
             // the asynchronous response is counted when its future completes, which may be just after get() returns
             for (int i = 0; i < 50 && completed(location) < before + 2; i++) {
-                Thread.sleep(20);
+                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(20));
             }
             assertEquals(before + 2, completed(location));
         }

@@ -39,7 +39,7 @@ public class Executor {
         Observation observation = EngineObservers.instance().nodeStarted(EngineObservers.nodeEvent(node));
         try {
             return executionHandler.execute(input);
-        } catch (RuntimeException | Error e) {
+        } catch (RuntimeException e) {
             observation.failed(e);
             throw e;
         } finally {

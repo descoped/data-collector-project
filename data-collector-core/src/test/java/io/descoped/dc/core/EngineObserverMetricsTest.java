@@ -114,6 +114,7 @@ class EngineObserverMetricsTest {
         double failed = finished(specification, "FAILED");
         double requestFailures = sample("dc_client_request_failure_total", "location", location);
         double getFailures = sample("dc_node_failure_total", "type", "Get");
+        double retries = sample("dc_client_request_retry_total", "location", location);
 
         SpecificationBuilder specificationBuilder = Specification.start(specification, "failure", "page")
                 .function(get("page")
@@ -121,13 +122,17 @@ class EngineObserverMetricsTest {
                         .validate(status().success(200))
                 );
 
-        assertThrows(RuntimeException.class, () -> Worker.newBuilder()
+        Worker worker = Worker.newBuilder()
                 .specification(specificationBuilder)
-                .configuration(Map.of("content.stream.connector", "discarding", "data.collector.http.request.napOnRetry", "1"))
-                .build()
-                .run());
+                .configuration(Map.of("content.stream.connector", "discarding",
+                        "data.collector.http.request.retryCount", "3",
+                        "data.collector.http.request.napOnRetry", "1"))
+                .build();
+        assertThrows(RuntimeException.class, worker::run);
 
         assertEquals(failed + 1, finished(specification, "FAILED"));
+        // three attempts fail: two of them are tried again
+        assertEquals(retries + 2, sample("dc_client_request_retry_total", "location", location), MetricSamples.text());
         assertTrue(sample("dc_client_request_failure_total", "location", location) >= requestFailures + 1, MetricSamples.text());
         assertTrue(sample("dc_node_failure_total", "type", "Get") >= getFailures + 1, MetricSamples.text());
     }
