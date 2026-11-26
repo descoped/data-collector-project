@@ -186,6 +186,12 @@ public class Worker {
             if (LOG.isDebugEnabled()) LOG.debug("[{}] Initialize worker monitor", workerId);
             initializeMonitor();
 
+            // what an earlier run of the topic committed is never written again (#71)
+            if (context.services().contains(CommittedPositions.class)) {
+                context.services().get(CommittedPositions.class).read(context.services().get(ContentStore.class),
+                        node.configurations().flowContext().topic());
+            }
+
             if (LOG.isDebugEnabled()) LOG.debug("[{}] Before execute worker node", workerId);
 
             // =============================================================================================
@@ -256,7 +262,22 @@ public class Worker {
                     }
                 }
 
+                if (!threadPoolIsTerminated.get()) {
+                    if (LOG.isDebugEnabled())
+                        LOG.debug("[{}] Finally terminate thread-pool if worker exception occurred!", workerId);
+                    FixedThreadPool threadPool = context.services().get(FixedThreadPool.class);
+                    threadPool.shutdownAndAwaitTermination();
+                    threadPoolIsTerminated.set(true);
+                }
+
                 ContentStore contentStore = context.services().get(ContentStore.class);
+                // content this run buffered and did not publish is never published by a later run (#72): after the
+                // pool is terminated, so no entry of this run buffers more, and before onFinish, so a run the
+                // observers start next is not touched
+                String topic = node.configurations().flowContext().topic();
+                if (topic != null && contentStore != null && !contentStore.isClosed()) {
+                    contentStore.discard(topic);
+                }
                 if (!keepContentStoreOpenOnWorkerCompletion && !contentStore.isClosed()) {
                     if (LOG.isDebugEnabled()) LOG.debug("[{}] Finally close content store!", workerId);
                     contentStore.closeTopic(node.configurations().flowContext().topic());
@@ -271,14 +292,6 @@ public class Worker {
                         workerObserver.finish(workerObservable, workerStatus);
                     }
                     finishWorkerObserverIsFired.set(true);
-                }
-
-                if (!threadPoolIsTerminated.get()) {
-                    if (LOG.isDebugEnabled())
-                        LOG.debug("[{}] Finally terminate thread-pool if worker exception occurred!", workerId);
-                    FixedThreadPool threadPool = context.services().get(FixedThreadPool.class);
-                    threadPool.shutdownAndAwaitTermination();
-                    threadPoolIsTerminated.set(true);
                 }
 
             } catch (Exception e) {
@@ -643,6 +656,7 @@ public class Worker {
 
             services.register(Termination.class, Termination.create());
             services.register(WorkerTasks.class, new WorkerTasks());
+            services.register(CommittedPositions.class, new CommittedPositions());
             services.register(ParallelHandler.Counters.class, new ParallelHandler.Counters());
             services.register(BufferedReordering.class, new BufferedReordering<String>());
             services.register(FixedThreadPool.class, FixedThreadPool.newInstance(

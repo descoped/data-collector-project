@@ -186,6 +186,18 @@ public class RawdataClientContentStore implements ContentStore {
     }
 
     @Override
+    public void discard(String topic, String... positions) {
+        for (String position : positions) {
+            contentBuffers.remove(new ContentStateKey(topic, position));
+        }
+    }
+
+    @Override
+    public void discard(String topic) {
+        contentBuffers.keySet().removeIf(key -> key.topic().equals(topic));
+    }
+
+    @Override
     public HealthContentStreamMonitor monitor() {
         return monitor;
     }

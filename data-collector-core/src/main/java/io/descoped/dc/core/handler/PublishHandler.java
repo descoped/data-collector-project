@@ -7,10 +7,13 @@ import io.descoped.dc.api.el.ExpressionLanguage;
 import io.descoped.dc.api.handler.Handler;
 import io.descoped.dc.api.node.Publish;
 import io.descoped.dc.core.executor.BufferedReordering;
+import io.descoped.dc.core.executor.CommittedPositions;
 import io.descoped.dc.core.health.HealthWorkerMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -50,6 +53,8 @@ public class PublishHandler extends AbstractNodeHandler<Publish> {
         Set<String> contentKeys = contentStore.contentKeys(topicName, positionValue);
 
         HealthWorkerMonitor monitor = input.services().get(HealthWorkerMonitor.class);
+        CommittedPositions committedPositions = input.services().contains(CommittedPositions.class)
+                ? input.services().get(CommittedPositions.class) : null;
 
         if (!contentKeys.isEmpty()) {
             contentStore.lock(topicName);
@@ -58,24 +63,8 @@ public class PublishHandler extends AbstractNodeHandler<Publish> {
                     if (monitor != null && monitor.contentStream().hasNotSetStartPosition()) {
                         monitor.contentStream().setStartPosition(orderedPositions.get(0));
                     }
-
-                    contentStore.publish(topicName, orderedPositions.toArray(new String[0]));
-
-                    if (LOG.isInfoEnabled()) {
-                        LOG.info("Reordered sequence: [{}] with content [{}]",
-                                String.join(",", orderedPositions),
-                                String.join(",", contentKeys)
-                        );
-                    }
-                    PositionObserver positionObserver = input.state(PositionObserver.class);
-                    // only avail in scope if coming from paginate
-                    if (positionObserver != null) {
-                        positionObserver.completed(orderedPositions.size());
-                    }
-
-                    if (monitor != null) {
-                        monitor.contentStream().setLastPosition(orderedPositions.get(orderedPositions.size() - 1));
-                    }
+                    commit(contentStore, topicName, orderedPositions, committedPositions);
+                    released(input, monitor, orderedPositions, contentKeys);
                 });
             } finally {
                 contentStore.unlock(topicName);
@@ -85,4 +74,37 @@ public class PublishHandler extends AbstractNodeHandler<Publish> {
         return ExecutionContext.empty();
     }
 
+
+    // the log, the pagination's position observer and the health monitor after a release
+    private static void released(ExecutionContext input, HealthWorkerMonitor monitor, List<String> orderedPositions, Set<String> contentKeys) {
+        if (LOG.isInfoEnabled()) {
+            LOG.info("Reordered sequence: [{}] with content [{}]",
+                    String.join(",", orderedPositions),
+                    String.join(",", contentKeys)
+            );
+        }
+        PositionObserver positionObserver = input.state(PositionObserver.class);
+        // only avail in scope if coming from paginate
+        if (positionObserver != null) {
+            positionObserver.completed(orderedPositions.size());
+        }
+        if (monitor != null) {
+            monitor.contentStream().setLastPosition(orderedPositions.get(orderedPositions.size() - 1));
+        }
+    }
+
+    // publishes released positions; one an earlier run committed is completed without being written again (#71)
+    private static void commit(ContentStore contentStore, String topicName, List<String> orderedPositions, CommittedPositions committedPositions) {
+        List<String> toPublish = new ArrayList<>(orderedPositions.size());
+        List<String> committed = new ArrayList<>();
+        for (String orderedPosition : orderedPositions) {
+            (committedPositions != null && committedPositions.take(orderedPosition) ? committed : toPublish).add(orderedPosition);
+        }
+        if (!committed.isEmpty()) {
+            contentStore.discard(topicName, committed.toArray(new String[0]));
+        }
+        if (!toPublish.isEmpty()) {
+            contentStore.publish(topicName, toPublish.toArray(new String[0]));
+        }
+    }
 }

@@ -39,6 +39,33 @@ class ContentStreamTest {
         contentStore.publish("topic", "1");
     }
 
+    // content buffered and not published is dropped, so a later publish of the position carries only its own (#72)
+    @Test
+    void thatDiscardedContentIsNeverPublished() throws Exception {
+        ContentStore contentStore = ProviderConfigurator.configure(ContentStoreInitializer.class, "rawdata", Map.of(
+                "rawdata.client.provider", "memory"));
+        HttpRequestInfo httpRequestInfo = new HttpRequestInfo(CorrelationIds.create(ExecutionContext.empty()), null, -1, new Headers(), new Headers(), -1);
+        contentStore.bufferDocument("topic", "1", "stale", "STALE".getBytes(StandardCharsets.UTF_8), httpRequestInfo);
+        contentStore.bufferDocument("topic", "2", "stale", "STALE".getBytes(StandardCharsets.UTF_8), httpRequestInfo);
+        contentStore.bufferDocument("other", "1", "kept", "KEPT".getBytes(StandardCharsets.UTF_8), httpRequestInfo);
+
+        contentStore.discard("topic", "2");
+        assertEquals(Set.of(), contentStore.contentKeys("topic", "2"));
+        assertEquals(1, contentStore.contentKeys("topic", "1").size());
+
+        contentStore.discard("topic");
+        assertEquals(Set.of(), contentStore.contentKeys("topic", "1"));
+        assertEquals(1, contentStore.contentKeys("other", "1").size());
+
+        contentStore.bufferDocument("topic", "1", "entry", "FRESH".getBytes(StandardCharsets.UTF_8), httpRequestInfo);
+        contentStore.publish("topic", "1");
+        ContentStreamBuffer message = contentStore.contentStream().consumer("topic").receive(1, TimeUnit.SECONDS);
+        assertNotNull(message);
+        assertEquals(Set.of("entry", "manifest.json"), message.keys());
+        assertEquals("FRESH", new String(message.get("entry"), StandardCharsets.UTF_8));
+        contentStore.close();
+    }
+
     @Test
     void thatRawdataClientProducesContent() {
         RawdataClient client = ProviderConfigurator.configure(RawdataClientInitializer.class, "memory", Map.of());

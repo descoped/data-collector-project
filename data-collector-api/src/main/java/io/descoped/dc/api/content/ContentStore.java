@@ -90,6 +90,23 @@ public interface ContentStore extends AutoCloseable {
     void publish(String topic, String... position);
 
     /**
+     * Drops the buffered content of positions without publishing it: a position that is already committed is never
+     * written again (#71).
+     *
+     * @param topic    the topic
+     * @param position the positions
+     */
+    void discard(String topic, String... position);
+
+    /**
+     * Drops the buffered content of every position of a topic that is not published, so that a later run never
+     * publishes content of an earlier one (#72). A worker calls it when it ends.
+     *
+     * @param topic the topic
+     */
+    void discard(String topic);
+
+    /**
      * The store's health monitor.
      *
      * @return the monitor

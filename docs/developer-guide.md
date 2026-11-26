@@ -533,7 +533,9 @@ The engine calls a `ContentStore` from many threads at once. What it calls and w
 | `contentKeys(topic, position)` | `publish` | The content keys buffered for the position. An empty set means the position is not published. |
 | `lock(topic)`, `unlock(topic)` | `publish` | Serialize publishing per topic. |
 | `publish(topic, positions...)` | `publish`, with the positions in source order | Write each position's buffers as one message, then drop the buffers. |
-| `addPaginationDocument(topic, position, contentKey, content, httpRequestInfo)` | `get` in a `paginate` with `addPageContent` | Write the page. The `rawdata` connector writes it to `<topic>-pages` at once. |
+| `addPaginationDocument(topic, position, contentKey, content, httpRequestInfo)` | `paginate` with `addPageContent`, when the page is complete | Write the page. The `rawdata` connector writes it to `<topic>-pages` at once. |
+| `discard(topic, positions...)` | `publish`, for positions an earlier run committed | Drop the positions' buffers without writing them. |
+| `discard(topic)` | the worker, when a run ends | Drop every buffer of the topic that is not published. |
 | `lastPosition(topic)` | `contentStream.lastPosition()` and related expressions | The last published position, or null. |
 | `contentStream()` | the server (integrity check, recovery, raw data dump) | Producers and consumers per topic. |
 | `monitor()` | the worker's health monitor | A `HealthContentStreamMonitor`. |
