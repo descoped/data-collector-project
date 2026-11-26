@@ -3,6 +3,7 @@ package io.descoped.dc.application.spi;
 /**
  * A component of the application, discovered as a service and closed when the application stops.
  */
+@SuppressWarnings("try") // AutoCloseable.close() is declared to throw Exception
 public interface Component extends AutoCloseable {
 
     /**
