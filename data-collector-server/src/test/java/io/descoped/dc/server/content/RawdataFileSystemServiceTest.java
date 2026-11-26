@@ -48,6 +48,8 @@ class RawdataFileSystemServiceTest {
         server.stop();
     }
 
+    // the API's close() is declared to throw Exception, which javac's try lint reports
+    @SuppressWarnings("try")
     static void produceMessages(ContentStoreComponent contentStoreComponent) {
         ContentStore contentStore = contentStoreComponent.getDelegate();
         try (ContentStreamProducer producer = contentStore.contentStream().producer(configuration.find("data.collector.rawdata.dump.topic").orElse(null))) {

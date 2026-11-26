@@ -12,6 +12,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * Writes JSON nodes to a file as one JSON array, flushing every few nodes.
+ */
 public class JsonArrayWriter implements AutoCloseable {
     private final FileOutputStream out;
     private final SequenceWriter sequenceWriter;
@@ -20,6 +23,13 @@ public class JsonArrayWriter implements AutoCloseable {
     private final ObjectMapper mapper;
     private final JsonParser jsonParser;
 
+    /**
+     * Opens the file.
+     *
+     * @param workPath         the directory
+     * @param filename         the file's name
+     * @param flushBufferCount the number of nodes between flushes
+     */
     public JsonArrayWriter(Path workPath, String filename, int flushBufferCount) {
         this.flushBufferCount = flushBufferCount;
         try {
@@ -35,14 +45,29 @@ public class JsonArrayWriter implements AutoCloseable {
         }
     }
 
+    /**
+     * The JSON parser.
+     *
+     * @return the parser
+     */
     public JsonParser parser() {
         return jsonParser;
     }
 
+    /**
+     * The parser's object mapper.
+     *
+     * @return the mapper
+     */
     public ObjectMapper mapper() {
         return mapper;
     }
 
+    /**
+     * Writes a node.
+     *
+     * @param node the node
+     */
     public void write(JsonNode node) {
         try {
             sequenceWriter.write(node);

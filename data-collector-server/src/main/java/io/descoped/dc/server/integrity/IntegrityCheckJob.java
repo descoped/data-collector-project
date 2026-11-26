@@ -27,6 +27,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Checks a topic for duplicate positions: indexes every message, then writes a summary and a report.
+ */
 public class IntegrityCheckJob {
     private static final Logger LOG = LoggerFactory.getLogger(IntegrityCheckJob.class);
 
@@ -36,6 +39,14 @@ public class IntegrityCheckJob {
     private final IntegrityCheckJobSummary summary;
     private final AtomicBoolean terminated = new AtomicBoolean(false);
 
+    /**
+     * Creates the job.
+     *
+     * @param configuration the configuration
+     * @param contentStoreComponent the content store
+     * @param index                 the index the job writes
+     * @param summary               the summary the job counts in
+     */
     public IntegrityCheckJob(DynamicConfiguration configuration, ContentStoreComponent contentStoreComponent, IntegrityCheckIndex index, IntegrityCheckJobSummary summary) {
         this.configuration = configuration;
         this.contentStore = contentStoreComponent.getDelegate();
@@ -43,6 +54,11 @@ public class IntegrityCheckJob {
         this.summary = summary;
     }
 
+    /**
+     * Indexes every message of a topic.
+     *
+     * @param topic the topic
+     */
     public void consume(String topic) {
         summary.setStarted();
         summary.setTopic(topic);
@@ -101,10 +117,18 @@ public class IntegrityCheckJob {
         }
     }
 
+    /**
+     * Stops the job.
+     */
     public void terminate() {
         terminated.set(true);
     }
 
+    /**
+     * Writes the summary.
+     *
+     * @param summary the summary
+     */
     public void generateSummary(IntegrityCheckJobSummary.Summary summary) {
         try {
             Path summaryFilenamePath = index.getDatabaseDir().resolve("report").resolve("summary.json");
@@ -116,7 +140,9 @@ public class IntegrityCheckJob {
         }
     }
 
-    // generate a duplicate report in json format
+    /**
+     * Writes the report of the duplicate positions.
+     */
     public void generateReport() {
         Path reportPath = index.getDatabaseDir().resolve("report");
         String reportId = TimeOrderedIds.generate().toString() + ".json";
@@ -166,6 +192,11 @@ public class IntegrityCheckJob {
         LOG.info("Done generating report");
     }
 
+    /**
+     * The job's summary.
+     *
+     * @return the summary
+     */
     public IntegrityCheckJobSummary.Summary getSummary() {
         return summary.build();
     }

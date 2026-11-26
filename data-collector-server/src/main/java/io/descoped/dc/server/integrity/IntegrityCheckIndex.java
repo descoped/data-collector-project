@@ -16,6 +16,9 @@ import java.util.UUID;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.function.BiConsumer;
 
+/**
+ * The LMDB index of a topic's positions, written in batches.
+ */
 public class IntegrityCheckIndex implements AutoCloseable {
 
     static int BUFFER_POOL_SIZE = 1001;
@@ -27,6 +30,11 @@ public class IntegrityCheckIndex implements AutoCloseable {
     private final Dbi<ByteBuffer> sequenceDb;
     private final Queue<Tuple<ByteBuffer, ByteBuffer>> bufferQueue;
 
+    /**
+     * Creates the index.
+     *
+     * @param lmdbEnvironment the environment the index is kept in
+     */
     public IntegrityCheckIndex(LmdbEnvironment lmdbEnvironment) {
         this.lmdbEnvironment = lmdbEnvironment;
         this.keyBufferPool = new DirectByteBufferPool(BUFFER_POOL_SIZE, lmdbEnvironment.maxKeySize());
@@ -35,10 +43,18 @@ public class IntegrityCheckIndex implements AutoCloseable {
         this.sequenceDb = lmdbEnvironment.open();
     }
 
+    /**
+     * The index's directory.
+     *
+     * @return the directory
+     */
     public Path getDatabaseDir() {
         return lmdbEnvironment.getDatabaseDir();
     }
 
+    /**
+     * Writes the queued positions to the index.
+     */
     public void commitQueue() {
         try (Txn<ByteBuffer> txn = lmdbEnvironment.env().txnWrite()) {
             Tuple<ByteBuffer, ByteBuffer> buffer;
@@ -54,6 +70,12 @@ public class IntegrityCheckIndex implements AutoCloseable {
         }
     }
 
+    /**
+     * Queues a position and its message id.
+     *
+     * @param id       the message id
+     * @param position the position
+     */
     public void writeSequence(UUID id, String position) {
         ByteBuffer keyBuffer = keyBufferPool.acquire();
         SequenceKey sequenceKey = new SequenceKey(id, position);
@@ -69,6 +91,11 @@ public class IntegrityCheckIndex implements AutoCloseable {
         }
     }
 
+    /**
+     * Visits the index in key order.
+     *
+     * @param visit called with each key, and whether more follow
+     */
     public void readSequence(BiConsumer<SequenceKey, Boolean> visit) {
         try (Txn<ByteBuffer> txn = lmdbEnvironment.env().txnRead()) {
             Iterator<CursorIterable.KeyVal<ByteBuffer>> it = sequenceDb.iterate(txn).iterator();

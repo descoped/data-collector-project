@@ -11,16 +11,31 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * The content store a recovery writes to: messages are copied as they are, without encryption keys.
+ */
+@SuppressWarnings("try") // ContentStore.close() is declared to throw Exception
 public class RecoveryContentStoreComponent implements Component {
 
     private final DynamicConfiguration configuration;
     private final AtomicBoolean closed = new AtomicBoolean(true);
     private ContentStore contentStore;
 
+    /**
+     * Creates the component; the store is created when it is initialized.
+     *
+     * @param configuration the configuration
+     */
     public RecoveryContentStoreComponent(DynamicConfiguration configuration) {
         this.configuration = configuration;
     }
 
+    /**
+     * Creates the component.
+     *
+     * @param configuration the configuration
+     * @return the component
+     */
     public static RecoveryContentStoreComponent create(DynamicConfiguration configuration) {
         RecoveryContentStoreComponent contentStoreComponent = new RecoveryContentStoreComponent(configuration);
         contentStoreComponent.initialize();
@@ -55,6 +70,7 @@ public class RecoveryContentStoreComponent implements Component {
     }
 
     @Override
+    @SuppressWarnings("unchecked") // the caller names the delegate's type
     public <R> R getDelegate() {
         Objects.requireNonNull(contentStore);
         return (R) contentStore;

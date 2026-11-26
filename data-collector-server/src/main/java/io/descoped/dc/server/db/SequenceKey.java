@@ -8,24 +8,49 @@ import java.util.UUID;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+/**
+ * A key of a topic's index: a message id and its position.
+ */
 public class SequenceKey implements Comparable<SequenceKey> {
 
     private final UUID id;
     private final String position;
 
+    /**
+     * Creates the key.
+     *
+     * @param id       the message id
+     * @param position the position
+     */
     public SequenceKey(UUID id, String position) {
         this.id = id;
         this.position = position;
     }
 
+    /**
+     * The message id.
+     *
+     * @return the id
+     */
     public UUID id() {
         return id;
     }
 
+    /**
+     * The position.
+     *
+     * @return the position
+     */
     public String position() {
         return position;
     }
 
+    /**
+     * Reads a key.
+     *
+     * @param keyBuffer the key's bytes
+     * @return the key
+     */
     public static SequenceKey fromByteBuffer(ByteBuffer keyBuffer) {
         Objects.requireNonNull(keyBuffer);
         int positionLength = keyBuffer.get();
@@ -38,6 +63,12 @@ public class SequenceKey implements Comparable<SequenceKey> {
         return new SequenceKey(id, position);
     }
 
+    /**
+     * Writes the key.
+     *
+     * @param allocatedBuffer the buffer to write to
+     * @return the buffer, flipped
+     */
     public ByteBuffer toByteBuffer(ByteBuffer allocatedBuffer) {
         Objects.requireNonNull(allocatedBuffer);
         byte[] key = position.getBytes(UTF_8);

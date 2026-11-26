@@ -15,6 +15,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Counts what an integrity check finds, and builds its summary.
+ */
 public class IntegrityCheckJobSummary {
 
     private final AtomicReference<String> topic = new AtomicReference<>();
@@ -30,6 +33,9 @@ public class IntegrityCheckJobSummary {
     private final AtomicLong duplicatePositions = new AtomicLong();
     private final AtomicLong affectedPositions = new AtomicLong();
 
+    /**
+     * Creates an empty summary.
+     */
     public IntegrityCheckJobSummary() {
         // the values are set while the job runs
     }
@@ -56,6 +62,11 @@ public class IntegrityCheckJobSummary {
         return this;
     }
 
+    /**
+     * The last position indexed.
+     *
+     * @return the position
+     */
     public String getLastPosition() {
         return lastPosition.get();
     }
@@ -65,6 +76,11 @@ public class IntegrityCheckJobSummary {
         return this;
     }
 
+    /**
+     * The position being indexed.
+     *
+     * @return the position
+     */
     public String getCurrentPosition() {
         return currentPosition.get();
     }
@@ -79,16 +95,34 @@ public class IntegrityCheckJobSummary {
         return this;
     }
 
+    /**
+     * Sets where the report is written.
+     *
+     * @param reportPath the directory
+     * @return this summary
+     */
     public IntegrityCheckJobSummary setReportPath(Path reportPath) {
         duplicateReportPath.set(reportPath);
         return this;
     }
 
+    /**
+     * Sets the report's id.
+     *
+     * @param reportId the id
+     * @return this summary
+     */
     public IntegrityCheckJobSummary setDuplicateReportId(String reportId) {
         duplicateReportId.set(reportId);
         return this;
     }
 
+    /**
+     * Sets the duplicate count of each position.
+     *
+     * @param duplicatePositionCounter the counts by position
+     * @return this summary
+     */
     public IntegrityCheckJobSummary setDuplicatePositionStats(Map<String, AtomicLong> duplicatePositionCounter) {
         AtomicLong duplicatePositionCount = new AtomicLong(0);
         duplicatePositionCounter.forEach((key, value) -> {
@@ -99,6 +133,11 @@ public class IntegrityCheckJobSummary {
         return this;
     }
 
+    /**
+     * Builds the summary.
+     *
+     * @return the summary
+     */
     public Summary build() {
         return new Summary(
                 topic.get(),
@@ -116,37 +155,98 @@ public class IntegrityCheckJobSummary {
         );
     }
 
+    /**
+     * An integrity check's summary, as served on {@code /check-integrity}.
+     */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Summary {
+        /**
+         * The topic.
+         */
         @JsonProperty
         public String topic;
+        /**
+         * The status.
+         */
         @JsonProperty
         public String status;
+        /**
+         * When the check started.
+         */
         @JsonProperty
         public String started;
+        /**
+         * When the check ended.
+         */
         @JsonProperty
         public String ended;
+        /**
+         * How long the check has run.
+         */
         @JsonProperty
         public String since;
+        /**
+         * The first position.
+         */
         @JsonProperty
         public String firstPosition;
+        /**
+         * The last position.
+         */
         @JsonProperty
         public String lastPosition;
+        /**
+         * The position being checked.
+         */
         @JsonProperty
         public String currentPosition;
+        /**
+         * The number of positions checked.
+         */
         @JsonProperty
         public long checkedPositions;
+        /**
+         * The positions checked per second.
+         */
         @JsonProperty
         public float averageCheckedPositionsPerSecond;
+        /**
+         * The number of duplicate positions.
+         */
         @JsonProperty
         public long duplicatePositions;
+        /**
+         * The number of positions that have duplicates.
+         */
         @JsonProperty
         public long affectedPositions;
+        /**
+         * Where the report is written.
+         */
         @JsonIgnore
         public final Path reportPath;
+        /**
+         * The report's id.
+         */
         @JsonIgnore
         public final String reportId;
 
+        /**
+         * Creates the summary.
+         *
+         * @param topic               the topic
+         * @param running             whether the check runs
+         * @param started             when it started, in epoch milliseconds
+         * @param ended               when it ended, in epoch milliseconds
+         * @param firstPosition       the first position
+         * @param lastPosition        the last position
+         * @param currentPosition     the position being checked
+         * @param checkedPositions    the number of positions checked
+         * @param duplicatePositions  the number of duplicate positions
+         * @param affectedPositions   the number of positions that have duplicates
+         * @param reportPath          where the report is written
+         * @param reportId            the report's id
+         */
         public Summary(String topic, boolean running, long started, long ended,
                        String firstPosition, String lastPosition, String currentPosition, long checkedPositions,
                        long duplicatePositions, long affectedPositions, Path reportPath, String reportId) {
@@ -172,6 +272,9 @@ public class IntegrityCheckJobSummary {
         }
     }
 
+    /**
+     * A position that has duplicates, with the ids of its messages.
+     */
     public static class PositionSummary {
         @JsonProperty
         String position;
@@ -180,6 +283,13 @@ public class IntegrityCheckJobSummary {
         @JsonProperty
         List<String> ulid; // the JSON report keeps its 2.x field name; the values are message ids (UUIDv7)
 
+        /**
+         * Creates the entry.
+         *
+         * @param position       the position
+         * @param duplicateCount the number of duplicates
+         * @param ulid           the ids of its messages
+         */
         public PositionSummary(String position, Integer duplicateCount, List<String> ulid) {
             this.position = position;
             this.duplicateCount = duplicateCount;

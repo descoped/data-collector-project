@@ -14,12 +14,20 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Serves {@code /tasks}: starts a specification, lists the running ones and cancels one.
+ */
 public class TaskController implements Controller {
 
     private static final String TASKS = "/tasks";
 
     private final WorkerService workerService;
 
+    /**
+     * Creates the controller.
+     *
+     * @param workerService the worker service
+     */
     public TaskController(WorkerService workerService) {
         this.workerService = workerService;
     }

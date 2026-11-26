@@ -18,6 +18,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * The running workers and the lock of each specification id.
+ */
 public class WorkManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(WorkManager.class);
@@ -95,7 +98,7 @@ public class WorkManager {
     }
 
     void cancel() {
-        CompletableFuture.allOf(workerFutures.values().toArray(new CompletableFuture[0]))
+        CompletableFuture.allOf(workerFutures.values().toArray(new CompletableFuture<?>[0]))
                 .completeOnTimeout(null, 0, TimeUnit.MILLISECONDS);
     }
 
@@ -136,11 +139,23 @@ public class WorkManager {
         }
     }
 
+    /**
+     * A running worker, as listed on {@code /tasks}.
+     */
     public static class Task {
+        /**
+         * The worker's id.
+         */
         @JsonProperty("task-id")
         public final String taskId;
+        /**
+         * The specification's id.
+         */
         @JsonProperty("specification-id")
         public final String specificationId;
+        /**
+         * The specification's name.
+         */
         @JsonProperty("description")
         public final String description;
 

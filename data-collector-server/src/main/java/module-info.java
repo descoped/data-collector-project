@@ -1,3 +1,6 @@
+/**
+ * The data collector server: tasks, integrity checks of topics, and their recovery.
+ */
 module io.descoped.dc.server {
 
     requires jdk.unsupported;

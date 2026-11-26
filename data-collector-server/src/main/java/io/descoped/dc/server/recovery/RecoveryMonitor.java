@@ -11,7 +11,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Counts a recovery's progress, and builds its summary.
+ */
 public class RecoveryMonitor {
+
+    /**
+     * Creates the monitor.
+     */
+    public RecoveryMonitor() {
+        // the state is in the fields
+    }
 
     final AtomicBoolean running = new AtomicBoolean();
     final AtomicLong started = new AtomicLong();
@@ -91,6 +101,11 @@ public class RecoveryMonitor {
         postCheckCheckedPositions.incrementAndGet();
     }
 
+    /**
+     * Builds the summary.
+     *
+     * @return the summary
+     */
     public Summary build() {
         return new Summary(
                 running.get(),
@@ -111,43 +126,116 @@ public class RecoveryMonitor {
         );
     }
 
+    /**
+     * A recovery's summary, as served on {@code /recovery}.
+     */
     public static class Summary {
 
+        /**
+         * The status.
+         */
         @JsonProperty
         public final String status;
+        /**
+         * When the recovery started.
+         */
         @JsonProperty
         public final String started;
+        /**
+         * When it ended.
+         */
         @JsonProperty
         public final String ended;
+        /**
+         * How long it has run.
+         */
         @JsonProperty
         public final String since;
+        /**
+         * The first position copied.
+         */
         @JsonProperty
         public final String startPosition;
+        /**
+         * The position being copied.
+         */
         @JsonProperty
         public final String currentPosition;
+        /**
+         * The last position copied.
+         */
         @JsonProperty
         public final String lastPosition;
+        /**
+         * The source topic's index.
+         */
         @JsonProperty
         public final Path indexDatabasePath;
+        /**
+         * The topic copied from.
+         */
         @JsonProperty
         public final String sourceTopic;
+        /**
+         * The topic copied to.
+         */
         @JsonProperty
         public final String targetTopic;
+        /**
+         * The number of positions read from the index.
+         */
         @JsonProperty
         public final long bufferedPositions;
+        /**
+         * The number of positions copied.
+         */
         @JsonProperty
         public final long copiedPositions;
+        /**
+         * The positions copied per second.
+         */
         @JsonProperty
         public final float averageCopiedPositionsPerSecond;
+        /**
+         * When the check of messages written during the copy starts from.
+         */
         @JsonProperty
         public final String postCheckFromTimestamp;
+        /**
+         * The first position the check found.
+         */
         @JsonProperty
         public final String postCheckStartPosition;
+        /**
+         * The last position the check found.
+         */
         @JsonProperty
         public final String postCheckLastPosition;
+        /**
+         * The number of positions the check found.
+         */
         @JsonProperty
         public final long postCheckCheckedPositions;
 
+        /**
+         * Creates the summary.
+         *
+         * @param running                   whether the recovery runs
+         * @param started                   when it started, in epoch milliseconds
+         * @param ended                     when it ended, in epoch milliseconds
+         * @param startPosition             the first position copied
+         * @param currentPosition           the position being copied
+         * @param lastPosition              the last position copied
+         * @param sourceDatabasePath        the source topic's index
+         * @param sourceTopic               the topic copied from
+         * @param targetTopic               the topic copied to
+         * @param bufferedPositions         the number of positions read from the index
+         * @param copiedPositions           the number of positions copied
+         * @param postCheckFromTimestamp    when the check of messages written during the copy starts from, in epoch milliseconds
+         * @param postCheckStartPosition    the first position the check found
+         * @param postCheckLastPosition     the last position the check found
+         * @param postCheckCheckedPositions the number of positions the check found
+         */
         public Summary(boolean running,
                        long started,
                        long ended,

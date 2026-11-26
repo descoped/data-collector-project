@@ -5,10 +5,19 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * A fixed pool of direct byte buffers.
+ */
 public class DirectByteBufferPool implements AutoCloseable {
 
     final BlockingQueue<ByteBuffer> deque;
 
+    /**
+     * Allocates the buffers.
+     *
+     * @param n        the number of buffers
+     * @param capacity each buffer's capacity
+     */
     public DirectByteBufferPool(int n, int capacity) {
         deque = new LinkedBlockingDeque<>(n);
         for (int i = 0; i < n; i++) {
@@ -21,6 +30,12 @@ public class DirectByteBufferPool implements AutoCloseable {
         }
     }
 
+    /**
+     * Takes a buffer, waiting for one to be released.
+     *
+     * @return the buffer
+     * @throws IllegalStateException if none is released in time
+     */
     public ByteBuffer acquire() {
         try {
             int failCount = 25;
@@ -39,6 +54,11 @@ public class DirectByteBufferPool implements AutoCloseable {
         }
     }
 
+    /**
+     * Returns a buffer to the pool.
+     *
+     * @param buffer the buffer
+     */
     public void release(ByteBuffer buffer) {
         try {
             deque.put(buffer.clear());

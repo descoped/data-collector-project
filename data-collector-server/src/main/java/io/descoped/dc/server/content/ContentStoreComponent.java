@@ -9,16 +9,31 @@ import io.descoped.service.provider.api.ProviderConfigurator;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * The content store the workers publish to, as a component of the application.
+ */
+@SuppressWarnings("try") // ContentStore.close() is declared to throw Exception
 public class ContentStoreComponent implements Component {
 
     private final DynamicConfiguration configuration;
     private final AtomicBoolean closed = new AtomicBoolean(true);
     private ContentStore contentStore;
 
+    /**
+     * Creates the component; the store is created when it is initialized.
+     *
+     * @param configuration the configuration
+     */
     public ContentStoreComponent(DynamicConfiguration configuration) {
         this.configuration = configuration;
     }
 
+    /**
+     * Creates the component.
+     *
+     * @param configuration the configuration
+     * @return the component
+     */
     public static ContentStoreComponent create(DynamicConfiguration configuration) {
         ContentStoreComponent contentStoreComponent = new ContentStoreComponent(configuration);
         contentStoreComponent.initialize();
@@ -40,6 +55,7 @@ public class ContentStoreComponent implements Component {
     }
 
     @Override
+    @SuppressWarnings("unchecked") // the caller names the delegate's type
     public <R> R getDelegate() {
         Objects.requireNonNull(contentStore);
         return (R) contentStore;

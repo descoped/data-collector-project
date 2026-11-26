@@ -18,6 +18,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Serves {@code /check-integrity}: starts, reports and cancels integrity checks of topics.
+ */
 public class IntegrityCheckController implements Controller {
 
     private static final String APPLICATION_JSON = "application/json";
@@ -25,6 +28,12 @@ public class IntegrityCheckController implements Controller {
     final DynamicConfiguration configuration;
     final IntegrityCheckService service;
 
+    /**
+     * Creates the controller.
+     *
+     * @param configuration the configuration
+     * @param service       the integrity check service
+     */
     public IntegrityCheckController(DynamicConfiguration configuration, IntegrityCheckService service) {
         this.configuration = configuration;
         this.service = service;

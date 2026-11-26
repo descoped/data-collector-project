@@ -13,12 +13,27 @@ import org.slf4j.LoggerFactory;
 
 import java.util.function.Supplier;
 
+/**
+ * The data collector server: reads the configuration and runs the application until it is stopped.
+ */
 public class Server {
+
+    /**
+     * Creates the class; the server is started by {@link #main(String[])}.
+     */
+    public Server() {
+        // the server is started by main
+    }
 
     private static final Logger LOG = LoggerFactory.getLogger(Server.class);
 
     private static final ConfigurationOverride configurationOverride = ConfigurationOverride.NONE;
 
+    /**
+     * Starts the server.
+     *
+     * @param args not used
+     */
     public static void main(String[] args) {
         MetricsAgent.premain(null, ByteBuddyAgent.install());
         long now = System.currentTimeMillis();

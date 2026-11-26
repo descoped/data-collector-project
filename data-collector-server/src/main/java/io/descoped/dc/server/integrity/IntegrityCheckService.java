@@ -29,6 +29,9 @@ import java.util.stream.Stream;
 
 import static io.descoped.dc.server.db.SequenceDbHelper.getSequenceDatabaseLocation;
 
+/**
+ * Runs integrity checks of topics, one job per topic.
+ */
 public class IntegrityCheckService implements Service {
 
     private static final Logger LOG = LoggerFactory.getLogger(IntegrityCheckService.class);
@@ -39,6 +42,12 @@ public class IntegrityCheckService implements Service {
     final ContentStoreComponent contentStoreComponent;
     final Map<String, IntegrityCheckJob> jobs = new ConcurrentHashMap<>();
 
+    /**
+     * Creates the service.
+     *
+     * @param configuration the configuration
+     * @param contentStoreComponent the content store
+     */
     public IntegrityCheckService(DynamicConfiguration configuration, ContentStoreComponent contentStoreComponent) {
         this.configuration = configuration;
         this.contentStoreComponent = contentStoreComponent;
@@ -61,6 +70,12 @@ public class IntegrityCheckService implements Service {
         }
     }
 
+    /**
+     * Whether a topic has a running or a completed job.
+     *
+     * @param topic the topic
+     * @return true if it has
+     */
     public boolean hasJob(String topic) {
         if (jobs.containsKey(topic)) {
             return true;
@@ -70,10 +85,22 @@ public class IntegrityCheckService implements Service {
         return previouslyCompletedJobs.contains(new JobStatus(topic, CLOSED));
     }
 
+    /**
+     * Whether a topic's job runs.
+     *
+     * @param topic the topic
+     * @return true if it runs
+     */
     public boolean isJobRunning(String topic) {
         return jobs.containsKey(topic) && "RUNNING".equals(jobs.get(topic).getSummary().status);
     }
 
+    /**
+     * Removes a topic's job if it has ended.
+     *
+     * @param topic the topic
+     * @return true if it was removed
+     */
     public boolean removeJobIfClosed(String topic) {
         if (jobs.containsKey(topic) && !"RUNNING".equals(jobs.get(topic).getSummary().status)) {
             jobs.remove(topic);
@@ -82,6 +109,11 @@ public class IntegrityCheckService implements Service {
         return false;
     }
 
+    /**
+     * Starts a job for a topic, replacing the topic's earlier index.
+     *
+     * @param topic the topic
+     */
     public void createJob(String topic) {
         if (isJobRunning(topic)) {
             return;
@@ -127,6 +159,11 @@ public class IntegrityCheckService implements Service {
         }
     }
 
+    /**
+     * The running and the completed jobs.
+     *
+     * @return the jobs
+     */
     public List<JobStatus> getJobs() {
         List<JobStatus> jobStatusList = jobs.values().stream()
                 .map(job -> {
@@ -157,6 +194,12 @@ public class IntegrityCheckService implements Service {
         }
     }
 
+    /**
+     * A topic's job summary.
+     *
+     * @param topic the topic
+     * @return the summary
+     */
     public IntegrityCheckJobSummary.Summary getJobSummary(String topic) {
         if (jobs.containsKey(topic)) {
             return jobs.get(topic).getSummary();
@@ -236,6 +279,11 @@ public class IntegrityCheckService implements Service {
         return reportFilePath;
     }
 
+    /**
+     * Cancels a topic's job.
+     *
+     * @param topic the topic
+     */
     public void cancelJob(String topic) {
         if (!isJobRunning(topic)) {
             return;
@@ -244,12 +292,21 @@ public class IntegrityCheckService implements Service {
         job.terminate();
     }
 
+    /**
+     * A job's topic and status.
+     */
     public static class JobStatus {
         @JsonProperty
         String topic;
         @JsonProperty
         String status;
 
+        /**
+         * Creates the status.
+         *
+         * @param topic  the topic
+         * @param status the status
+         */
         public JobStatus(String topic, String status) {
             this.topic = topic;
             this.status = status;
