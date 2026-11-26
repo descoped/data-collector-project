@@ -135,14 +135,7 @@ class AddContentHandlerTest {
 
         @Override
         public void close() {
-            try {
-                delegate.close();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new IllegalStateException(e);
-            } catch (Exception e) {
-                throw new IllegalStateException(e);
-            }
+            delegate.close();
         }
     }
 }

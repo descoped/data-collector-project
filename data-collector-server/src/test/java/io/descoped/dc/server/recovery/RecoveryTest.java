@@ -42,7 +42,6 @@ class RecoveryTest {
     private static final Logger LOG = LoggerFactory.getLogger(RecoveryTest.class);
 
     // the API's close() is declared to throw Exception, which javac's try lint reports
-    @SuppressWarnings("try")
     static void produceMessages(ContentStream contentStream, String prefixTopic) {
         try (ContentStreamProducer producer = contentStream.producer(prefixTopic + "test-stream")) {
             int min = (int) Math.round(NUMBER_OF_MESSAGES * 0.75);
@@ -186,7 +185,6 @@ class RecoveryTest {
     }
 
     // the API's close() is declared to throw Exception, which javac's try lint reports
-    @SuppressWarnings("try")
     @Test
     void readIndexAndConsumerSourceAndProduceTarget() throws InterruptedException {
         DynamicConfiguration configuration = DynamicConfiguration.builder()
