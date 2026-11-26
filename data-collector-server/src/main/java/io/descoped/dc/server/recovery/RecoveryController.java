@@ -161,11 +161,7 @@ public class RecoveryController implements Controller {
         if (!isRunning(fromTopic)) {
             return HttpStatus.HTTP_NOT_FOUND;
         }
-        RecoveryWorker recoveryWorker = service.jobs.get(fromTopic);
-        // a recovery that is starting has no worker yet
-        if (recoveryWorker != null) {
-            recoveryWorker.terminate();
-        }
+        service.cancel(fromTopic);
         return HttpStatus.HTTP_OK;
     }
 }

@@ -22,8 +22,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -45,6 +45,8 @@ public class IntegrityCheckService implements Service {
     final Map<String, IntegrityCheckJob> jobs = new ConcurrentHashMap<>();
     // the topics whose job is starting or running, claimed before anything is deleted or opened (#67)
     private final Set<String> active = ConcurrentHashMap.newKeySet();
+    // the topics asked to stop while their job was starting: the job stops itself when it registers
+    private final Set<String> cancelWhenRegistered = ConcurrentHashMap.newKeySet();
 
     /**
      * Creates the service.
@@ -127,11 +129,14 @@ public class IntegrityCheckService implements Service {
         if (isJobRunning(topic) || !active.add(topic)) {
             return false;
         }
+        boolean started = false;
         try {
             startJob(topic);
-        } catch (RuntimeException | Error e) {
-            active.remove(topic);
-            throw e;
+            started = true;
+        } finally {
+            if (!started) {
+                active.remove(topic);
+            }
         }
         return true;
     }
@@ -148,12 +153,18 @@ public class IntegrityCheckService implements Service {
                     IntegrityCheckJobSummary summary = new IntegrityCheckJobSummary();
                     IntegrityCheckJob job = new IntegrityCheckJob(configuration, contentStoreComponent, index, summary);
                     jobs.put(topic, job);
+                    if (cancelWhenRegistered.remove(topic)) {
+                        job.terminate();
+                    }
                     job.consume(topic);
                     LOG.info("Check integrity of topic {}\u00A0completed successfully at position {}!", topic, summary.getLastPosition());
                     return job;
                 }
             }
-        }).whenComplete((job, throwable) -> active.remove(topic)).exceptionally(throwable -> {
+        }).whenComplete((job, throwable) -> {
+            cancelWhenRegistered.remove(topic);
+            active.remove(topic);
+        }).exceptionally(throwable -> {
             LOG.error("Ended exceptionally with error: {}", CommonUtils.captureStackTrace(throwable));
             if (throwable instanceof RuntimeException runtimeException) {
                 throw runtimeException;
@@ -306,10 +317,20 @@ public class IntegrityCheckService implements Service {
      * @param topic the topic
      */
     public void cancelJob(String topic) {
+        if (!isJobRunning(topic)) {
+            return;
+        }
         IntegrityCheckJob job = jobs.get(topic);
-        // a job that is still opening its index is not registered yet
-        if (job != null && isJobRunning(topic)) {
+        if (job != null && "RUNNING".equals(job.getSummary().status)) {
             job.terminate();
+        } else if (active.contains(topic)) {
+            // still opening its index: the job stops itself when it registers; checked again in case it registered
+            // in between, and terminating twice is harmless
+            cancelWhenRegistered.add(topic);
+            IntegrityCheckJob registered = jobs.get(topic);
+            if (registered != null && registered != job) {
+                registered.terminate();
+            }
         }
     }
 

@@ -37,6 +37,8 @@ public class RecoveryService implements Service {
     final Map<String, RecoveryWorker> jobs = new ConcurrentHashMap<>();
     // the source topics whose recovery is starting or running, claimed before it starts (#67)
     private final Set<String> active = ConcurrentHashMap.newKeySet();
+    // the source topics asked to stop while their recovery was starting: it stops itself when it registers
+    private final Set<String> cancelWhenRegistered = ConcurrentHashMap.newKeySet();
 
     /**
      * Creates the service.
@@ -94,23 +96,48 @@ public class RecoveryService implements Service {
         if (!active.add(fromTopic)) {
             return false;
         }
+        boolean started = false;
         try {
             jobFutures.put(fromTopic, startRecovery(fromTopic, toTopic));
-        } catch (RuntimeException | Error e) {
-            active.remove(fromTopic);
-            throw e;
+            started = true;
+        } finally {
+            if (!started) {
+                active.remove(fromTopic);
+            }
         }
         return true;
+    }
+
+    // asks the topic's recovery to stop, also one that is still starting
+    void cancel(String fromTopic) {
+        RecoveryWorker worker = jobs.get(fromTopic);
+        if (worker != null && worker.monitor().running.get()) {
+            worker.terminate();
+        } else if (active.contains(fromTopic)) {
+            // not registered yet: it stops itself when it registers; checked again in case it registered in between,
+            // and terminating twice is harmless
+            cancelWhenRegistered.add(fromTopic);
+            RecoveryWorker registered = jobs.get(fromTopic);
+            if (registered != null && registered != worker) {
+                registered.terminate();
+            }
+        }
     }
 
     private CompletableFuture<RecoveryWorker> startRecovery(String fromTopic, String toTopic) {
         return CompletableFuture.supplyAsync(() -> {
             RecoveryWorker recoveryWorker = new RecoveryWorker(configuration, contentStoreComponent, recoveryContentStoreComponent);
             jobs.put(fromTopic, recoveryWorker);
+            if (cancelWhenRegistered.remove(fromTopic)) {
+                recoveryWorker.terminate();
+            }
             recoveryWorker.recover(fromTopic, toTopic);
             LOG.trace("Completed Recovery!");
             return recoveryWorker;
-        }).whenComplete((recoveryWorker, throwable) -> active.remove(fromTopic)).exceptionally(throwable -> {
+        }).whenComplete((recoveryWorker, throwable) -> {
+            cancelWhenRegistered.remove(fromTopic);
+            active.remove(fromTopic);
+        }).exceptionally(throwable -> {
             LOG.error("Ended exceptionally with error: {}", CommonUtils.captureStackTrace(throwable));
             if (throwable instanceof RuntimeException runtimeException) {
                 throw runtimeException;

@@ -566,7 +566,7 @@ Stop a running check. The check stops reading, writes its report and summary, an
 
 | Status | When |
 |---|---|
-| `200 OK` | The check was asked to stop. Empty body. |
+| `200 OK` | The check was asked to stop; one that is still starting stops as soon as it has started. Empty body. |
 | `400 Bad Request` | No check of this topic is running. |
 
 ```sh
@@ -684,7 +684,7 @@ Stop a running recovery.
 
 | Status | When |
 |---|---|
-| `200 OK` | The recovery was asked to stop. Empty body. |
+| `200 OK` | The recovery was asked to stop; one that is still starting stops as soon as it has started. Empty body. |
 | `404 Not Found` | No recovery of this topic is running. |
 
 ```sh

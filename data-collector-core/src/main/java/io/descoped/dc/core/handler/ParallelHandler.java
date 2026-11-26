@@ -75,7 +75,8 @@ public class ParallelHandler extends AbstractNodeHandler<Parallel> {
         }
     }
 
-    // a handler run without a worker counts for itself
+    // a handler run without a worker gets fresh counters on each call: only a worker sets MAX_NUMBER_OF_ITERATIONS, so
+    // without one there is no limit to count against
     private static Counters counters(ExecutionContext input) {
         return input.services().contains(Counters.class) ? input.services().get(Counters.class) : new Counters();
     }
