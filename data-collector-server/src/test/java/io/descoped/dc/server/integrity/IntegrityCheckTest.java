@@ -196,4 +196,36 @@ public class IntegrityCheckTest {
         assertEquals(2, written.size());
         assertEquals("value", written.get(1).get("field2").asText());
     }
+
+    // #60: the topic's last position also occurs earlier; the check runs to the last message, not to that occurrence
+    @Test
+    void thatTheCheckRunsToTheLastMessage() throws Exception {
+        DynamicConfiguration configuration = DynamicConfiguration.builder()
+                .value("content.stream.connector", "rawdata")
+                .value("rawdata.client.provider", "memory")
+                .value("data.collector.integrityCheck.consumer.timeoutInSeconds", "1")
+                .value("data.collector.integrityCheck.dbSizeInMb", "100")
+                .build();
+        ContentStoreComponent contentStoreComponent = ContentStoreComponent.create(configuration);
+        ContentStore contentStore = contentStoreComponent.getDelegate();
+        try (ContentStreamProducer producer = contentStore.contentStream().producer("repeat-stream")) {
+            for (String position : new String[]{"a", "b", "c", "d", "b"}) {
+                producer.publishBuilders(producer.builder().position(position).put("entry", "DATA".getBytes(StandardCharsets.UTF_8)));
+            }
+        }
+
+        Path dbPath = CommonUtils.currentPath().resolve("target").resolve("lmdb-repeat");
+        LmdbEnvironment.removePath(dbPath);
+        IntegrityCheckJob job;
+        try (LmdbEnvironment lmdbEnvironment = new LmdbEnvironment(configuration, dbPath, "repeat-stream");
+             IntegrityCheckIndex index = new IntegrityCheckIndex(lmdbEnvironment)) {
+            job = new IntegrityCheckJob(configuration, contentStoreComponent, index, new IntegrityCheckJobSummary());
+            job.consume("repeat-stream");
+        }
+
+        contentStoreComponent.close();
+
+        assertEquals(5, job.getSummary().checkedPositions);
+        assertEquals("b", job.getSummary().lastPosition);
+    }
 }

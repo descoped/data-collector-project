@@ -442,7 +442,8 @@ Both are driven over HTTP; the endpoints are in [REST API: integrity check](rest
 
 `PUT /check-integrity/{topic}` deletes `<location>/<topic>` if it exists, opens a new LMDB environment there, and reads
 the topic through the server's content store from its first message. It stores one key per message: the position
-and the message id (UUIDv7). It ends when it reads the topic's last position, when no message arrives within
+and the message id (UUIDv7). It ends when it reads the topic's last message (found by its id, so a last position that also occurs earlier does
+not end it there), when no message arrives within
 `data.collector.integrityCheck.consumer.timeoutInSeconds`, or when it is stopped with `DELETE`. It then writes:
 
 | File | Content |

@@ -426,7 +426,8 @@ curl -H "Authorization: Bearer $DC_TOKEN" localhost:9990/metrics/-/healthy
 
 ## Integrity check
 
-An integrity check reads a topic from its first message until it reaches the topic's last position (or until no
+An integrity check reads a topic from its first message until it reaches the topic's last message, found by its id
+(or until no
 message arrives for `data.collector.integrityCheck.consumer.timeoutInSeconds`, 15 by default). It writes every message
 id and position to an LMDB index in `<data.collector.integrityCheck.database.location>/<topic>`, then reports the
 positions that occur more than once. One check per topic runs at a time. See
@@ -583,8 +584,9 @@ walk at the first position whose first message is not older. Afterwards recovery
 the last copied message and writes the positions it finds to `<LMDB location>/<target>/report/tail-report.json` (the
 post-check).
 
-The index must hold at least one duplicated position. Without one there is no stop message, and the copy fails at the
-first message it reads; the failure is logged and the summary shows `COMPLETED` with no copied positions.
+The index must hold at least one duplicated position. Without one there is no stop message, and recovery fails before
+it copies anything (`IllegalStateException`: the index has no duplicate position to recover to); the failure is
+logged and the summary shows `COMPLETED` with no copied positions.
 
 The target topic is written through a second content store with the same configuration, except that every
 `rawdata.encryption.*` key is removed, so already encrypted content is not encrypted twice, and `local-temp-folder` gets the suffix `-recovery`. See

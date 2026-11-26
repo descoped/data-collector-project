@@ -62,9 +62,12 @@ public class IntegrityCheckJob {
     public void consume(String topic) {
         summary.setStarted();
         summary.setTopic(topic);
-        String lastPosition = contentStore.lastPosition(topic);
-        summary.setLastPosition(lastPosition);
         ContentStream contentStream = contentStore.contentStream();
+        // the check ends at the topic's last message, found by its id: its position may also occur earlier in the topic,
+        // as a duplicate, and ending at the first message of that position left the rest of the topic unchecked (#60)
+        ContentStreamBuffer lastMessage = contentStream.lastMessage(topic);
+        String lastPosition = lastMessage != null ? lastMessage.position() : contentStore.lastPosition(topic);
+        summary.setLastPosition(lastPosition);
         try {
             ContentStreamConsumer consumer = contentStream.consumer(topic);
             ContentStreamBuffer buffer;
@@ -85,7 +88,7 @@ public class IntegrityCheckJob {
 
                     index.writeSequence(buffer.id(), buffer.position());
 
-                    if (lastPosition != null && lastPosition.equals(buffer.position())) {
+                    if (lastMessage != null ? lastMessage.id().equals(buffer.id()) : lastPosition != null && lastPosition.equals(buffer.position())) {
                         LOG.info("Reached en of stream for topic: {}", topic);
                         break;
                     }

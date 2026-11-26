@@ -163,6 +163,10 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
 
 ### Fixed
 
+- **The integrity check runs to the topic's last message** (#60). It stopped at the first message with the last
+  message's position, so a topic whose last position also occurs earlier, as a duplicate, was checked only up to
+  that occurrence. Recovery then could find no duplicate to recover to and failed with a `NullPointerException`; it
+  now fails with a message that says so.
 - **The worker history on `/health` keeps the latest 25 workers** (#56). Once full, it dropped the newest entry
   instead of the oldest, so it showed the 25 oldest workers and the latest one, and it held 26.
 - **A `Process` fails when its output lacks any required variable** (#57). It failed only when the output had none of

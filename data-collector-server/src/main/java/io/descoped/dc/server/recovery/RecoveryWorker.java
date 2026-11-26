@@ -63,6 +63,7 @@ public class RecoveryWorker {
      *
      * @param sourceTopic the topic copied from
      * @param targetTopic the topic copied to
+     * @throws IllegalStateException when the source topic's integrity check index has no duplicate position
      */
     public void recover(String sourceTopic, String targetTopic) {
         RawdataTopics.requireValid(sourceTopic);
@@ -79,6 +80,11 @@ public class RecoveryWorker {
             PositionAndIdVersion firstPosition = sequenceDbHelper.findFirstPosition();
             monitor.setStartPosition(firstPosition.position());
             PositionAndIdVersion lastPosition = sequenceDbHelper.findLastPosition();
+            if (lastPosition.id() == null) {
+                // the last position is found among the duplicate positions of the index; without one there is none (#60)
+                monitor.setEnded();
+                throw new IllegalStateException("The integrity check index of " + sourceTopic + " has no duplicate position to recover to");
+            }
             monitor.setLastPosition(lastPosition.position());
 
             int publishAtCount = 1000;
