@@ -7,10 +7,13 @@ import io.descoped.dc.api.el.ExpressionLanguage;
 import io.descoped.dc.api.handler.Handler;
 import io.descoped.dc.api.node.Publish;
 import io.descoped.dc.core.executor.BufferedReordering;
+import io.descoped.dc.core.executor.CommittedPositions;
 import io.descoped.dc.core.health.HealthWorkerMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -50,6 +53,8 @@ public class PublishHandler extends AbstractNodeHandler<Publish> {
         Set<String> contentKeys = contentStore.contentKeys(topicName, positionValue);
 
         HealthWorkerMonitor monitor = input.services().get(HealthWorkerMonitor.class);
+        CommittedPositions committedPositions = input.services().contains(CommittedPositions.class)
+                ? input.services().get(CommittedPositions.class) : null;
 
         if (!contentKeys.isEmpty()) {
             contentStore.lock(topicName);
@@ -59,7 +64,18 @@ public class PublishHandler extends AbstractNodeHandler<Publish> {
                         monitor.contentStream().setStartPosition(orderedPositions.get(0));
                     }
 
-                    contentStore.publish(topicName, orderedPositions.toArray(new String[0]));
+                    // a position an earlier run committed is completed without being written again (#71)
+                    List<String> toPublish = new ArrayList<>(orderedPositions.size());
+                    List<String> committed = new ArrayList<>();
+                    for (String orderedPosition : orderedPositions) {
+                        (committedPositions != null && committedPositions.take(orderedPosition) ? committed : toPublish).add(orderedPosition);
+                    }
+                    if (!committed.isEmpty()) {
+                        contentStore.discard(topicName, committed.toArray(new String[0]));
+                    }
+                    if (!toPublish.isEmpty()) {
+                        contentStore.publish(topicName, toPublish.toArray(new String[0]));
+                    }
 
                     if (LOG.isInfoEnabled()) {
                         LOG.info("Reordered sequence: [{}] with content [{}]",

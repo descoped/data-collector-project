@@ -17,7 +17,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * The content store {@code discarding}, the engine's default: it keeps the last published position in memory and
@@ -27,7 +26,8 @@ public class DiscardingContentStore implements ContentStore {
 
     private static final Logger LOG = LoggerFactory.getLogger(DiscardingContentStore.class);
 
-    final AtomicReference<String> lastPositionRef = new AtomicReference<>();
+    // the last published position of each topic, pages included (#71)
+    final Map<String, String> lastPositions = new ConcurrentHashMap<>();
     final Map<ContentStateKey, Set<String>> contentBuffers = new ConcurrentHashMap<>();
     final AtomicBoolean closed = new AtomicBoolean(false);
 
@@ -55,7 +55,7 @@ public class DiscardingContentStore implements ContentStore {
 
     @Override
     public String lastPosition(String topic) {
-        return lastPositionRef.get();
+        return topic == null ? null : lastPositions.get(topic);
     }
 
     @Override
@@ -79,6 +79,7 @@ public class DiscardingContentStore implements ContentStore {
         bufferBuilder.buffer(contentKey, content, manifest);
 
         producer.produce(bufferBuilder);
+        lastPositions.put(topic + "-pages", position);
     }
 
     @Override
@@ -116,12 +117,24 @@ public class DiscardingContentStore implements ContentStore {
     }
 
     @Override
+    public void discard(String topic, String... positions) {
+        for (String pos : positions) {
+            contentBuffers.remove(new ContentStateKey(topic, pos));
+        }
+    }
+
+    @Override
+    public void discard(String topic) {
+        contentBuffers.keySet().removeIf(key -> key.topic().equals(topic));
+    }
+
+    @Override
     public void publish(String topic, String... position) {
         if (LOG.isTraceEnabled()) {
             LOG.trace("Publish Positions: {}", List.of(position));
         }
         for (String pos : position) {
-            lastPositionRef.set(pos);
+            lastPositions.put(topic, pos);
             contentBuffers.remove(new ContentStateKey(topic, pos));
         }
     }

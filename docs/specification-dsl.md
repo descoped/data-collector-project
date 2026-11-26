@@ -294,9 +294,11 @@ is not evaluated here.
 The next page starts from the output of the previous page, which holds the variables that the page's `NextPage`
 produced.
 
-With `addPageContent`, the first request made by each `iterate` target writes its response body to `<topic>-pages`,
-with content key `page`, at the position given by the value of `positionVariable` (`OperationHandler.doRequest`). If the
-variable has no value, the request fails with `Unable to resolve position`.
+With `addPageContent`, the response body of the first request made by each `iterate` target is the page's document.
+It is written to `<topic>-pages`, with content key `page`, at the position given by the value of `positionVariable`,
+when the page is complete: every entry of it, and of every page before it, is published. A page that fails, has no
+entries or is still in flight when the run stops is not written. If the variable has no value, the request fails with
+`Unable to resolve position`.
 
 #### Get
 
@@ -827,8 +829,9 @@ completed holds back every position after it.
 
 ### Page documents
 
-With `Paginate.addPageContent`, each page response is published at once to `<topic>-pages`, with content key `page`, at
-the position held by `Paginate.positionVariable`.
+With `Paginate.addPageContent`, each page response is published to `<topic>-pages`, with content key `page`, at the
+position held by `Paginate.positionVariable`, when the page is complete. The page topic's last position is therefore
+always the last complete page.
 
 ### Resuming
 
@@ -836,7 +839,13 @@ the position held by `Paginate.positionVariable`.
 when the `Paginate` starts. A specification resumes from where the last run stopped by computing its first request from
 that value, for example `${cast.toLong(contentStream.lastOrInitialPosition(0)) + 1}` for sequence numbers, or by
 passing it to an API that returns the entries after a position. `lastOrInitialPagePosition` does the same with the page
-topic.
+topic: the last complete page.
+
+A position that a run committed is never written again. A resumed run that fetches the last complete page again (for
+example by resuming on `lastOrInitialPagePosition` without moving on) does not write it, or its entries, again. In the
+first other page, the entries up to and including the topic's last position are not written again either. A
+specification may therefore resume on the last entry, on the next page or on the last page; the stream holds each
+position once.
 
 ### Prefetch
 
@@ -1095,7 +1104,8 @@ page-loop:
    `topic`, or `1` on the first run.
 2. For each page, `fromPosition` is set to the value of `nextPosition`, and `Execute` runs `page`.
 3. `page` requests `${baseURL}/api/events?position=${fromPosition}&pageSize=10` with header `accept: application/xml`.
-   Because of `addPageContent`, the response is published to `topic-pages` at position `fromPosition`.
+   Because of `addPageContent`, the response is published to `topic-pages` at position `fromPosition` once every entry
+   of the page is published.
 4. `Sequence` splits the feed at `/feed/entry` and lists each entry's `/entry/id` as the page's expected positions.
 5. `NextPage` takes the `href` of `<link rel="next">` and extracts its `position` parameter into `nextPosition`. The
    test server ends the feed with a page that has no entries and no such link. On that page `Sequence` raises end of

@@ -4,7 +4,10 @@ import io.descoped.dc.api.PageContext;
 import io.descoped.dc.api.PositionObserver;
 import io.descoped.dc.api.Termination;
 import io.descoped.dc.api.TerminationException;
+import io.descoped.dc.api.content.ContentStore;
+import io.descoped.dc.api.content.PageDocument;
 import io.descoped.dc.api.context.ExecutionContext;
+import io.descoped.dc.core.executor.CommittedPositions;
 import io.descoped.dc.core.executor.FixedThreadPool;
 import io.descoped.dc.core.health.HealthWorkerMonitor;
 import io.descoped.dc.core.observer.EngineObservers;
@@ -102,7 +105,7 @@ class PaginationLifecycle {
 
         doStartAsync(context);
 
-        monitorLifecycleUntilLoopConditionIsSatisfied(termination, monitor);
+        monitorLifecycleUntilLoopConditionIsSatisfied(context, termination, monitor);
 
         return ExecutionContext.empty();
     }
@@ -115,7 +118,7 @@ class PaginationLifecycle {
         lastPageFuture.set(future);
     }
 
-    private void monitorLifecycleUntilLoopConditionIsSatisfied(Termination termination, HealthWorkerMonitor monitor) throws InterruptedException {
+    private void monitorLifecycleUntilLoopConditionIsSatisfied(ExecutionContext context, Termination termination, HealthWorkerMonitor monitor) throws InterruptedException {
         boolean done = false;
 
         do {
@@ -123,7 +126,7 @@ class PaginationLifecycle {
             CompletableFuture<ExecutionContext> pageFuture = pageFutures.poll(1, TimeUnit.SECONDS);
 
             if (pageFuture != null) {
-                done = completePage(pageFuture, termination, monitor);
+                done = completePage(context, pageFuture, termination, monitor);
             }
 
         } while (!done);
@@ -132,7 +135,7 @@ class PaginationLifecycle {
     }
 
     // true when the page is the end of the stream, or the until condition is satisfied
-    private boolean completePage(CompletableFuture<ExecutionContext> pageFuture, Termination termination, HealthWorkerMonitor monitor) {
+    private boolean completePage(ExecutionContext context, CompletableFuture<ExecutionContext> pageFuture, Termination termination, HealthWorkerMonitor monitor) {
         checkTerminationSignal(termination);
 
         ExecutionContext outputContext = pageFuture.join();
@@ -140,7 +143,6 @@ class PaginationLifecycle {
 
         PageContext pageContext = outputContext.state(PageContext.class);
 
-        // TODO wait for all tasks in parallel-handler instead of here
         CompletableFuture.allOf(pageContext.parallelFutures().toArray(new CompletableFuture<?>[0]))
                 .thenApply(v -> {
                     // decrement monitor prefetch count
@@ -150,6 +152,8 @@ class PaginationLifecycle {
                     return v;
                 })
                 .join();
+
+        commitPage(context, pageContext);
 
         if (pageContext.isEndOfStream()) {
             LOG.info("Termination page!");
@@ -163,6 +167,21 @@ class PaginationLifecycle {
         }
 
         return evaluateUntilCondition(pageContext);
+    }
+
+    // the page is complete: every entry of it, and of the pages before it, is published. It is committed to the page
+    // topic now, unless it failed, has no entries, or is the page an earlier run committed last (#71)
+    private void commitPage(ExecutionContext context, PageContext pageContext) {
+        PageDocument pageDocument = pageContext.pageDocument();
+        if (pageDocument == null || pageContext.isFailure()
+                || pageContext.expectedPositions() == null || pageContext.expectedPositions().isEmpty()) {
+            return;
+        }
+        if (context.services().contains(CommittedPositions.class)
+                && context.services().get(CommittedPositions.class).isCommittedPage(pageDocument.position())) {
+            return;
+        }
+        pageDocument.commit(context.services().get(ContentStore.class));
     }
 
     private void checkTerminationSignal(Termination termination) {

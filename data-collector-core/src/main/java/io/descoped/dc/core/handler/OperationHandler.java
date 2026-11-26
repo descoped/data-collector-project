@@ -3,8 +3,8 @@ package io.descoped.dc.core.handler;
 import io.descoped.dc.api.ConfigurationMap;
 import io.descoped.dc.api.CorrelationIds;
 import io.descoped.dc.api.PageContext;
-import io.descoped.dc.api.content.ContentStore;
 import io.descoped.dc.api.content.HttpRequestInfo;
+import io.descoped.dc.api.content.PageDocument;
 import io.descoped.dc.api.context.ExecutionContext;
 import io.descoped.dc.api.el.ExpressionLanguage;
 import io.descoped.dc.api.error.ExecutionException;
@@ -142,9 +142,8 @@ public abstract class OperationHandler<T extends Operation> extends AbstractNode
         // add page content
         boolean addPageContent = input.state(PaginateHandler.ADD_PAGE_CONTENT) != null && (Boolean) input.state(PaginateHandler.ADD_PAGE_CONTENT);
 
-        // TODO end-of-stream is determined in Sequence. An unintended empty page will be added to content store
+        // the page is committed when it is complete (PaginationLifecycle), so an empty page or one in flight is not (#71)
         if (addPageContent) {
-            ContentStore contentStore = input.services().get(ContentStore.class);
             String topicName = node.configurations().flowContext().topic();
             if (topicName == null) {
                 throw new IllegalStateException("Unable to resolve topic!");
@@ -159,7 +158,7 @@ public abstract class OperationHandler<T extends Operation> extends AbstractNode
             if (position == null) {
                 throw new ExecutionException(String.format("Unable to resolve position for function %s.addPageContent(%s)!", node.id(), positionVariable));
             }
-            contentStore.addPaginationDocument(topicName, position.toString(), "page", response.body(), httpRequestInfo);
+            input.state(PageDocument.class, new PageDocument(topicName, position.toString(), "page", response.body(), httpRequestInfo));
             input.releaseState(PaginateHandler.ADD_PAGE_CONTENT);
         }
         return response;
@@ -172,6 +171,11 @@ public abstract class OperationHandler<T extends Operation> extends AbstractNode
 
         PageContext.Builder pageContextBuilder = new PageContext.Builder();
         pageContextBuilder.addNextPositionVariableNames(node.returnVariables());
+        PageDocument pageDocument = input.state(PageDocument.class);
+        if (pageDocument != null) {
+            pageContextBuilder.pageDocument(pageDocument);
+            input.releaseState(PageDocument.class);
+        }
 
         // handle step nodes and captures exceptions
         AtomicReference<Throwable> failureCause = new AtomicReference<>();

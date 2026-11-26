@@ -1,5 +1,6 @@
 package io.descoped.dc.api;
 
+import io.descoped.dc.api.content.PageDocument;
 import io.descoped.dc.api.context.ExecutionContext;
 
 import java.util.ArrayList;
@@ -25,11 +26,14 @@ public class PageContext {
     private final CompletionInfo completionInfo = new CompletionInfo();
     private final AtomicBoolean endOfStream = new AtomicBoolean(false);
     private final AtomicReference<Throwable> failureCause = new AtomicReference<>();
+    private final PageDocument pageDocument;
 
-    private PageContext(List<String> expectedPositions, List<String> nextPositionVariableNames, Map<String, String> nextPositionMap) {
+    private PageContext(List<String> expectedPositions, List<String> nextPositionVariableNames, Map<String, String> nextPositionMap,
+                        PageDocument pageDocument) {
         this.expectedPositions = expectedPositions;
         this.nextPositionVariableNames = nextPositionVariableNames;
         this.nextPositionMap = nextPositionMap;
+        this.pageDocument = pageDocument;
     }
 
     /**
@@ -38,9 +42,18 @@ public class PageContext {
      * @return the page context
      */
     public static PageContext createEndOfStream() {
-        PageContext pageContext = new PageContext(new LinkedList<>(), new LinkedList<>(), new LinkedHashMap<>());
+        PageContext pageContext = new PageContext(new LinkedList<>(), new LinkedList<>(), new LinkedHashMap<>(), null);
         pageContext.endOfStream.set(true);
         return pageContext;
+    }
+
+    /**
+     * The page's document, committed to the page topic when the page is complete.
+     *
+     * @return the document, or {@code null} if the page's content is not added
+     */
+    public PageDocument pageDocument() {
+        return pageDocument;
     }
 
     /**
@@ -241,6 +254,7 @@ public class PageContext {
         private List<String> expectedPositions;
         private final Map<String, String> nextPositionMap = new LinkedHashMap<>();
         private List<String> nextPositionVariableNames;
+        private PageDocument pageDocument;
 
         /**
          * Creates an empty builder.
@@ -293,12 +307,23 @@ public class PageContext {
         }
 
         /**
+         * Sets the page's document, committed to the page topic when the page is complete.
+         *
+         * @param pageDocument the document
+         * @return this builder
+         */
+        public Builder pageDocument(PageDocument pageDocument) {
+            this.pageDocument = pageDocument;
+            return this;
+        }
+
+        /**
          * Builds the page context.
          *
          * @return the page context
          */
         public PageContext build() {
-            return new PageContext(expectedPositions, nextPositionVariableNames, nextPositionMap);
+            return new PageContext(expectedPositions, nextPositionVariableNames, nextPositionMap, pageDocument);
         }
     }
 }

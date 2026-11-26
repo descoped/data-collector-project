@@ -194,6 +194,19 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
   topic is now claimed before anything starts, and the request that loses gets 409 Conflict.
 - **An integrity check's buffer pool fails at once when it is empty** (#68), instead of waiting about 26 seconds for a
   buffer that no other thread can release.
+- **The stream is durable, and a committed position is never written again** (#71, #72).
+  - **Lost entries:** a page was committed to `<topic>-pages` when it was fetched, before its entries, and prefetch ran
+    several pages ahead. A specification that resumes from the page topic skipped the entries of those pages: 28 of
+    3,000 were lost in a test that stopped a worker three times. A page is now committed when it is complete. A page
+    in flight, a failed page and an empty page are not committed, so the empty page at the head is no longer written.
+  - **Repeated pages:** a resumed run wrote the page in flight at the stop again, and a run resumed on its last page
+    wrote that page's entries again. At start a worker now reads the last committed page and entry, and writes neither
+    again.
+  - **Stale content:** a stopped run's buffered content stayed in the content store, and a later run of the topic
+    could publish it. A worker now discards it when it ends. `ContentStore` has `discard(topic, positions...)` and
+    `discard(topic)`.
+  - **Discarding store:** it keeps the last position per topic, pages included. Before, `lastPosition` returned the
+    last entry for every topic.
 - **Positions are published in order whatever the content store locks** (#69). The reordering of completed positions
   handed a released run on after leaving its lock, so two threads could publish their runs in reverse order. The rawdata
   store's topic lock hid it; with the `discarding` store, the default, the last position could end below the real one.

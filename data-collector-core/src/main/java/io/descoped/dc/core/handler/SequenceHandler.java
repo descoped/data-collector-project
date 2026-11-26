@@ -10,6 +10,7 @@ import io.descoped.dc.api.http.BodyHandler;
 import io.descoped.dc.api.http.Response;
 import io.descoped.dc.api.node.Sequence;
 import io.descoped.dc.core.executor.BufferedReordering;
+import io.descoped.dc.core.executor.CommittedPositions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -72,6 +74,16 @@ public class SequenceHandler extends AbstractNodeHandler<Sequence> {
         }
 
         pageContextBuilder.expectedPositions(positionList);
+
+        // the entries an earlier run committed are completed without being written again (#71)
+        if (input.services().contains(CommittedPositions.class)) {
+            String pagePositionVariable = input.state(PaginateHandler.ADD_PAGE_CONTENT_TO_POSITION);
+            Object pagePosition = pagePositionVariable == null ? null : input.variable(pagePositionVariable);
+            Set<String> committed = input.services().get(CommittedPositions.class).committedInPage(pagePosition, positionList);
+            if (!committed.isEmpty()) {
+                LOG.info("Committed by an earlier run, not written again: {} of {} positions", committed.size(), positionList.size());
+            }
+        }
 
         return ExecutionContext.empty();
     }

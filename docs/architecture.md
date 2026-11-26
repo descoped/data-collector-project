@@ -202,8 +202,9 @@ which reads the last position of the topic) and the functions of the `Expression
    too. A body streamed to a file gets a new handler of the same file for each attempt: the abandoned attempt is
    cancelled and writes no more, and the file is written from the start. With a `retryWhile(...)` rule, `GetHandler`
    repeats the request while the rule matches; only the first rule is used.
-6. When the request is a page of a `paginate` with `addPageContent(...)`, writes the response body to the content store
-   with `addPaginationDocument`, under the content key `page`. Both connectors write it to the topic `<topic>-pages`.
+6. When the request is a page of a `paginate` with `addPageContent(...)`, keeps the response body as the page's
+   document (content key `page`) on its `PageContext`. `PaginationLifecycle` commits it to `<topic>-pages` with
+   `addPaginationDocument` when the page is complete (see [Durable stream](#durable-stream)).
 7. Runs the node's steps (`pipe(...)`) in order, each with the response in its state, and returns the variables named
    in `returnVariables(...)`.
 
@@ -252,7 +253,7 @@ sequenceDiagram
     PL->>Pool: run page (first page at start)
     Pool->>PH: doPage(context)
     PH->>OP: execute target through ExecuteHandler
-    OP->>CS: addPaginationDocument (when addPageContent)
+    OP->>OP: keep the page document (when addPageContent)
     OP->>SQ: step: split the page into positions
     SQ->>PF: PositionObserver.expected(n)
     PF-->>PL: prefetch next page when pending is below threshold
@@ -299,7 +300,28 @@ A content store holds content per topic and position until the position is publi
    in the order of the source.
 4. `ContentStore.publish(topic, positions...)` turns each position's buffers into one message on the topic.
 
-`addPageContent` pages bypass the reordering: they are written to `<topic>-pages` at once.
+### Durable stream
+
+A stream is durable, and a position committed in the store is never written again (#71, #72):
+
+- **A page is committed when it is complete.** `PaginationLifecycle.completePage` joins the page's entries in page
+  order, so every entry of the page, and of every page before it, is published. Only then does it write the page's
+  document to `<topic>-pages`. A page in flight, a failed page and a page with no entries are not committed, so the
+  page topic's last position is always the last complete page.
+- **A resumed run skips what an earlier run committed.** When the worker starts, `CommittedPositions` reads the page
+  topic's last position and the topic's last position. A page at the last complete page's position is not written
+  again, and neither are its entries. In the first other page, the entries up to and including the last committed
+  entry, in the page's order, are completed without being written. Positions are compared by equality and page order
+  only, never sorted. A skipped entry still runs its steps and is still expected by the reordering; only
+  `publish` leaves it out and `discard`s its content.
+- **An ended worker's unpublished content is discarded.** When a run ends, whatever its status, the worker terminates
+  its pool and calls `ContentStore.discard(topic)` before its observers' `finish`, so a later run never publishes
+  content of an earlier one.
+
+With one writer per topic this holds for every way a specification resumes: from the last entry, from the next page
+or on the last page. How durable a publish is when it returns depends on the rawdata provider: PostgreSQL commits it
+at once, while the Avro providers (filesystem, GCS, S3) commit it when the upload window is uploaded. After a crash,
+the Avro providers can repeat up to one window of positions.
 
 The content API is in `io.descoped.dc.api.content`: `ContentStore` (buffer, publish, lock, last position, monitor),
 `ContentStream` (producers and consumers per topic), `ContentStreamProducer`, `ContentStreamConsumer`,
@@ -325,7 +347,9 @@ The `rawdata` connector:
   `manifest.json` entry: a JSON array with the metadata of each content item. The request and response headers in it
   keep their names; the values of secret headers are masked (see
   [Administration](administration.md#secrets-in-logs-messages-and-health)).
-- Writes `addPageContent` pages to `<topic>-pages` and publishes them at once.
+- Writes a page document to `<topic>-pages` and publishes it at once when the engine commits the page (when the page
+  is complete).
+- `discard(topic, positions...)` and `discard(topic)` drop buffered content without writing it.
 - Encrypts content and manifest with AES-256 (encryption-util) when it finds both an encryption key and salt that are
   not empty. They are read through secrets-client, from the configuration (`rawdata.encryption.key`,
   `rawdata.encryption.salt`), from a properties file, or from Google Secret Manager, depending on

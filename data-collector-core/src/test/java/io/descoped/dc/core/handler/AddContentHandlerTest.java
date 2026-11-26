@@ -119,6 +119,16 @@ class AddContentHandlerTest {
         }
 
         @Override
+        public void discard(String topic, String... position) {
+            delegate.discard(topic, position);
+        }
+
+        @Override
+        public void discard(String topic) {
+            delegate.discard(topic);
+        }
+
+        @Override
         public HealthContentStreamMonitor monitor() {
             return delegate.monitor();
         }

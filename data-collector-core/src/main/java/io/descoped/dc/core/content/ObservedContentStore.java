@@ -87,6 +87,16 @@ public final class ObservedContentStore implements ContentStore {
     }
 
     @Override
+    public void discard(String topic, String... position) {
+        delegate.discard(topic, position);
+    }
+
+    @Override
+    public void discard(String topic) {
+        delegate.discard(topic);
+    }
+
+    @Override
     public void publish(String topic, String... position) {
         Observation observation = observer.publishing(new ContentEvent(topic), position == null ? 0 : position.length);
         try {

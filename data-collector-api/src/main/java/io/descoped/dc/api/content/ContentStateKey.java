@@ -20,6 +20,15 @@ public class ContentStateKey {
         this.position = position;
     }
 
+    /**
+     * The topic.
+     *
+     * @return the topic
+     */
+    public String topic() {
+        return topic;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
