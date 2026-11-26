@@ -30,3 +30,6 @@ hs_err_pid*
 
 # Local data written by the server and the samples (rawdata filesystem provider, LMDB, dumps)
 **/storage/
+
+# The bearer token of the examples (examples/Makefile)
+examples/.dc-token

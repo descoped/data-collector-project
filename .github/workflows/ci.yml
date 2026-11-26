@@ -70,18 +70,22 @@ jobs:
       # The three images of the server, as release.yml builds them (for this runner's platform only, and not pushed),
       # each started with the filesystem example until it is ready: a Dockerfile or a runtime that misses a module is
       # found here, not at a release. The example writes rawdata under /target, which the container's user (10001)
-      # must be able to write.
+      # must be able to write. Every endpoint requires the bearer token, which the run makes for itself.
       - name: Images
         run: |
+          token="$(openssl rand -hex 32)"
           for target in regular distroless debug; do
             docker build --quiet --target "$target" --tag "data-collector:$target" data-collector-server
             mkdir -p "image-$target" && chmod 777 "image-$target"
             docker run --detach --name "dc-$target" --publish 9990:9990 \
+              --env "DC_http.authentication.bearer.token=$token" \
               --volume "$PWD/examples/profile/filesystem/conf:/conf:ro" --volume "$PWD/image-$target:/target" \
               "data-collector:$target"
             ready=false
             for _ in $(seq 1 60); do
-              if curl --silent --fail http://localhost:9990/health/ready > /dev/null; then ready=true; break; fi
+              if curl --silent --fail --header "Authorization: Bearer $token" http://localhost:9990/health/ready > /dev/null; then
+                ready=true; break
+              fi
               sleep 1
             done
             docker logs "dc-$target" > "dc-$target.log" 2>&1

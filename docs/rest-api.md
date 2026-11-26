@@ -38,6 +38,10 @@ server registers, with the parameters, bodies and status codes the code gives th
 | `GET` | `/recovery/{topic}` | Summary of a recovery | data-collector-server |
 | `DELETE` | `/recovery/{topic}` | Stop a running recovery | data-collector-server |
 
+A `{topic}` (and `toTopic`) is a rawdata topic name: 1 to 100 letters `A-Z a-z`, digits and `_ . -`, starting with a
+letter or digit. The integrity check and recovery endpoints answer `400 Bad Request` to any other name, before it reaches
+a path on disk.
+
 Controllers are found at start-up from the `META-INF/services/io.descoped.dc.application.spi.Controller` files of the
 jars on the module path and class path.
 The server logs each one (`Registered controller: /tasks -> ...`), and `GET /health?contexts` lists them.
@@ -46,23 +50,34 @@ JSON responses are pretty-printed by Jackson.
 
 ## Authentication and CORS
 
-**Authentication.** No endpoint checks credentials. The server reads no `Authorization` header and has no user or
-token configuration. Anyone who can reach the HTTP port can start and cancel tasks, start integrity checks and
-recoveries, and read the health report, including the configuration (`?config`) and thread dumps (`?threads`).
+**Authentication.** Every endpoint requires authentication, `/ping`, `/health/alive`, `/health/ready` and `/metrics`
+included: a Kubernetes probe and Prometheus send the header too (`httpHeaders` of a probe, `authorization` of a scrape
+configuration). A request that is not authenticated gets `401 Unauthorized` with a `WWW-Authenticate` challenge and an
+empty body, before it reaches an endpoint.
 
-**CORS.** Every request passes a CORS handler before it reaches an endpoint. It is configured with the
-`http.cors.allow.*` keys ([configuration reference](administration.md#http-server-and-cors)):
+The authenticator is a provider chosen by `http.authentication.provider` ([configuration
+reference](administration.md#http-server-and-cors)). The built-in one, `bearer` (the default), accepts a request whose
+`Authorization` header is `Bearer <token>` with the token in `http.authentication.bearer.token`, compared in constant
+time; it answers `WWW-Authenticate: Bearer realm="data-collector"`. The server does not start when the token is not set
+or is shorter than 32 characters,
+or when no provider has the configured name. Other schemes are added as providers of
+`io.descoped.dc.application.spi.Authenticator` (see [Extending the server](developer-guide.md#extending-the-server)).
 
-| Key | Default in code and in `application-defaults.properties` |
+**CORS** is off by default: without `http.cors.allow.origin`, the server sends no CORS headers and answers no
+preflight. Setting it turns on a CORS handler in front of the authentication, configured with the `http.cors.allow.*`
+keys:
+
+| Key | Default |
 |---|---|
-| `http.cors.allow.origin` | `.*` |
+| `http.cors.allow.origin` | not set: CORS is off |
 | `http.cors.allow.methods` | `POST,GET,PUT,DELETE,HEAD` |
 | `http.cors.allow.header` | `Content-Type,Authorization` |
 | `http.cors.allow.credentials` | `false` |
 | `http.cors.allow.max-age` | `900` |
 
 `http.cors.allow.origin` is a comma-separated list of regular expressions; an `Origin` matches when one of them matches
-it in full. With the default `.*`, every origin matches. The handler works like this:
+it in full. A preflight carries no credentials, so the handler answers it before authentication; every other request is
+authenticated. The handler works like this:
 
 - A request without an `Origin` header, or whose `Origin` does not match, goes to the endpoint unchanged, without CORS
   headers. It is not rejected.
@@ -72,10 +87,11 @@ it in full. With the default `.*`, every origin matches. The handler works like 
 - A preflight (`OPTIONS` with a matching `Origin`, one `Access-Control-Request-Method` in the allowed methods, and
   every name in `Access-Control-Request-Headers` in the allowed headers) is answered by the handler with
   `204 No Content`, `Access-Control-Allow-Origin`, `Vary: Origin`, `Access-Control-Max-Age`,
-  `Access-Control-Allow-Methods` and `Access-Control-Allow-Headers`. A preflight that fails one of these checks goes to
-  the endpoint as an ordinary `OPTIONS` request, which every endpoint except `/ping` answers with `400`.
+  `Access-Control-Allow-Methods` and `Access-Control-Allow-Headers`. A preflight that fails one of these checks is an
+  ordinary `OPTIONS` request: it is authenticated, and every endpoint except `/ping` answers it with `400`.
 
 ```sh
+# with http.cors.allow.origin=https://console\.example\.org
 curl -i -X OPTIONS localhost:9990/tasks \
   -H 'Origin: https://console.example.org' \
   -H 'Access-Control-Request-Method: PUT' \
@@ -116,7 +132,7 @@ thread pool for requests and entries, and reports to the health report while it 
 sequenceDiagram
     autonumber
     participant C as Client
-    participant U as Undertow (CORS handler, dispatcher)
+    participant U as Undertow (authentication, dispatcher)
     participant T as TaskController
     participant S as WorkerService
     participant W as Worker
@@ -176,7 +192,7 @@ Start a task.
 | `400 Bad Request` | The path is not exactly `/tasks`. |
 
 ```sh
-curl -X PUT -i localhost:9990/tasks \
+curl -H "Authorization: Bearer $DC_TOKEN" -X PUT -i localhost:9990/tasks \
   -H 'content-type: application/json' \
   -d @examples/specs/enhetsregisteret-test-spec.json
 ```
@@ -202,7 +218,7 @@ List the running tasks. A task leaves the list when it completes, fails or is ca
 | `description` | the specification's `name` |
 
 ```sh
-curl localhost:9990/tasks
+curl -H "Authorization: Bearer $DC_TOKEN" localhost:9990/tasks
 ```
 
 ```json
@@ -228,7 +244,7 @@ Ask a running task to stop. The worker stops asynchronously and ends with status
 | `500 Internal Server Error` | `taskId` is not a UUID. |
 
 ```sh
-curl -X DELETE -i localhost:9990/tasks/019aa1d2-7c3e-7b41-a1f0-5c2d9e8b3f60
+curl -H "Authorization: Bearer $DC_TOKEN" -X DELETE -i localhost:9990/tasks/019aa1d2-7c3e-7b41-a1f0-5c2d9e8b3f60
 ```
 
 ## Health
@@ -269,9 +285,9 @@ The sections, in the order they are written:
 | `400 Bad Request` | Another method, or a path under `/health` other than `/health`, `/health/alive` and `/health/ready`. Empty body. |
 
 ```sh
-curl 'localhost:9990/health'
-curl 'localhost:9990/health?config&runtime'
-curl 'localhost:9990/health?all'
+curl -H "Authorization: Bearer $DC_TOKEN" 'localhost:9990/health'
+curl -H "Authorization: Bearer $DC_TOKEN" 'localhost:9990/health?config&runtime'
+curl -H "Authorization: Bearer $DC_TOKEN" 'localhost:9990/health?all'
 ```
 
 Example while the Enhetsregisteret specification runs (abbreviated: `content-stream` and `modules` are shortened):
@@ -345,7 +361,7 @@ Example while the Enhetsregisteret specification runs (abbreviated: `content-str
 | Response | `200 OK`, empty body, whenever the server answers |
 
 ```sh
-curl -i localhost:9990/health/alive
+curl -H "Authorization: Bearer $DC_TOKEN" -i localhost:9990/health/alive
 ```
 
 ### GET /health/ready
@@ -361,7 +377,7 @@ curl -i localhost:9990/health/alive
 | `503 Service Unavailable` | Otherwise. |
 
 ```sh
-curl -i localhost:9990/health/ready
+curl -H "Authorization: Bearer $DC_TOKEN" -i localhost:9990/health/ready
 ```
 
 ## Ping
@@ -372,7 +388,7 @@ Any request whose path starts with `/ping` is answered with `200 OK` and an empt
 not touch any other part of the server.
 
 ```sh
-curl -i localhost:9990/ping
+curl -H "Authorization: Bearer $DC_TOKEN" -i localhost:9990/ping
 ```
 
 ## Metrics
@@ -392,8 +408,8 @@ The Prometheus text format, version 0.0.4, from the default Prometheus `Collecto
 | Other methods | `400 Bad Request` |
 
 ```sh
-curl localhost:9990/metrics
-curl -g 'localhost:9990/metrics?name[]=dc_client_request_started_total&name[]=dc_client_request_duration_count'
+curl -H "Authorization: Bearer $DC_TOKEN" localhost:9990/metrics
+curl -H "Authorization: Bearer $DC_TOKEN" -g 'localhost:9990/metrics?name[]=dc_client_request_started_total&name[]=dc_client_request_duration_count'
 ```
 
 The metric families are listed in [Administration: metrics and profiling](administration.md#metrics-and-profiling).
@@ -403,7 +419,7 @@ The metric families are listed in [Administration: metrics and profiling](admini
 `200 OK` with the body `Exporter is Healthy.` and the same content type.
 
 ```sh
-curl localhost:9990/metrics/-/healthy
+curl -H "Authorization: Bearer $DC_TOKEN" localhost:9990/metrics/-/healthy
 ```
 
 ## Integrity check
@@ -441,10 +457,10 @@ Start a check. A previous index of the topic is deleted first.
 |---|---|
 | `201 Created` | The check started. Empty body. |
 | `409 Conflict` | A check of this topic is running. |
-| `400 Bad Request` | The path is not `/check-integrity/{topic}`. |
+| `400 Bad Request` | The path is not `/check-integrity/{topic}`, or the topic is not a topic name. |
 
 ```sh
-curl -X PUT -i localhost:9990/check-integrity/enhetsregister
+curl -H "Authorization: Bearer $DC_TOKEN" -X PUT -i localhost:9990/check-integrity/enhetsregister
 ```
 
 ### GET /check-integrity
@@ -457,7 +473,7 @@ List the checks: those held in memory since the server started, with their statu
 | Response | `200 OK`, `Content-Type: application/json`; `500` while the LMDB location does not exist (before the first check) |
 
 ```sh
-curl localhost:9990/check-integrity
+curl -H "Authorization: Bearer $DC_TOKEN" localhost:9990/check-integrity
 ```
 
 ```json
@@ -481,7 +497,7 @@ the summary class has no constructor Jackson can use, so reading it fails and th
 | `500 Internal Server Error` | The check is known only on disk, and `report/summary.json` exists (see above), or the LMDB location does not exist yet. |
 
 ```sh
-curl localhost:9990/check-integrity/enhetsregister
+curl -H "Authorization: Bearer $DC_TOKEN" localhost:9990/check-integrity/enhetsregister
 ```
 
 ```json
@@ -517,7 +533,7 @@ and streams that file on later requests.
 be read with `GET /check-integrity/{topic}`.
 
 ```sh
-curl localhost:9990/check-integrity/enhetsregister/full
+curl -H "Authorization: Bearer $DC_TOKEN" localhost:9990/check-integrity/enhetsregister/full
 ```
 
 ```json
@@ -552,7 +568,7 @@ Stop a running check. The check stops reading, writes its report and summary, an
 | `400 Bad Request` | No check of this topic is running. |
 
 ```sh
-curl -X DELETE -i localhost:9990/check-integrity/enhetsregister
+curl -H "Authorization: Bearer $DC_TOKEN" -X DELETE -i localhost:9990/check-integrity/enhetsregister
 ```
 
 ## Recovery
@@ -588,10 +604,10 @@ Start a recovery of `topic` into `target`.
 |---|---|
 | `201 Created` | The recovery started. Empty body. |
 | `409 Conflict` | A recovery of this source topic is running. |
-| `400 Bad Request` | `toTopic` is missing, the LMDB location does not exist, or the request fails otherwise. |
+| `400 Bad Request` | `toTopic` is missing, either topic is not a topic name, the LMDB location does not exist, or the request fails otherwise. |
 
 ```sh
-curl -X PUT -i 'localhost:9990/recovery/enhetsregister?toTopic=enhetsregister-recovered'
+curl -H "Authorization: Bearer $DC_TOKEN" -X PUT -i 'localhost:9990/recovery/enhetsregister?toTopic=enhetsregister-recovered'
 ```
 
 ### GET /recovery
@@ -605,7 +621,7 @@ earlier recoveries, which get a `report` directory there).
 | `400 Bad Request` | The LMDB location cannot be listed. |
 
 ```sh
-curl localhost:9990/recovery
+curl -H "Authorization: Bearer $DC_TOKEN" localhost:9990/recovery
 ```
 
 ```json
@@ -635,7 +651,7 @@ The summary of the recovery of `topic` started since the server started.
 | `postCheckFromTimestamp`, `postCheckStartPosition`, `postCheckLastPosition`, `postCheckCheckedPositions` | the post-check of the target topic |
 
 ```sh
-curl localhost:9990/recovery/enhetsregister
+curl -H "Authorization: Bearer $DC_TOKEN" localhost:9990/recovery/enhetsregister
 ```
 
 ```json
@@ -670,7 +686,7 @@ Stop a running recovery.
 | `404 Not Found` | No recovery of this topic is running. |
 
 ```sh
-curl -X DELETE -i localhost:9990/recovery/enhetsregister
+curl -H "Authorization: Bearer $DC_TOKEN" -X DELETE -i localhost:9990/recovery/enhetsregister
 ```
 
 ## Test facility: the mock data API

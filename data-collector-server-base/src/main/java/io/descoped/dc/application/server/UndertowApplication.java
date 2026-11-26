@@ -11,6 +11,8 @@ import io.descoped.dc.application.health.HealthConfigResource;
 import io.descoped.dc.application.health.HealthContextsResource;
 import io.descoped.dc.application.health.HealthResourceFactory;
 import io.descoped.dc.application.metrics.MetricsResourceFactory;
+import io.descoped.dc.application.security.AuthenticationHandler;
+import io.descoped.dc.application.spi.Authenticator;
 import io.descoped.dc.application.spi.Component;
 import io.descoped.dc.application.spi.Controller;
 import io.descoped.dc.application.spi.Service;
@@ -18,6 +20,7 @@ import io.descoped.dc.application.ssl.BusinessSSLResourceSupplier;
 import io.prometheus.client.hotspot.DefaultExports;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
+import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.util.StatusCodes;
 import org.slf4j.Logger;
@@ -27,6 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
@@ -63,17 +67,46 @@ public class UndertowApplication {
 
         pathHandler.addPrefixPath("/", dispatchController);
 
-        CORSHandler corsHandler = configureCORSHandler(configuration, pathHandler);
+        // every request is authenticated; CORS, when it is configured, answers preflights before that
+        HttpHandler handler = new AuthenticationHandler(authenticator(configuration), pathHandler);
+        if (!configuration.get("http.cors.allow.origin", "").isBlank()) {
+            handler = configureCORSHandler(configuration, handler);
+        }
 
         this.server = Undertow.builder()
                 .addHttpListener(port, host)
-                .setHandler(corsHandler)
+                .setHandler(handler)
                 .build();
         this.applicationMonitor.setServerStatus(HealthApplicationMonitor.ServerStatus.INITIALIZED);
     }
 
-    private CORSHandler configureCORSHandler(DynamicConfiguration configuration, PathHandler pathHandler) {
-        List<Pattern> corsAllowOrigin = Stream.of(configuration.get("http.cors.allow.origin", ".*")
+    // the provider named by http.authentication.provider (default bearer), initialized; the server does not start
+    // without one
+    static Authenticator authenticator(DynamicConfiguration configuration) {
+        String name = configuration.get("http.authentication.provider", "bearer");
+        Authenticator authenticator = select(ServiceLoader.load(Authenticator.class, UndertowApplication.class.getClassLoader())
+                .stream()
+                .map(ServiceLoader.Provider::get)
+                .toList(), name);
+        authenticator.initialize(configuration);
+        LOG.info("Authentication provider: {}", name);
+        return authenticator;
+    }
+
+    // exactly one provider has the name: a second jar must not replace the authenticator unnoticed
+    static Authenticator select(List<Authenticator> providers, String name) {
+        List<Authenticator> named = providers.stream().filter(provider -> name.equals(provider.name())).toList();
+        if (named.isEmpty()) {
+            throw new IllegalStateException("No authentication provider named: " + name);
+        }
+        if (named.size() > 1) {
+            throw new IllegalStateException("More than one authentication provider named: " + name);
+        }
+        return named.get(0);
+    }
+
+    private CORSHandler configureCORSHandler(DynamicConfiguration configuration, HttpHandler next) {
+        List<Pattern> corsAllowOrigin = Stream.of(configuration.get("http.cors.allow.origin", "")
                 .split(",")).map(Pattern::compile).toList();
         Set<String> corsAllowMethods = Set.of(configuration.get("http.cors.allow.methods", "POST,GET,PUT,DELETE,HEAD")
                 .split(","));
@@ -82,7 +115,7 @@ public class UndertowApplication {
         boolean corsAllowCredentials = Boolean.parseBoolean(configuration.find("http.cors.allow.credentials").orElse(null));
         int corsMaxAge = configuration.find("http.cors.allow.max-age").map(Integer::parseInt).orElse(900);
 
-        return new CORSHandler(pathHandler, pathHandler, corsAllowOrigin,
+        return new CORSHandler(next, next, corsAllowOrigin,
                 corsAllowCredentials, StatusCodes.NO_CONTENT, corsMaxAge, corsAllowMethods, corsAllowHeaders
         );
     }

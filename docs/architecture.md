@@ -39,7 +39,7 @@ except `data-collector-testutils` is a named JPMS module.
 | `data-collector-core` | `io.descoped.dc.core` | The engine: `Worker`, `Executor`, the node handlers, the `java.net.http` client, client certificates, the Maskinporten JWT grant, worker health, the ByteBuddy metrics agents. |
 | `data-collector-connector-content-stream-discarding` | `io.descoped.dc.content.discarding` | Content store provider `discarding`: keeps the last published position in memory and drops the content. The engine's default connector. |
 | `data-collector-connector-content-stream-rawdata` | `io.descoped.dc.content.rawdata` | Content store provider `rawdata`: writes content to rawdata-client topics, optionally encrypted. |
-| `data-collector-server-base` | `io.descoped.dc.application` | The Undertow application: discovery of components, services and controllers, routing, CORS, health, Prometheus metrics. |
+| `data-collector-server-base` | `io.descoped.dc.application` | The Undertow application: discovery of components, services and controllers, authentication, routing, CORS, health, Prometheus metrics. |
 | `data-collector-server` | `io.descoped.dc.server` | The server: tasks, integrity check (LMDB), recovery of topics, raw data dump. The `main` class is `io.descoped.dc.server.Server`. |
 | `data-collector-testutils` | none (class path) | JUnit harness: embedded test server with mock data, test client, configuration profiles. |
 | `data-collector-samples` | none | Example specifications run as tests. Not published. |
@@ -346,7 +346,10 @@ a `DynamicConfiguration`:
 3. Discovers and creates the components, services and controllers, in that order. Discovery reads every
    `META-INF/services/<interface name>` resource with ClassGraph and loads each listed class with `Class.forName`; it
    does not use `ServiceLoader`, and no `provides` clause is needed.
-4. Builds an Undertow server listening on `http.host` and `http.port`, with a CORS handler in front of the dispatcher.
+4. Chooses the authenticator named by `http.authentication.provider` (default `bearer`) with `ServiceLoader` and
+   initializes it; the server does not start without one. Builds an Undertow server listening on `http.host` and
+   `http.port`, with the authentication handler in front of the dispatcher, and a CORS handler in front of that when
+   `http.cors.allow.origin` is set.
 
 The three extension points are in `io.descoped.dc.application.spi`:
 
@@ -363,8 +366,13 @@ Routing (`DispatchController`): a path that starts with `/ping` answers 200. Oth
 path segment and passes the request to the controller with the greatest context path that sorts at or before
 `/<segment>`. With no such controller it answers 400. The controllers do their own method and path matching.
 
-CORS (`CORSHandler`) reads `http.cors.allow.origin` (a comma separated list of regular expressions, default `.*`),
-`http.cors.allow.methods`, `http.cors.allow.header`, `http.cors.allow.credentials` and `http.cors.allow.max-age`.
+Authentication (`AuthenticationHandler`): every request is passed to the authenticator on a worker thread; a request
+it refuses gets `401` with the authenticator's `WWW-Authenticate` challenge. The built-in `BearerTokenAuthenticator`
+compares the SHA-256 digests of the presented and the configured token in constant time.
+
+CORS (`CORSHandler`) is on only when `http.cors.allow.origin` is set (a comma separated list of regular expressions),
+and also reads `http.cors.allow.methods`, `http.cors.allow.header`, `http.cors.allow.credentials` and
+`http.cors.allow.max-age`. It answers preflights before authentication.
 
 `server-base` registers two controllers:
 

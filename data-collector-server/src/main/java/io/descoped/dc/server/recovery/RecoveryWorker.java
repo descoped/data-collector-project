@@ -12,6 +12,7 @@ import io.descoped.dc.server.content.ContentStoreComponent;
 import io.descoped.dc.server.db.LmdbEnvironment;
 import io.descoped.dc.server.db.SequenceDbHelper;
 import io.descoped.dc.server.integrity.JsonArrayWriter;
+import io.descoped.rawdata.api.RawdataTopics;
 import org.lmdbjava.Dbi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,10 +65,12 @@ public class RecoveryWorker {
      * @param targetTopic the topic copied to
      */
     public void recover(String sourceTopic, String targetTopic) {
+        RawdataTopics.requireValid(sourceTopic);
+        RawdataTopics.requireValid(targetTopic);
         LOG.info("Copy from {} to {}", sourceTopic, targetTopic);
         monitor.setStarted();
         Path dbLocation = getSequenceDatabaseLocation(configuration);
-        monitor.setSourceDatabasePath(dbLocation.resolve(sourceTopic));
+        monitor.setSourceDatabasePath(SequenceDbHelper.topicDirectory(dbLocation, sourceTopic));
         monitor.setSourceTopic(sourceTopic);
         monitor.setTargetTopic(targetTopic);
         try (LmdbEnvironment lmdbEnvironment = new LmdbEnvironment(configuration, dbLocation, sourceTopic)) {
@@ -152,7 +155,7 @@ public class RecoveryWorker {
             monitor.setPostCheckFromTimestamp(fromTimestamp);
             consumer.seek(fromTimestamp);
             ContentStreamBuffer buffer;
-            Path reportPath = getSequenceDatabaseLocation(configuration).resolve(targetTopic).resolve("report");
+            Path reportPath = SequenceDbHelper.topicDirectory(getSequenceDatabaseLocation(configuration), targetTopic).resolve("report");
             Files.createDirectories(reportPath);
             try (JsonArrayWriter writer = new JsonArrayWriter(reportPath, "tail-report.json", 5000)) {
                 while (!closed.get() && (buffer = consumer.receive(3, TimeUnit.SECONDS)) != null) {

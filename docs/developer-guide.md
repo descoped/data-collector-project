@@ -589,7 +589,8 @@ Then select it with `content.stream.connector=my-store`, or create it yourself w
 ## Extending the server
 
 `data-collector-server-base` discovers three kinds of extension: `Component`, `Service` and `Controller`, in
-`io.descoped.dc.application.spi`. [Architecture](architecture.md#the-application-data-collector-server-base) describes
+`io.descoped.dc.application.spi`; a fourth, `Authenticator`, is chosen by configuration (see
+[Authentication](#authentication)). [Architecture](architecture.md#the-application-data-collector-server-base) describes
 their lifecycle.
 
 ### Registration and injection
@@ -680,6 +681,50 @@ A `Service` is started when the application starts and stopped when it stops; `W
 and `RecoveryService` are examples. A `Component` holds a shared resource: `initialize()` runs when it is created,
 `getDelegate()` returns the resource, `close()` runs at shutdown; `ContentStoreComponent` holds the server's
 `ContentStore`.
+
+### Authentication
+
+Every request passes an `io.descoped.dc.application.spi.Authenticator` before it reaches a controller; the server uses
+the provider whose `name()` is `http.authentication.provider` (`bearer`, the built-in bearer token, by default). A
+service that dc runs for has its own security scheme, so a scheme of its own is added as a provider:
+
+```java
+public class ApiKeyAuthenticator implements Authenticator {
+    private byte[] keyDigest;
+
+    public ApiKeyAuthenticator() {
+    }
+
+    @Override
+    public String name() {
+        return "api-key";
+    }
+
+    @Override
+    public void initialize(DynamicConfiguration configuration) {
+        // fail closed: the server must not start without the key
+        keyDigest = sha256(configuration.find("http.authentication.api-key").orElseThrow(
+                () -> new IllegalStateException("http.authentication.api-key is not set")));
+    }
+
+    @Override
+    public boolean authenticate(HttpServerExchange exchange) {
+        String key = exchange.getRequestHeaders().getFirst("X-Api-Key");
+        return key != null && MessageDigest.isEqual(sha256(key), keyDigest);
+    }
+
+    @Override
+    public String challenge() {
+        return "ApiKey realm=\"data-collector\"";
+    }
+}
+```
+
+It is a service provider: `provides io.descoped.dc.application.spi.Authenticator with ...ApiKeyAuthenticator;` in its
+`module-info.java` and the class name in `META-INF/services/io.descoped.dc.application.spi.Authenticator`, on the
+server's module path or class path. `authenticate` runs on a worker thread, so it may block, and it never logs the
+credentials it reads. The test server of data-collector-testutils uses the provider `test`: the bearer token for dc's
+endpoints, with the mock source under `/api` open, and `TestClient` sends the token.
 
 ### Health and metrics resources
 

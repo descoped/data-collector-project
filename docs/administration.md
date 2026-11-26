@@ -69,15 +69,17 @@ Read by `data-collector-server-base` at start-up.
 |---|---|---|---|
 | `http.host` | `0.0.0.0` | `localhost` | Address the HTTP listener binds to. |
 | `http.port` | `9990` | none, required | HTTP port. |
-| `http.cors.allow.origin` | `.*` | `.*` | Comma-separated regular expressions. An `Origin` that one of them matches in full is allowed. |
-| `http.cors.allow.methods` | `POST,GET,PUT,DELETE,HEAD` | same | Methods a preflight may ask for. |
-| `http.cors.allow.header` | `Content-Type,Authorization` | same | Headers a preflight may ask for; also sent as `Access-Control-Expose-Headers`. |
-| `http.cors.allow.credentials` | `false` | `false` | `true` adds `Access-Control-Allow-Credentials: true`. |
-| `http.cors.allow.max-age` | `900` | `900` | `Access-Control-Max-Age` of a preflight, in seconds. |
+| `http.authentication.provider` | not set | `bearer` | The authenticator every request passes: the name of a provider of `io.descoped.dc.application.spi.Authenticator`. The server does not start when no provider has the name. |
+| `http.authentication.bearer.token` | not set | none, required by `bearer` | The token of the `bearer` provider: a request is authenticated by `Authorization: Bearer <token>`. The server does not start without it, or with a token shorter than 32 characters (`openssl rand -hex 16` gives 32). Give it as `DC_http.authentication.bearer.token`, or in `/conf/application-override.properties`; never in a file of the image. |
+| `http.cors.allow.origin` | not set | not set: CORS is off | Comma-separated regular expressions. An `Origin` that one of them matches in full is allowed. Setting it turns CORS on. |
+| `http.cors.allow.methods` | not set | `POST,GET,PUT,DELETE,HEAD` | Methods a preflight may ask for. |
+| `http.cors.allow.header` | not set | `Content-Type,Authorization` | Headers a preflight may ask for; also sent as `Access-Control-Expose-Headers`. |
+| `http.cors.allow.credentials` | not set | `false` | `true` adds `Access-Control-Allow-Credentials: true`. |
+| `http.cors.allow.max-age` | not set | `900` | `Access-Control-Max-Age` of a preflight, in seconds. |
 | `prometheus.defaultExports.disabled` | not set | `false` | `true` leaves out the JVM and process metrics of the Prometheus client. |
 
-How the CORS handler applies these is described in [REST API: authentication and CORS](rest-api.md#authentication-and-cors).
-The server has no authentication settings.
+How authentication and the CORS handler apply these is described in [REST API: authentication and
+CORS](rest-api.md#authentication-and-cors).
 
 ### Content store
 
@@ -162,11 +164,12 @@ A service that writes a topic's content to files. It is registered only when it 
 |---|---|---|
 | `data.collector.rawdata.dump.enabled` | `false` | `true` starts the service. |
 | `data.collector.rawdata.dump.location` | not set | Target directory. Not set: the service logs a warning and does not start. Empty: `./storage`. |
-| `data.collector.rawdata.dump.topic` | not set | The topic to read. The service reads it until the server stops. |
+| `data.collector.rawdata.dump.topic` | not set | The topic to read, a topic name. Not set or not a topic name: the service logs a warning and does not start. The service reads it until the server stops. |
 
 Each message is written to `<location>/<topic>/<position>/<content key><extension>`, where the extension comes from
-the detected media type (`.json`, `.xml`, or the subtype Apache Tika reports). The position is used as a directory
-name as it is.
+the detected media type (`.json`, `.xml`, or the subtype Apache Tika reports). The position and the content key come
+from the source's data, so each is written as one file name: characters other than letters, digits and `. - * _` are
+percent-encoded (a position `a/b` is the directory `a%2Fb`), and `.` and `..` become `%2E` and `%2E%2E`.
 
 ## The Docker image
 

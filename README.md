@@ -25,13 +25,15 @@ You need JDK 27 and Docker with Compose v2.
 # Build the server and its development image (data-collector:dev)
 cd data-collector-server && ./build-dev.sh
 
-# Start it with the filesystem profile; content is written under examples/target
+# Start it with the filesystem profile; content is written under examples/target. Every endpoint requires the
+# bearer token, which make keeps in examples/.dc-token
 cd ../examples && make start-filesystem-dev
+export DC_TOKEN="$(cat .dc-token)"
 
 # Run a specification: the public Enhetsregisteret API (data.brreg.no)
-curl -X PUT -i localhost:9990/tasks -H 'content-type: application/json' -d @specs/enhetsregisteret-test-spec.json
-curl localhost:9990/tasks
-curl localhost:9990/health
+curl -H "Authorization: Bearer $DC_TOKEN" -X PUT -i localhost:9990/tasks -H 'content-type: application/json' -d @specs/enhetsregisteret-test-spec.json
+curl -H "Authorization: Bearer $DC_TOKEN" localhost:9990/tasks
+curl -H "Authorization: Bearer $DC_TOKEN" localhost:9990/health
 
 make stop-filesystem-dev
 ```
@@ -64,7 +66,7 @@ Import `data-collector-bom` to align their versions.
 | [data-collector-core](data-collector-core) | `io.descoped.dc.core` | The engine: `Worker`, node handlers, HTTP client, client certificates, Maskinporten JWT, metrics |
 | [data-collector-connector-content-stream-discarding](data-collector-connector-content-stream-discarding) | `io.descoped.dc.content.discarding` | Content store `discarding`, the engine's default: keeps the last position, drops the content |
 | [data-collector-connector-content-stream-rawdata](data-collector-connector-content-stream-rawdata) | `io.descoped.dc.content.rawdata` | Content store `rawdata`: content to rawdata-client topics, optionally encrypted |
-| [data-collector-server-base](data-collector-server-base) | `io.descoped.dc.application` | The Undertow application: configuration, routing, CORS, health, Prometheus metrics |
+| [data-collector-server-base](data-collector-server-base) | `io.descoped.dc.application` | The Undertow application: configuration, authentication, routing, CORS, health, Prometheus metrics |
 | [data-collector-server](data-collector-server) | `io.descoped.dc.server` | The server: tasks, integrity check (LMDB) and recovery; the Docker image |
 | [data-collector-testutils](data-collector-testutils) | (class path) | JUnit harness: embedded test server with mock data, test client |
 | [data-collector-samples](data-collector-samples) | (class path) | Example specifications run as tests; not published |

@@ -5,6 +5,8 @@ services:
     ports:
       - 9990:9990
       - 9992:9992
+    environment:
+      - DC_http.authentication.bearer.token=${DC_TOKEN:?set DC_TOKEN to the bearer token the server requires; make sets it from .dc-token}
     volumes:
     - $WORKDIR/profile/$PROFILE/conf:/conf
     - $WORKDIR/certs:/certs
@@ -44,6 +46,7 @@ services:
     image: prom/prometheus:v3.16.0
     volumes:
     - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    - ./.dc-token:/etc/prometheus/dc-token:ro
     command: "--config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/prometheus"
     ports:
     - 9090:9090

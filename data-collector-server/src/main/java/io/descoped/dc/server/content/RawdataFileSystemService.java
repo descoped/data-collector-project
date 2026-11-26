@@ -7,6 +7,7 @@ import io.descoped.dc.api.content.ContentStreamBuffer;
 import io.descoped.dc.api.content.ContentStreamConsumer;
 import io.descoped.dc.api.util.CommonUtils;
 import io.descoped.dc.application.spi.Service;
+import io.descoped.rawdata.api.RawdataTopics;
 import org.apache.tika.detect.DefaultDetector;
 import org.apache.tika.detect.Detector;
 import org.apache.tika.io.TikaInputStream;
@@ -17,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -80,6 +82,10 @@ public class RawdataFileSystemService implements Service {
         }
 
         String topic = configuration.find("data.collector.rawdata.dump.topic").orElse(null);
+        if (!RawdataTopics.isValid(topic)) {
+            LOG.warn("Unable to start file exporter. No valid topic is defined");
+            return;
+        }
 
         workDir = targetPath.resolve(topic);
         consumerFuture = createFuture(topic, workDir)
@@ -135,7 +141,8 @@ public class RawdataFileSystemService implements Service {
     }
 
     private static void writeBuffer(ContentStreamBuffer buffer, Path targetPath, Detector detector, Metadata metadata) throws IOException {
-        Path filePath = targetPath.resolve(buffer.position()).normalize();
+        // the position and the keys come from the source's data: each becomes one file name, never a path
+        Path filePath = targetPath.resolve(fileName(buffer.position()));
         if (!Files.exists(filePath)) {
             Files.createDirectories(filePath);
         }
@@ -147,9 +154,19 @@ public class RawdataFileSystemService implements Service {
             MediaType mediaType = detector.detect(TikaInputStream.get(data), metadata, new ParseContext());
             String subtype = fileSuffix(mediaType.getSubtype(), content, key);
 
-            Path contentFilePath = filePath.resolve(filePath.resolve(key) + subtype);
+            Path contentFilePath = filePath.resolve(fileName(key) + subtype);
             Files.write(contentFilePath, data);
         }
+    }
+
+    /**
+     * A name as one file name: characters other than letters, digits and {@code . - * _} are percent-encoded, so a
+     * separator or a drive letter cannot leave the directory, and {@code .} and {@code ..} are encoded too. Names of
+     * letters, digits and {@code . - _} are kept as they are.
+     */
+    static String fileName(String name) {
+        String encoded = URLEncoder.encode(name, StandardCharsets.UTF_8);
+        return ".".equals(encoded) || "..".equals(encoded) ? encoded.replace(".", "%2E") : encoded;
     }
 
     private static String fileSuffix(String subtype, String content, String key) {

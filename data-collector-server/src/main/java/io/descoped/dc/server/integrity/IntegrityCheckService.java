@@ -7,6 +7,7 @@ import io.descoped.dc.api.util.JsonParser;
 import io.descoped.dc.application.spi.Service;
 import io.descoped.dc.server.content.ContentStoreComponent;
 import io.descoped.dc.server.db.LmdbEnvironment;
+import io.descoped.dc.server.db.SequenceDbHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -122,7 +123,7 @@ public class IntegrityCheckService implements Service {
         Path dbLocation = getSequenceDatabaseLocation(configuration);
         LOG.trace("Database path: {}", dbLocation);
 
-        LmdbEnvironment.removePath(dbLocation.resolve(topic));
+        LmdbEnvironment.removePath(SequenceDbHelper.topicDirectory(dbLocation, topic));
 
         CompletableFuture.supplyAsync(() -> {
             try (LmdbEnvironment lmdbEnvironment = new LmdbEnvironment(configuration, dbLocation, topic)) {
@@ -211,7 +212,7 @@ public class IntegrityCheckService implements Service {
             throw new IllegalStateException("Job not found for topic: " + topic);
         }
 
-        Path summaryPath = getSequenceDatabaseLocation(configuration).resolve(topic).resolve("report").resolve("summary.json");
+        Path summaryPath = SequenceDbHelper.topicDirectory(getSequenceDatabaseLocation(configuration), topic).resolve("report").resolve("summary.json");
         if (!summaryPath.toFile().exists()) {
             return null;
         }

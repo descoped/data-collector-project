@@ -5,6 +5,8 @@ services:
     ports:
       - 9990:9990
       - 9992:9992
+    environment:
+      - DC_http.authentication.bearer.token=${DC_TOKEN:?set DC_TOKEN to the bearer token the server requires; make sets it from .dc-token}
     volumes:
     - $WORKDIR/profile/$PROFILE/conf:/conf
     - $WORKDIR/certs:/certs

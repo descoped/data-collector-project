@@ -7,6 +7,7 @@ import io.descoped.dc.api.util.JsonParser;
 import io.descoped.dc.application.controller.PathDispatcher;
 import io.descoped.dc.application.controller.PathHandler;
 import io.descoped.dc.application.spi.Controller;
+import io.descoped.rawdata.api.RawdataTopics;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
@@ -105,6 +106,9 @@ public class RecoveryController implements Controller {
     // PUT /recovery/{topic}?toTopic=TARGET_TOPIC
     private HttpStatus createWorker(PathHandler handler) {
         String fromTopic = handler.parameters().get(TOPIC);
+        if (!RawdataTopics.isValid(fromTopic)) {
+            return HttpStatus.HTTP_BAD_REQUEST;
+        }
         if (isRunning(fromTopic)) {
             return HttpStatus.HTTP_CONFLICT;
         }
@@ -112,6 +116,9 @@ public class RecoveryController implements Controller {
             return HttpStatus.HTTP_BAD_REQUEST;
         }
         String toTopic = handler.exchange().getQueryParameters().get("toTopic").getFirst();
+        if (!RawdataTopics.isValid(toTopic)) {
+            return HttpStatus.HTTP_BAD_REQUEST;
+        }
         service.createRecoveryWorker(fromTopic, toTopic);
         return HttpStatus.HTTP_CREATED;
     }
@@ -128,6 +135,9 @@ public class RecoveryController implements Controller {
     // GET /recovery/{topic}
     private HttpStatus getWorkerSummary(PathHandler handler) {
         String fromTopic = handler.parameters().get(TOPIC);
+        if (!RawdataTopics.isValid(fromTopic)) {
+            return HttpStatus.HTTP_BAD_REQUEST;
+        }
         RecoveryWorker recoveryWorker = service.jobs.get(fromTopic);
         if (recoveryWorker == null) {
             return HttpStatus.HTTP_BAD_REQUEST;
@@ -142,6 +152,9 @@ public class RecoveryController implements Controller {
     // DELETE /recovery/{topic}
     private HttpStatus cancelWorker(PathHandler handler) {
         String fromTopic = handler.parameters().get(TOPIC);
+        if (!RawdataTopics.isValid(fromTopic)) {
+            return HttpStatus.HTTP_BAD_REQUEST;
+        }
         if (!isRunning(fromTopic)) {
             return HttpStatus.HTTP_NOT_FOUND;
         }

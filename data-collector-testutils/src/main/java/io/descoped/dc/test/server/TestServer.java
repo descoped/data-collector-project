@@ -1,6 +1,7 @@
 package io.descoped.dc.test.server;
 
 import io.descoped.config.DynamicConfiguration;
+import io.descoped.dc.application.security.BearerTokenAuthenticator;
 import io.descoped.dc.application.server.UndertowApplication;
 import io.descoped.dc.application.ssl.BusinessSSLResourceSupplier;
 import io.descoped.dc.application.ssl.SecretManagerSSLResource;
@@ -8,6 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.security.SecureRandom;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Supplier;
 
 /**
@@ -23,6 +26,8 @@ public class TestServer implements TestUriResolver {
 
     private final int testServerServicePort;
 
+    private final String authorization;
+
     /**
      * Creates the server; it is not started.
      *
@@ -30,7 +35,15 @@ public class TestServer implements TestUriResolver {
      * @param testServerServicePort the port
      */
     public TestServer(DynamicConfiguration configuration, int testServerServicePort) {
+        // the test authenticator with a token of this server's own, unless the configuration names others
+        String token = UUID.randomUUID().toString();
+        DynamicConfiguration effective = DynamicConfiguration.builder()
+                .value("http.authentication.provider", "test")
+                .value(BearerTokenAuthenticator.TOKEN_KEY, token)
+                .values(configuration.asMap())
+                .build();
         this.configuration = configuration;
+        this.authorization = "Bearer " + effective.find(BearerTokenAuthenticator.TOKEN_KEY).orElse(token);
         this.testServerServicePort = testServerServicePort;
 
         /*
@@ -42,10 +55,10 @@ public class TestServer implements TestUriResolver {
          * Please note: only Google Secret Manager is supported!
          */
 
-        String businessSslResourceProvider = configuration.find("data.collector.sslBundle.provider").orElse(null);
-        Supplier<SecretManagerSSLResource> sslResourceSupplier = () -> new SecretManagerSSLResource(configuration);
+        String businessSslResourceProvider = effective.find("data.collector.sslBundle.provider").orElse(null);
+        Supplier<SecretManagerSSLResource> sslResourceSupplier = () -> new SecretManagerSSLResource(effective);
 
-        application = UndertowApplication.initializeUndertowApplication(configuration, testServerServicePort,
+        application = UndertowApplication.initializeUndertowApplication(effective, testServerServicePort,
                 businessSslResourceProvider != null ? new BusinessSSLResourceSupplier(sslResourceSupplier) : null);
     }
 
@@ -89,6 +102,11 @@ public class TestServer implements TestUriResolver {
      */
     public int getTestServerServicePort() {
         return testServerServicePort;
+    }
+
+    @Override
+    public Optional<String> authorization() {
+        return Optional.of(authorization);
     }
 
     @Override

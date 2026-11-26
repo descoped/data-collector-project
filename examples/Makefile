@@ -1,8 +1,12 @@
-SHELL=/bin/bash -x
+SHELL=/bin/bash
 
 DC_RELEASE_IMAGE=descoped/data-collector:latest
 DC_LOCAL_IMAGE=data-collector:dev
 DC_PORT=9990
+# The bearer token the server requires (http.authentication.bearer.token), and Prometheus sends: made once and kept in
+# .dc-token, which git ignores. Write your own token there to use another.
+DC_TOKEN := $(shell [ -s .dc-token ] || (umask 077 && openssl rand -hex 32 > .dc-token); cat .dc-token)
+export DC_TOKEN
 
 .PHONY: default
 default: | help
@@ -214,68 +218,68 @@ remove-filesystem-dev: ## remove filesystem
 
 .PHONY: collect-freg-playground
 collect-freg-playground: ## Collect freg playground
-	@curl -X PUT -i localhost:${DC_PORT}/tasks -H 'content-type: application/json' -d @specs/ske-freg-playground-spec.json
+	@curl -H 'Authorization: Bearer ${DC_TOKEN}' -X PUT -i localhost:${DC_PORT}/tasks -H 'content-type: application/json' -d @specs/ske-freg-playground-spec.json
 
 .PHONY: collect-freg-konsument-test
 collect-freg-konsument-test: ## Collect konsument test
-	@curl -X PUT -i localhost:${DC_PORT}/tasks -H 'content-type: application/json' -d @specs/ske-freg-konsument-test-spec.json
+	@curl -H 'Authorization: Bearer ${DC_TOKEN}' -X PUT -i localhost:${DC_PORT}/tasks -H 'content-type: application/json' -d @specs/ske-freg-konsument-test-spec.json
 
 .PHONY: collect-freg-bulk-uttrekk-prod
 collect-freg-bulk-uttrekk-prod: ## Collect freg bulk uttrekk
-	@curl -X PUT -i localhost:${DC_PORT}/tasks -H 'content-type: application/json' -d @specs/ske-freg-bulk-uttrekk-spec.json
+	@curl -H 'Authorization: Bearer ${DC_TOKEN}' -X PUT -i localhost:${DC_PORT}/tasks -H 'content-type: application/json' -d @specs/ske-freg-bulk-uttrekk-spec.json
 
 .PHONY: collect-sirius-person-utkast
 collect-sirius-person-utkast: ## Collect sirius person utkast
-	@curl -X PUT -i localhost:${DC_PORT}/tasks -H 'content-type: application/json' -d @specs/ske-sirius-person-utkast-spec.json
+	@curl -H 'Authorization: Bearer ${DC_TOKEN}' -X PUT -i localhost:${DC_PORT}/tasks -H 'content-type: application/json' -d @specs/ske-sirius-person-utkast-spec.json
 
 .PHONY: collect-sirius-person-fastsatt
 collect-sirius-person-fastsatt: ## Collect sirius person fastsatt
-	@curl -X PUT -i localhost:${DC_PORT}/tasks -H 'content-type: application/json' -d @specs/ske-sirius-person-fastsatt-spec.json
+	@curl -H 'Authorization: Bearer ${DC_TOKEN}' -X PUT -i localhost:${DC_PORT}/tasks -H 'content-type: application/json' -d @specs/ske-sirius-person-fastsatt-spec.json
 
 .PHONY: collect-tvinn-test
 collect-tvinn-test: ## Collect tvinn Test
-	@curl -X PUT -i localhost:${DC_PORT}/tasks -H 'content-type: application/json' -d @specs/toll-tvinn-test-spec.json
+	@curl -H 'Authorization: Bearer ${DC_TOKEN}' -X PUT -i localhost:${DC_PORT}/tasks -H 'content-type: application/json' -d @specs/toll-tvinn-test-spec.json
 
 .PHONY: collect-tvinn-api-test
 collect-tvinn-api-test: ## Collect tvinn API-test
-	@curl -X PUT -i localhost:${DC_PORT}/tasks -H 'content-type: application/json' -d @specs/toll-tvinn-api-test-spec.json
+	@curl -H 'Authorization: Bearer ${DC_TOKEN}' -X PUT -i localhost:${DC_PORT}/tasks -H 'content-type: application/json' -d @specs/toll-tvinn-api-test-spec.json
 
 .PHONY: collect-altinn-test
 collect-altinn-test: ## Collect Altinn 3 Test
-	@curl -X PUT -i localhost:${DC_PORT}/tasks -H 'content-type: application/json' -d @specs/altinn3-test-spec.json
+	@curl -H 'Authorization: Bearer ${DC_TOKEN}' -X PUT -i localhost:${DC_PORT}/tasks -H 'content-type: application/json' -d @specs/altinn3-test-spec.json
 
 .PHONY: collect-moveit-test
 collect-moveit-test: ## Collect MoveIt Test
-	@curl -X PUT -i localhost:${DC_PORT}/tasks -H 'content-type: application/json' -d @specs/moveit-test-spec.json
+	@curl -H 'Authorization: Bearer ${DC_TOKEN}' -X PUT -i localhost:${DC_PORT}/tasks -H 'content-type: application/json' -d @specs/moveit-test-spec.json
 
 .PHONY: collect-enheter-test
 collect-enheter-test: ## Collect enheter test
-	@curl -X PUT -i localhost:${DC_PORT}/tasks -H 'content-type: application/json' -d @specs/enhetsregisteret-test-spec.json
+	@curl -H 'Authorization: Bearer ${DC_TOKEN}' -X PUT -i localhost:${DC_PORT}/tasks -H 'content-type: application/json' -d @specs/enhetsregisteret-test-spec.json
 
 .PHONY: collect-enheter-download
 collect-enheter-download: ## Collect enheter download (huge file)
-	@curl -X PUT -i localhost:${DC_PORT}/tasks -H 'content-type: application/json' -d @specs/enhetsregisteret-download-spec.json
+	@curl -H 'Authorization: Bearer ${DC_TOKEN}' -X PUT -i localhost:${DC_PORT}/tasks -H 'content-type: application/json' -d @specs/enhetsregisteret-download-spec.json
 
 .PHONY: list-tasks
 list-tasks: ## List running tasks
-	@curl -X GET localhost:${DC_PORT}/tasks && printf "\n"
+	@curl -H 'Authorization: Bearer ${DC_TOKEN}' -X GET localhost:${DC_PORT}/tasks && printf "\n"
 
 .PHONY: cancel-task
 cancel-task: ## Cancel running tasks 'make cancel-task'
-	@echo "curl -X DELETE -i localhost:${DC_PORT}/tasks/TASK_ID"
+	@echo "curl -H 'Authorization: Bearer $$(cat .dc-token)' -X DELETE -i localhost:${DC_PORT}/tasks/TASK_ID"
 
 .PHONY: health
 health: ## Health
-	@curl -X GET localhost:${DC_PORT}/health
+	@curl -H 'Authorization: Bearer ${DC_TOKEN}' -X GET localhost:${DC_PORT}/health
 
 .PHONY: health-all
 health-all: ## Health show all
-	@curl -X GET localhost:${DC_PORT}/health?all
+	@curl -H 'Authorization: Bearer ${DC_TOKEN}' -X GET localhost:${DC_PORT}/health?all
 
 .PHONY: health-alive
 health-alive: ## Health Alive
-	@curl -X GET -i localhost:${DC_PORT}/health/alive
+	@curl -H 'Authorization: Bearer ${DC_TOKEN}' -X GET -i localhost:${DC_PORT}/health/alive
 
 .PHONY: health-ready
 health-ready: ## Health Ready
-	@curl -X GET -i localhost:${DC_PORT}/health/ready
+	@curl -H 'Authorization: Bearer ${DC_TOKEN}' -X GET -i localhost:${DC_PORT}/health/ready

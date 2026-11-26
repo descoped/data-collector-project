@@ -264,10 +264,22 @@ public final class TestClient {
                 .build(), bodyHandler);
     }
 
+    // the server's Authorization header, unless the request has one of its own
+    private HttpRequest authorized(HttpRequest request) {
+        if (request.headers().firstValue("Authorization").isPresent()) {
+            return request;
+        }
+        return server.authorization()
+                .map(authorization -> HttpRequest.newBuilder(request, (name, value) -> true)
+                        .header("Authorization", authorization)
+                        .build())
+                .orElse(request);
+    }
+
     // the request is built and sent in one place; an interrupted send keeps the thread's interrupt flag
     private <R> ResponseHelper<R> send(Supplier<HttpRequest> request, HttpResponse.BodyHandler<R> bodyHandler) {
         try {
-            return new ResponseHelper<>(client.send(request.get(), bodyHandler));
+            return new ResponseHelper<>(client.send(authorized(request.get()), bodyHandler));
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             LOG.error("Error: {}", captureStackTrace(e));
