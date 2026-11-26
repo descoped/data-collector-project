@@ -17,6 +17,7 @@ public class Queries {
     private Queries() {
     }
 
+    @SuppressWarnings("unchecked") // a query node's first interface is its query type
     public static DocumentParserFeature parserFor(Class<? extends Query> queryClass) {
         if (!queryClass.isInterface()) {
             queryClass = (Class<? extends Query>) queryClass.getInterfaces()[0];
@@ -76,6 +77,7 @@ public class Queries {
         public List<?> evaluateList(Object data) {
             context.state(QueryState.class, new QueryState<>(QueryFeature.Type.LIST, data));
             ExecutionContext output = Executor.execute(query, context);
+            @SuppressWarnings("unchecked") // the state is kept by its raw class
             QueryResult<List<?>> state = output.state(QueryResult.class);
             return state.getResult();
         }
@@ -84,6 +86,7 @@ public class Queries {
         public Object evaluateObject(Object data) {
             context.state(QueryState.class, new QueryState<>(Type.OBJECT, data));
             ExecutionContext output = Executor.execute(query, context);
+            @SuppressWarnings("unchecked") // the state is kept by its raw class
             QueryResult<Object> state = output.state(QueryResult.class);
             return state.getResult();
         }
@@ -92,6 +95,7 @@ public class Queries {
         public String evaluateStringLiteral(Object data) {
             context.state(QueryState.class, new QueryState<>(Type.STRING_LITERAL, data));
             ExecutionContext output = Executor.execute(query, context);
+            @SuppressWarnings("unchecked") // the state is kept by its raw class
             QueryResult<String> state = output.state(QueryResult.class);
             return state.getResult();
         }

@@ -97,7 +97,7 @@ public class ParallelHandler extends AbstractNodeHandler<Parallel> {
 
             if (counter.incrementAndGet() % 1000 == 0) {
                 LOG.warn("Wait for buffered futures to complete");
-                CompletableFuture.allOf(parallelFutures.toArray(new CompletableFuture[0]))
+                CompletableFuture.allOf(parallelFutures.toArray(new CompletableFuture<?>[0]))
                         .thenApply(v -> {
                             parallelFutures.clear();
                             return v;
@@ -112,7 +112,7 @@ public class ParallelHandler extends AbstractNodeHandler<Parallel> {
         LOG.info("Parallel count: {}", counter.get());
 
         LOG.warn("Wait for ALL buffered futures to complete");
-        CompletableFuture.allOf(parallelFutures.toArray(new CompletableFuture[0]))
+        CompletableFuture.allOf(parallelFutures.toArray(new CompletableFuture<?>[0]))
                 .thenApply(v -> {
                     parallelFutures.clear();
                     return v;
@@ -139,7 +139,7 @@ public class ParallelHandler extends AbstractNodeHandler<Parallel> {
 
             if (counter.incrementAndGet() % queueBufferThreshold == 0) {
                 LOG.warn("Wait for buffered futures to complete at: {} / {}", pageCounter.get(), counter.get());
-                CompletableFuture.allOf(parallelFutures.toArray(new CompletableFuture[0]))
+                CompletableFuture.allOf(parallelFutures.toArray(new CompletableFuture<?>[0]))
                         .thenApply(v -> {
                             parallelFutures.clear();
                             return v;

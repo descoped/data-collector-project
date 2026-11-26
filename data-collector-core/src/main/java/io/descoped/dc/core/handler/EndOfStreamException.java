@@ -4,6 +4,8 @@ import io.descoped.dc.api.error.ExecutionException;
 
 public class EndOfStreamException extends ExecutionException {
 
+    private static final long serialVersionUID = 1L;
+
     public EndOfStreamException() {
         super();
     }

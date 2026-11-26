@@ -56,6 +56,7 @@ public class XPathHandler extends AbstractQueryHandler<XPath> {
         try {
             javax.xml.xpath.XPath xpath = xpathFactory.newXPath();
             xpath.setNamespaceContext(new IgnoreNamespaceResolver(document));
+            @SuppressWarnings("unchecked") // the result is of the requested return type
             QUERY_RESULT result = (QUERY_RESULT) xpath.compile(evaluateExpression(node.expression())).evaluate(document, returnType);
 
             if (result == null) {

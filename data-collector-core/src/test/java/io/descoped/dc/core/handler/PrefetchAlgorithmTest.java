@@ -43,7 +43,7 @@ class PrefetchAlgorithmTest {
             PositionObserver positionObserver = positionObserverRef.get();
             LOG.trace("PageId: {}, expected: {}", prefetchId, pageSize);
             positionObserver.expected(pageSize);
-            CompletableFuture[] futures = new CompletableFuture[pageSize];
+            CompletableFuture<?>[] futures = new CompletableFuture<?>[pageSize];
             for (int i = 0; i < pageSize; i++) {
                 futures[i] = CompletableFuture.runAsync(() -> {
                     ThreadLocalRandom random = ThreadLocalRandom.current();

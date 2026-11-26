@@ -51,6 +51,13 @@ public class HttpRequestDelegate implements Request {
         byte[] payloadBytes;
         Flow.Publisher<ByteBuffer> bodyPublisher;
 
+        /**
+         * Creates an empty builder.
+         */
+        public RequestBuilder() {
+            // the state is in the fields
+        }
+
         @Override
         public Request.Builder url(String url) {
             this.url = url;

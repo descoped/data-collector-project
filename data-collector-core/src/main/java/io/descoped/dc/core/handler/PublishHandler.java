@@ -29,6 +29,7 @@ public class PublishHandler extends AbstractNodeHandler<Publish> {
 
         String positionValue = (String) el.evaluateExpression(node.positionVariableExpression());
 
+        @SuppressWarnings("unchecked") // the service is kept by its raw class
         BufferedReordering<String> bufferedReordering = input.services().get(BufferedReordering.class);
 
         ContentStore contentStore = input.services().get(ContentStore.class);

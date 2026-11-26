@@ -57,6 +57,7 @@ public class HttpResponseDelegate implements Response {
 
     @Override
     public <R> Optional<BodyHandler<R>> bodyHandler() {
+        @SuppressWarnings("unchecked") // the caller asks for the body type it gave
         BodyHandler<R> handler = (BodyHandler<R>) bodyHandler;
         return Optional.ofNullable(handler);
     }
@@ -71,6 +72,13 @@ public class HttpResponseDelegate implements Response {
 
         HttpResponse<byte[]> httpResponse;
         BodyHandler<?> bodyHandler;
+
+        /**
+         * Creates an empty builder.
+         */
+        public ResponseBuilder() {
+            // the state is in the fields
+        }
 
         @Override
         public Builder delegate(Object delegate) {

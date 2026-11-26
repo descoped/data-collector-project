@@ -18,6 +18,7 @@ public class EvalHandler extends AbstractQueryHandler<Eval> {
 
     @Override
     public ExecutionContext execute(ExecutionContext input) {
+        @SuppressWarnings("unchecked") // the state is kept by its raw class
         QueryState<Eval> queryState = input.state(QueryState.class);
 
         if (queryState == null) {

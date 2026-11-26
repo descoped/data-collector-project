@@ -325,6 +325,13 @@ public class Worker {
         private boolean keepContentStoreOpenOnWorkerCompletion;
         private Supplier<? extends BusinessSSLResource> businessSSLResourceSupplier;
 
+        /**
+         * Creates an empty builder.
+         */
+        public WorkerBuilder() {
+            // the state is in the fields
+        }
+
         public WorkerBuilder specification(SpecificationBuilder specificationBuilder) {
             this.specificationBuilder = specificationBuilder;
             return this;

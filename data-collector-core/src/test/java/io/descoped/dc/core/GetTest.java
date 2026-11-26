@@ -7,6 +7,7 @@ import io.descoped.dc.api.Specification;
 import io.descoped.dc.api.content.ContentStore;
 import io.descoped.dc.api.content.ContentStoreInitializer;
 import io.descoped.dc.api.context.ExecutionContext;
+import io.descoped.dc.api.http.BodyHandler;
 import io.descoped.dc.api.http.Headers;
 import io.descoped.dc.api.http.Response;
 import io.descoped.dc.api.node.builder.SpecificationBuilder;
@@ -32,12 +33,10 @@ import javax.inject.Inject;
 import io.descoped.dc.api.node.Process;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.Flow;
 import java.util.concurrent.TimeUnit;
 
 import static io.descoped.dc.api.Builders.addContent;
@@ -460,7 +459,7 @@ class GetTest {
         }
 
         @Override
-        public Optional<Flow.Subscriber<List<ByteBuffer>>> bodyHandler() {
+        public <R> Optional<BodyHandler<R>> bodyHandler() {
             return Optional.empty();
         }
 
