@@ -21,7 +21,7 @@ public class MetricsApplicationResource implements MetricsResource {
     }
 
     /**
-     * Records the start time the uptime is measured from.
+     * Updates the uptime gauge: the time since the resource was created, in milliseconds.
      */
     public void trackUptime() {
         uptime.set(Instant.now().toEpochMilli() - since.get());

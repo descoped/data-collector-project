@@ -82,7 +82,7 @@ public class HealthApplicationMonitor {
     }
 
     /**
-     * When the status was last set, as an ISO-8601 instant.
+     * When the server last started running, as an ISO-8601 instant.
      *
      * @return the time
      */
@@ -100,7 +100,7 @@ public class HealthApplicationMonitor {
     }
 
     /**
-     * The time since the status was last set.
+     * The time since the server last started running.
      *
      * @return the duration, as text
      */

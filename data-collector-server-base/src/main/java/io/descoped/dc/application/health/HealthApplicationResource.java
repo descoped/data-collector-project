@@ -84,7 +84,7 @@ public class HealthApplicationResource implements HealthResource {
         @JsonProperty
         public final Integer port;
         /**
-         * When the status was set.
+         * When the server last started running.
          */
         @JsonProperty
         public final String since;
@@ -94,7 +94,7 @@ public class HealthApplicationResource implements HealthResource {
         @JsonProperty
         public final String now;
         /**
-         * The time since the status was set.
+         * The time since the server last started running.
          */
         @JsonProperty
         public final String uptime;
@@ -105,9 +105,9 @@ public class HealthApplicationResource implements HealthResource {
          * @param status the status
          * @param host   the host
          * @param port   the port
-         * @param since  when the status was set
+         * @param since  when the server last started running
          * @param now    the current time
-         * @param uptime the time since the status was set
+         * @param uptime the time since the server last started running
          */
         public ServerInfo(String status, String host, Integer port, String since, String now, String uptime) {
             this.status = status;
