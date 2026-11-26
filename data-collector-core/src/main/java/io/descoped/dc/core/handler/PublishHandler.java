@@ -63,24 +63,8 @@ public class PublishHandler extends AbstractNodeHandler<Publish> {
                     if (monitor != null && monitor.contentStream().hasNotSetStartPosition()) {
                         monitor.contentStream().setStartPosition(orderedPositions.get(0));
                     }
-
                     commit(contentStore, topicName, orderedPositions, committedPositions);
-
-                    if (LOG.isInfoEnabled()) {
-                        LOG.info("Reordered sequence: [{}] with content [{}]",
-                                String.join(",", orderedPositions),
-                                String.join(",", contentKeys)
-                        );
-                    }
-                    PositionObserver positionObserver = input.state(PositionObserver.class);
-                    // only avail in scope if coming from paginate
-                    if (positionObserver != null) {
-                        positionObserver.completed(orderedPositions.size());
-                    }
-
-                    if (monitor != null) {
-                        monitor.contentStream().setLastPosition(orderedPositions.get(orderedPositions.size() - 1));
-                    }
+                    released(input, monitor, orderedPositions, contentKeys);
                 });
             } finally {
                 contentStore.unlock(topicName);
@@ -90,6 +74,24 @@ public class PublishHandler extends AbstractNodeHandler<Publish> {
         return ExecutionContext.empty();
     }
 
+
+    // the log, the pagination's position observer and the health monitor after a release
+    private static void released(ExecutionContext input, HealthWorkerMonitor monitor, List<String> orderedPositions, Set<String> contentKeys) {
+        if (LOG.isInfoEnabled()) {
+            LOG.info("Reordered sequence: [{}] with content [{}]",
+                    String.join(",", orderedPositions),
+                    String.join(",", contentKeys)
+            );
+        }
+        PositionObserver positionObserver = input.state(PositionObserver.class);
+        // only avail in scope if coming from paginate
+        if (positionObserver != null) {
+            positionObserver.completed(orderedPositions.size());
+        }
+        if (monitor != null) {
+            monitor.contentStream().setLastPosition(orderedPositions.get(orderedPositions.size() - 1));
+        }
+    }
 
     // publishes released positions; one an earlier run committed is completed without being written again (#71)
     private static void commit(ContentStore contentStore, String topicName, List<String> orderedPositions, CommittedPositions committedPositions) {
