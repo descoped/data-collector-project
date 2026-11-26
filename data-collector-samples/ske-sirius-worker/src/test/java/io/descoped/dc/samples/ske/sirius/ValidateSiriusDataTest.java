@@ -973,7 +973,7 @@ public class ValidateSiriusDataTest {
         }
 
         @Override
-        public void close() throws Exception {
+        public void close() throws SQLException {
             conn.close();
         }
     }

@@ -8,6 +8,7 @@ import java.util.List;
 
 public class JqHelper {
 
+    @SuppressWarnings("unchecked") // evaluateList returns the nodes of a JSON document
     public static List<JsonNode> queryList(Object data, String expression) {
         return (List<JsonNode>) Queries.from(Builders.jqpath(expression).build()).evaluateList(data);
     }

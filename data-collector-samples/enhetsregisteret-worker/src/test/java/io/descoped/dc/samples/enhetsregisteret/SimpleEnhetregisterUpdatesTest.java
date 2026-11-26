@@ -53,10 +53,10 @@ public class SimpleEnhetregisterUpdatesTest {
                 """
                         {
                             "_embedded" : {
-                                "oppdaterteEnheter" : [ 
+                                "oppdaterteEnheter" : [
                                 ]
                             }
-                        }                
+                        }
                         """
         );
     }

@@ -238,6 +238,7 @@ public class SimpleAltinn3Test {
         return client.send(request);
     }
 
+    @SuppressWarnings("unchecked") // evaluateList returns the nodes of a JSON document
     List<JsonNode> jqQueryList(Object data, String expression) {
         return (List<JsonNode>) Queries.from(Builders.jqpath(expression).build()).evaluateList(data);
     }
