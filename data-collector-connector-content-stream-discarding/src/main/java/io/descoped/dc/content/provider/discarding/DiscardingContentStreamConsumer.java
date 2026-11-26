@@ -20,7 +20,7 @@ public class DiscardingContentStreamConsumer implements ContentStreamConsumer {
 
     @Override
     public void seek(long timestamp) {
-
+        // nothing to seek in
     }
 
     @Override
@@ -30,6 +30,6 @@ public class DiscardingContentStreamConsumer implements ContentStreamConsumer {
 
     @Override
     public void close() throws Exception {
-
+        // nothing to close
     }
 }

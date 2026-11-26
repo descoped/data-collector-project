@@ -11,6 +11,7 @@ import io.descoped.rawdata.api.RawdataProducer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -106,7 +107,7 @@ public class RawdataClientContentStreamProducer implements ContentStreamProducer
         }
         messageBuilder.position(buffer.position());
 
-        for (Map.Entry<String, byte[]> entry : buffer.data().entrySet()) {
+        for (Map.Entry<String, byte[]> entry : Objects.requireNonNull(buffer.data(), "A buffer without data").entrySet()) {
             messageBuilder.put(entry.getKey(), entry.getValue());
         }
 

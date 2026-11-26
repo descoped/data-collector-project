@@ -71,7 +71,7 @@ public class RawdataClientContentStream implements ContentStream {
         if (producer != null) {
             try {
                 producer.close();
-            } catch (RuntimeException | Error e) {
+            } catch (RuntimeException e) {
                 throw e;
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -85,7 +85,7 @@ public class RawdataClientContentStream implements ContentStream {
         if (consumer != null) {
             try {
                 consumer.close();
-            } catch (RuntimeException | Error e) {
+            } catch (RuntimeException e) {
                 throw e;
             } catch (Exception e) {
                 throw new RuntimeException(e);

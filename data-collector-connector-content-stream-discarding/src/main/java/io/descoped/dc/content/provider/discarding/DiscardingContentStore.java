@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class DiscardingContentStore implements ContentStore {
 
-    private final static Logger LOG = LoggerFactory.getLogger(DiscardingContentStore.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DiscardingContentStore.class);
 
     final AtomicReference<String> lastPositionRef = new AtomicReference<>();
     final Map<ContentStateKey, Set<String>> contentBuffers = new ConcurrentHashMap<>();
@@ -29,10 +29,12 @@ public class DiscardingContentStore implements ContentStore {
 
     @Override
     public void lock(String topic) {
+        // the discarding store does not lock topics
     }
 
     @Override
     public void unlock(String topic) {
+        // the discarding store does not lock topics
     }
 
     @Override
@@ -57,7 +59,6 @@ public class DiscardingContentStore implements ContentStore {
         ContentStreamProducer producer = contentStream.producer(topic + "-pages");
         ContentStreamBuffer.Builder bufferBuilder = producer.builder();
 
-        //String position = httpRequestInfo.getCorrelationIds().first().toString();
         MetadataContent manifest = getMetadataContent(topic + "-pages", position, contentKey, content, MetadataContent.ResourceType.PAGE, httpRequestInfo);
         if (LOG.isTraceEnabled()) {
             LOG.trace("Buffer Page: {}", manifest.toJSON());
@@ -73,7 +74,6 @@ public class DiscardingContentStore implements ContentStore {
     public void bufferPaginationEntryDocument(String topic, String position, String contentKey, byte[] content, HttpRequestInfo httpRequestInfo, Map<String, Object> state) {
         MetadataContent manifest = getMetadataContent(topic, position, contentKey, content, MetadataContent.ResourceType.ENTRY, httpRequestInfo);
         if (LOG.isTraceEnabled()) {
-            System.out.printf("%n");
             LOG.trace("Buffer Entry: {}", manifest.toJSON());
         }
 
@@ -110,8 +110,6 @@ public class DiscardingContentStore implements ContentStore {
             LOG.trace("Publish Positions: {}", List.of(position));
         }
         for (String pos : position) {
-            if (LOG.isTraceEnabled()) {
-            }
             lastPositionRef.set(pos);
             contentBuffers.remove(new ContentStateKey(topic, pos));
         }
@@ -129,6 +127,7 @@ public class DiscardingContentStore implements ContentStore {
 
     @Override
     public void closeTopic(String topic) {
+        // no topic is kept open
     }
 
     @Override

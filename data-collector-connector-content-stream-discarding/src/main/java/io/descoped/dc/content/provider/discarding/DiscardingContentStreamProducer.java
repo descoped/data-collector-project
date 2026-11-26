@@ -2,12 +2,8 @@ package io.descoped.dc.content.provider.discarding;
 
 import io.descoped.dc.api.content.ContentStreamBuffer;
 import io.descoped.dc.api.content.ContentStreamProducer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class DiscardingContentStreamProducer implements ContentStreamProducer {
-
-    private final static Logger LOG = LoggerFactory.getLogger(DiscardingContentStreamProducer.class);
 
     @Override
     public ContentStreamBuffer.Builder builder() {
@@ -26,11 +22,11 @@ public class DiscardingContentStreamProducer implements ContentStreamProducer {
 
     @Override
     public void publish(String... position) {
-
+        // the content is discarded
     }
 
     @Override
     public void close() throws Exception {
-
+        // nothing to close
     }
 }

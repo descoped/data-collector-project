@@ -5,15 +5,11 @@ import io.descoped.dc.api.content.ContentStreamBuffer;
 import io.descoped.dc.api.content.ContentStreamConsumer;
 import io.descoped.dc.api.content.ContentStreamCursor;
 import io.descoped.dc.api.content.ContentStreamProducer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DiscardingContentStream implements ContentStream {
-
-    private final static Logger LOG = LoggerFactory.getLogger(DiscardingContentStream.class);
 
     final Map<String, ContentStreamBuffer> buffersByName = new ConcurrentHashMap<>();
 
@@ -39,15 +35,16 @@ public class DiscardingContentStream implements ContentStream {
 
     @Override
     public void closeAndRemoveProducer(String topic) {
+        // no producers are kept
     }
 
     @Override
     public void closeAndRemoveConsumer(String topic) {
-
+        // no consumers are kept
     }
 
     @Override
     public void close() throws Exception {
-
+        // nothing to close
     }
 }

@@ -67,7 +67,7 @@ public class RawdataClientContentStreamBuffer implements ContentStreamBuffer {
         private UUID id;
         private String position;
         final Map<String, byte[]> data = new LinkedHashMap<>();
-        private List<MetadataContent> manifestList = new ArrayList<>();
+        private final List<MetadataContent> manifestList = new ArrayList<>();
 
         @Override
         public ContentStreamBuffer.Builder id(UUID id) {

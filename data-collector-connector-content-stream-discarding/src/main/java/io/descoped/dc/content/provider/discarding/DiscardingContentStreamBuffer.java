@@ -13,9 +13,10 @@ import java.util.UUID;
 
 public class DiscardingContentStreamBuffer implements ContentStreamBuffer {
 
-    private final static Logger LOG = LoggerFactory.getLogger(DiscardingContentStreamBuffer.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DiscardingContentStreamBuffer.class);
 
     public DiscardingContentStreamBuffer() {
+        // the buffer holds no content
     }
 
 
@@ -51,12 +52,10 @@ public class DiscardingContentStreamBuffer implements ContentStreamBuffer {
 
     static class Builder implements ContentStreamBuffer.Builder {
 
-        private UUID id;
         private String position;
 
         @Override
         public ContentStreamBuffer.Builder id(UUID id) {
-            this.id = id;
             return this;
         }
 
@@ -79,7 +78,7 @@ public class DiscardingContentStreamBuffer implements ContentStreamBuffer {
         @Override
         public ContentStreamBuffer.Builder buffer(String contentKey, byte[] content, MetadataContent manifest) {
             if (LOG.isTraceEnabled()) {
-                LOG.trace("{} -> {} => {}", position, contentKey, new String(content));
+                LOG.trace("{} ->\u00A0{} => {}", position, contentKey, new String(content));
             }
             return this;
         }
