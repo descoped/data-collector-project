@@ -57,7 +57,8 @@ class CORSHandlerTest {
         client = HttpClient.newHttpClient();
         server.start();
 
-        uri = URI.create("http://localhost:" + ((InetSocketAddress) server.getListenerInfo().getFirst().getAddress()).getPort());
+        int port = ((InetSocketAddress) server.getListenerInfo().getFirst().getAddress()).getPort();
+        uri = URI.create("http://localhost:" + port);
     }
 
     private HttpResponse<Void> send(String method, String origin, String... headers) throws IOException {

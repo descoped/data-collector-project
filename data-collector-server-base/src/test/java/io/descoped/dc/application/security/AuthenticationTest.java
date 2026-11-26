@@ -1,6 +1,8 @@
 package io.descoped.dc.application.security;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.descoped.config.DynamicConfiguration;
+import io.descoped.dc.api.util.JsonParser;
 import io.descoped.dc.application.server.UndertowApplication;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -58,6 +60,15 @@ class AuthenticationTest {
             assertEquals(401, send("GET", path, "Authorization", "Basic " + TOKEN).statusCode(), path);
             assertEquals(200, send("GET", path, "Authorization", "Bearer " + TOKEN).statusCode(), path);
         }
+    }
+
+    // initialized on port 0, the server reports the port it is bound to, and so does the health output (#62)
+    @Test
+    void thatTheBoundPortIsReported() throws Exception {
+        assertTrue(server.getPort() > 0, "the port the listener is bound to");
+        HttpResponse<String> health = send("GET", "/health", "Authorization", "Bearer " + TOKEN);
+        JsonNode application = JsonParser.createJsonParser().fromJson(health.body(), JsonNode.class).path("application");
+        assertEquals(server.getPort(), application.path("port").asInt(), health.body());
     }
 
     @Test

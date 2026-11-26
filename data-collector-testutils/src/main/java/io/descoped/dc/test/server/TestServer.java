@@ -92,7 +92,8 @@ public class TestServer implements TestUriResolver {
     }
 
     /**
-     * The server's port.
+     * The server's port: once it is started, the port it is bound to; before that, {@code 0} for a server created on
+     * port 0.
      *
      * @return the port
      */
