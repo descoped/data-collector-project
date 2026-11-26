@@ -322,9 +322,14 @@ A stream is durable, and a position committed in the store is never written agai
   content of an earlier one.
 
 With one writer per topic this holds for every way a specification resumes: from the last entry, from the next page
-or on the last page. How durable a publish is when it returns depends on the rawdata provider: PostgreSQL commits it
-at once, while the Avro providers (filesystem, GCS, S3) commit it when the upload window is uploaded. After a crash,
-the Avro providers can repeat up to one window of positions.
+or on the last page.
+
+It also holds across a crash of the process. rawdata-client 3.2 guarantees in every provider that a publish that
+returned survives a crash, and that once a producer of a topic exists, its last message holds everything published
+before, a crashed process's publishes included. So the worker opens the producers of its topic, and of the page
+topic when a paginate adds page content, before it or the specification's `contentStream` expressions read what is
+committed. With the `filesystem` and `gcs` providers, `local-temp-folder` must be on a disk that outlives the process;
+a lost disk loses what was not uploaded.
 
 The content API is in `io.descoped.dc.api.content`: `ContentStore` (buffer, publish, lock, last position, monitor),
 `ContentStream` (producers and consumers per topic), `ContentStreamProducer`, `ContentStreamConsumer`,

@@ -117,10 +117,14 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
   | dynamic-configuration | 3.0.2 |
   | secrets-client | 3.0.0 |
   | encryption-util | 3.0.1 |
-  | rawdata-client | 3.1.0 |
+  | rawdata-client | 3.2.0-SNAPSHOT (on the owner's request, until 3.2.0 is released) |
 
   rawdata-client 3.1 makes a message id unique in its topic: the same message again is ignored, a different one
-  under a taken id is refused. A recovery run repeated over the same source no longer duplicates the target's
+  under a taken id is refused. rawdata-client 3.2 makes two guarantees in every provider: a publish that returned
+  survives a crash of the process, and once a producer of a topic exists its last message holds everything published
+  before, a crashed process's publishes included. The worker opens its topics' producers before it, or the
+  specification's `contentStream` expressions, read what is committed, so a run resumed after a crash writes every
+  position once. On `filesystem` and `gcs`, `local-temp-folder` must be on a disk that outlives the process. A recovery run repeated over the same source no longer duplicates the target's
   messages (on 3.0.1 the `filesystem` provider stored them twice and `postgres` failed on its key).
 
   Every other dependency is at its latest version. classgraph 6 (for JDK 25 and later) scans only the sources it is

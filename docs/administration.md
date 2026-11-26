@@ -103,6 +103,13 @@ The class path defaults also hold the `postgres.driver.*` and `rawdata.postgres.
 
 `local-temp-folder` is also read by the server: the recovery content store uses its value with the suffix `-recovery`.
 
+**`local-temp-folder` must outlive the process** with the `filesystem` and `gcs` providers. rawdata-client forces each
+publish to disk there before it returns, and uploads what a crashed process left there when the next one opens the
+topic, so a task resumed after a crash or a restart writes every position once. In a container, mount it on a
+persistent volume (the examples mount `/target` from the host). On a volume that is lost with the container, what was
+not uploaded yet is lost too. Each publish costs one disk sync: on a network disk that bounds a topic at a few hundred
+publish calls per second.
+
 ### Encryption
 
 Read by the rawdata connector. See [Encryption of rawdata content](#encryption-of-rawdata-content).
