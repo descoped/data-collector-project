@@ -13,7 +13,7 @@ public abstract class AbstractBaseNode implements Base {
     /**
      * Creates the node; subclasses call it.
      */
-    public AbstractBaseNode() {
+    protected AbstractBaseNode() {
         // no state
     }
 
