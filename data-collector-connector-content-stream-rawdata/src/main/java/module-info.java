@@ -1,5 +1,8 @@
 import io.descoped.dc.api.content.ContentStoreInitializer;
 
+/**
+ * The content store provider {@code rawdata}: content to rawdata-client topics, optionally encrypted.
+ */
 module io.descoped.dc.content.rawdata {
 
     requires io.descoped.service.provider.api;

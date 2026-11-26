@@ -14,18 +14,32 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
+/**
+ * A content stream on a rawdata-client topic: producers publish content as rawdata messages, optionally encrypted.
+ */
 public class RawdataClientContentStream implements ContentStream {
 
     private final RawdataClient client;
     private final Function<byte[], byte[]> tryEncryptContent;
-    private final Map<String, ContentStreamProducer> producerMap = new ConcurrentHashMap<>();
-    private final Map<String, ContentStreamConsumer> consumerMap = new ConcurrentHashMap<>();
+    private final Map<String, RawdataClientContentStreamProducer> producerMap = new ConcurrentHashMap<>();
+    private final Map<String, RawdataClientContentStreamConsumer> consumerMap = new ConcurrentHashMap<>();
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
+    /**
+     * Creates a stream that writes content as given.
+     *
+     * @param client the rawdata client
+     */
     public RawdataClientContentStream(RawdataClient client) {
         this(client, null);
     }
 
+    /**
+     * Creates a stream whose producers pass content and manifests through {@code tryEncryptContent}.
+     *
+     * @param client            the rawdata client
+     * @param tryEncryptContent encrypts content, or returns it as given; {@code null} for none
+     */
     public RawdataClientContentStream(RawdataClient client, Function<byte[], byte[]> tryEncryptContent) {
         this.client = client;
         this.tryEncryptContent = tryEncryptContent;
@@ -67,43 +81,36 @@ public class RawdataClientContentStream implements ContentStream {
 
     @Override
     public void closeAndRemoveProducer(String topic) {
-        ContentStreamProducer producer = producerMap.remove(topic);
+        RawdataClientContentStreamProducer producer = producerMap.remove(topic);
         if (producer != null) {
-            try {
-                producer.close();
-            } catch (RuntimeException e) {
-                throw e;
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            producer.close();
         }
     }
 
     @Override
     public void closeAndRemoveConsumer(String topic) {
-        ContentStreamConsumer consumer = consumerMap.remove(topic);
+        RawdataClientContentStreamConsumer consumer = consumerMap.remove(topic);
         if (consumer != null) {
-            try {
-                consumer.close();
-            } catch (RuntimeException e) {
-                throw e;
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            consumer.close();
         }
     }
 
+    /**
+     * Whether the stream is closed.
+     *
+     * @return true after {@link #close()}
+     */
     public boolean isClosed() {
         return closed.get();
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         if (closed.compareAndSet(false, true)) {
-            for (ContentStreamProducer producer : producerMap.values()) {
+            for (RawdataClientContentStreamProducer producer : producerMap.values()) {
                 producer.close();
             }
-            for (ContentStreamConsumer consumer : consumerMap.values()) {
+            for (RawdataClientContentStreamConsumer consumer : consumerMap.values()) {
                 consumer.close();
             }
             producerMap.clear();

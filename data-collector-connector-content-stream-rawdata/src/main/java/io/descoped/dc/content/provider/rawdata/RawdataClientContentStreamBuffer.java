@@ -11,6 +11,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * The content of one position: its id, its position and its data by content key.
+ */
 public class RawdataClientContentStreamBuffer implements ContentStreamBuffer {
 
     private final UUID id;
@@ -25,6 +28,12 @@ public class RawdataClientContentStreamBuffer implements ContentStreamBuffer {
         this.manifestList = manifestList;
     }
 
+    /**
+     * The buffer of a rawdata message.
+     *
+     * @param message the message, or {@code null}
+     * @return the buffer, or {@code null} for no message
+     */
     public static ContentStreamBuffer of(RawdataMessage message) {
         if (message == null) {
             return null;
@@ -62,12 +71,22 @@ public class RawdataClientContentStreamBuffer implements ContentStreamBuffer {
         return manifestList;
     }
 
+    /**
+     * Builds a buffer; the manifest entries are kept beside the data.
+     */
     public static class Builder implements ContentStreamBuffer.Builder {
 
         private UUID id;
         private String position;
         final Map<String, byte[]> data = new LinkedHashMap<>();
         private final List<MetadataContent> manifestList = new ArrayList<>();
+
+        /**
+         * Creates an empty builder.
+         */
+        public Builder() {
+            // the state is in the fields
+        }
 
         @Override
         public ContentStreamBuffer.Builder id(UUID id) {
