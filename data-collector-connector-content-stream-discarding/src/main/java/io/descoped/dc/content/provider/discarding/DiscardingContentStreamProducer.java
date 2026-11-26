@@ -3,7 +3,17 @@ package io.descoped.dc.content.provider.discarding;
 import io.descoped.dc.api.content.ContentStreamBuffer;
 import io.descoped.dc.api.content.ContentStreamProducer;
 
+/**
+ * A producer that discards what it is given.
+ */
 public class DiscardingContentStreamProducer implements ContentStreamProducer {
+
+    /**
+     * Creates the producer.
+     */
+    public DiscardingContentStreamProducer() {
+        // no state
+    }
 
     @Override
     public ContentStreamBuffer.Builder builder() {
@@ -26,7 +36,7 @@ public class DiscardingContentStreamProducer implements ContentStreamProducer {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         // nothing to close
     }
 }

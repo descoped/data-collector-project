@@ -6,7 +6,17 @@ import io.descoped.dc.api.content.ContentStreamConsumer;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * A consumer that receives nothing.
+ */
 public class DiscardingContentStreamConsumer implements ContentStreamConsumer {
+
+    /**
+     * Creates the consumer.
+     */
+    public DiscardingContentStreamConsumer() {
+        // no state
+    }
 
     @Override
     public String topic() {
@@ -29,7 +39,7 @@ public class DiscardingContentStreamConsumer implements ContentStreamConsumer {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         // nothing to close
     }
 }
