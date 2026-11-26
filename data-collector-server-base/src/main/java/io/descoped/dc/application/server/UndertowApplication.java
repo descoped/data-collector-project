@@ -84,15 +84,25 @@ public class UndertowApplication {
     // without one
     static Authenticator authenticator(DynamicConfiguration configuration) {
         String name = configuration.get("http.authentication.provider", "bearer");
-        Authenticator authenticator = ServiceLoader.load(Authenticator.class, UndertowApplication.class.getClassLoader())
+        Authenticator authenticator = select(ServiceLoader.load(Authenticator.class, UndertowApplication.class.getClassLoader())
                 .stream()
                 .map(ServiceLoader.Provider::get)
-                .filter(provider -> name.equals(provider.name()))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No authentication provider named: " + name));
+                .toList(), name);
         authenticator.initialize(configuration);
         LOG.info("Authentication provider: {}", name);
         return authenticator;
+    }
+
+    // exactly one provider has the name: a second jar must not replace the authenticator unnoticed
+    static Authenticator select(List<Authenticator> providers, String name) {
+        List<Authenticator> named = providers.stream().filter(provider -> name.equals(provider.name())).toList();
+        if (named.isEmpty()) {
+            throw new IllegalStateException("No authentication provider named: " + name);
+        }
+        if (named.size() > 1) {
+            throw new IllegalStateException("More than one authentication provider named: " + name);
+        }
+        return named.get(0);
     }
 
     private CORSHandler configureCORSHandler(DynamicConfiguration configuration, HttpHandler next) {

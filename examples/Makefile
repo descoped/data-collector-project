@@ -1,4 +1,4 @@
-SHELL=/bin/bash -x
+SHELL=/bin/bash
 
 DC_RELEASE_IMAGE=descoped/data-collector:latest
 DC_LOCAL_IMAGE=data-collector:dev

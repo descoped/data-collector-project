@@ -92,8 +92,9 @@ class AuthenticationTest {
         DynamicConfiguration configuration = DynamicConfiguration.builder()
                 .value("prometheus.defaultExports.disabled", "true")
                 .build();
+        int port = findFree();
         IllegalStateException e = assertThrows(IllegalStateException.class,
-                () -> UndertowApplication.initializeUndertowApplication(configuration, findFree(), null));
+                () -> UndertowApplication.initializeUndertowApplication(configuration, port, null));
         assertTrue(e.getMessage().contains("http.authentication.bearer.token"), e.getMessage());
     }
 
@@ -103,8 +104,9 @@ class AuthenticationTest {
                 .value("prometheus.defaultExports.disabled", "true")
                 .value("http.authentication.provider", "none")
                 .build();
+        int port = findFree();
         IllegalStateException e = assertThrows(IllegalStateException.class,
-                () -> UndertowApplication.initializeUndertowApplication(configuration, findFree(), null));
+                () -> UndertowApplication.initializeUndertowApplication(configuration, port, null));
         assertEquals("No authentication provider named: none", e.getMessage());
     }
 
