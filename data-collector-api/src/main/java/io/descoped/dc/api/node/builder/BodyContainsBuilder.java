@@ -22,6 +22,7 @@ public class BodyContainsBuilder extends ResponsePredicateBuilder {
         this.equalToStringLiteral = equalToStringLiteral;
     }
 
+    @SuppressWarnings("unchecked") // the caller names the node type it builds
     @Override
     public <R extends Base> R build(BuildContext buildContext) {
         Query query = queryBuilder.build(buildContext);

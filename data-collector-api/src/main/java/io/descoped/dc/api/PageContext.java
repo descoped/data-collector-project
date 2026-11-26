@@ -111,6 +111,13 @@ public class PageContext {
         final AtomicLong queueCount = new AtomicLong(0);
         final AtomicLong completedCount = new AtomicLong(0);
 
+        /**
+         * Creates an empty instance.
+         */
+        public CompletionInfo() {
+            // the state is in the fields
+        }
+
         public AtomicLong queueCount() {
             return queueCount;
         }
@@ -124,6 +131,13 @@ public class PageContext {
         private List<String> expectedPositions;
         private final Map<String, String> nextPositionMap = new LinkedHashMap<>();
         private List<String> nextPositionVariableNames;
+
+        /**
+         * Creates an empty builder.
+         */
+        public Builder() {
+            // the state is in the fields
+        }
 
         public Builder expectedPositions(List<String> expectedPositions) {
             this.expectedPositions = expectedPositions;

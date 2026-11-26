@@ -11,6 +11,7 @@ public class XmlTokenBuilder extends QueryBuilder {
         super(BuilderType.QueryXmlToken);
     }
 
+    @SuppressWarnings("unchecked") // the caller names the node type it builds
     @Override
     <R extends Base> R build(BuildContext buildContext) {
         return (R) new XmlTokenNode();

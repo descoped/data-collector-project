@@ -47,6 +47,14 @@ public class Configurations {
     public static class Builder {
         final Map<Class<? extends Configuration>, Configuration> configurationMap = new LinkedHashMap<>();
 
+        /**
+         * Creates an empty builder.
+         */
+        public Builder() {
+            // the state is in the fields
+        }
+
+        @SuppressWarnings("unchecked") // a configuration's first interface is its configuration type
         public Builder add(Configuration configuration) {
             Class<? extends Configuration> anInterface = (Class<? extends Configuration>) configuration.getClass().getInterfaces()[0];
             configurationMap.put(anInterface, configuration);

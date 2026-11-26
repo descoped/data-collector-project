@@ -18,6 +18,7 @@ public class InjectionParameters implements Services {
         return instanceMap.containsKey(clazz);
     }
 
+    @SuppressWarnings("unchecked") // the parameter registered for a class is of that class
     @Override
     public <R> R get(Class<R> clazz) {
         try {

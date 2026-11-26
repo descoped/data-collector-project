@@ -11,6 +11,7 @@ public class BodyBuilder extends QueryBuilder {
         super(BuilderType.QueryBody);
     }
 
+    @SuppressWarnings("unchecked") // the caller names the node type it builds
     @Override
     <R extends Base> R build(BuildContext buildContext) {
         return (R) new BodyNode();

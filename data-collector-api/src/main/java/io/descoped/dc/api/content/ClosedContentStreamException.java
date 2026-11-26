@@ -1,6 +1,9 @@
 package io.descoped.dc.api.content;
 
 public class ClosedContentStreamException extends RuntimeException {
+
+    private static final long serialVersionUID = 1L;
+
     public ClosedContentStreamException() {
         super();
     }

@@ -29,6 +29,7 @@ public class NextPageBuilder extends NodeBuilder {
         return this;
     }
 
+    @SuppressWarnings("unchecked") // the caller names the node type it builds
     @Override
     <R extends Base> R build(BuildContext buildContext) {
         Map<String, QueryBuilder.QueryNode> queryNodeMap = new LinkedHashMap<>();

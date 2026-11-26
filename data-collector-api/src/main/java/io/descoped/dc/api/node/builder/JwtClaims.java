@@ -8,6 +8,13 @@ import java.util.Objects;
 
 public class JwtClaims {
 
+    /**
+     * Creates an empty instance.
+     */
+    public JwtClaims() {
+        // the state is in the fields
+    }
+
     @JsonProperty("claims")
     Map<String, String> claims = new LinkedHashMap<>();
 

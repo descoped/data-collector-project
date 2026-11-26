@@ -42,6 +42,7 @@ public class HttpStatusRetryWhileBuilder extends LeafNodeBuilder {
 
     // TODO: implement regex predicate support
 
+    @SuppressWarnings("unchecked") // the caller names the node type it builds
     @Override
     public <R extends Base> R build(BuildContext buildContext) {
         BodyContains bodyContains = bodyContainsBuilder != null ? bodyContainsBuilder.build(buildContext) : null;

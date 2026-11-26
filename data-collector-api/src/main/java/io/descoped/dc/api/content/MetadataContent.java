@@ -43,6 +43,13 @@ public class MetadataContent {
         private final ObjectNode httpInfoNode = JsonParser.createJsonParser().createObjectNode();
         private final ObjectNode stateNode = JsonParser.createJsonParser().createObjectNode();
 
+        /**
+         * Creates an empty builder.
+         */
+        public Builder() {
+            // the state is in the fields
+        }
+
         public Builder correlationId(CorrelationIds correlationIds) {
             metadataNode.put("correlation-id", (correlationIds == null ? null : correlationIds.get().stream().map(UUID::toString).collect(Collectors.joining(","))));
             return this;

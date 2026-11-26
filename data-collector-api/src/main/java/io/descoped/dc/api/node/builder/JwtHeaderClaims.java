@@ -11,6 +11,13 @@ import java.util.Objects;
 
 public class JwtHeaderClaims {
 
+    /**
+     * Creates an empty instance.
+     */
+    public JwtHeaderClaims() {
+        // the state is in the fields
+    }
+
     @JsonProperty
     Map<String, String> headerClaims = new LinkedHashMap<>();
 

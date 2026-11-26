@@ -72,6 +72,7 @@ public class BodyPublisherBuilder extends OperationPublisherBuilder {
         return this;
     }
 
+    @SuppressWarnings("unchecked") // the caller names the node type it builds
     @Override
     public <R extends Base> R build(BuildContext buildContext) {
         BodyPublisherProducer plainTextProducer = plainText == null ? null : plainText.build(buildContext);

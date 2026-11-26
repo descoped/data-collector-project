@@ -32,6 +32,7 @@ public class SecurityBuilder extends ConfigurationBuilder {
         return this;
     }
 
+    @SuppressWarnings("unchecked") // the caller names the node type it builds
     @Override
     public <R extends Base> R build(BuildContext buildContext) {
         List<Identity> identityList = new ArrayList<>();

@@ -21,6 +21,7 @@ public class JwtIdentityBuilder extends IdentityBuilder {
         this.claims = claims;
     }
 
+    @SuppressWarnings("unchecked") // the caller names the node type it builds
     @Override
     public <R extends Base> R build(BuildContext buildContext) {
         return (R) new JwtIdentityNode(id, headerClaims, claims);

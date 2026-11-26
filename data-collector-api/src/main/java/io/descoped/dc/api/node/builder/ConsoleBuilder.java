@@ -15,6 +15,7 @@ public class ConsoleBuilder extends NodeBuilder {
         super(BuilderType.Console);
     }
 
+    @SuppressWarnings("unchecked") // the caller names the node type it builds
     @Override
     <R extends Base> R build(BuildContext buildContext) {
         return (R) new ConsoleNode(buildContext.getInstance(SpecificationBuilder.GLOBAL_CONFIGURATION));

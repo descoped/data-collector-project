@@ -4,6 +4,13 @@ import io.descoped.dc.api.util.CommonUtils;
 
 public class ELCast {
 
+    /**
+     * Creates the functions; expressions call them on the instance bound in the context.
+     */
+    public ELCast() {
+        // no state
+    }
+
     public Float toFloat(String value) {
         if (value == null) {
             return null;

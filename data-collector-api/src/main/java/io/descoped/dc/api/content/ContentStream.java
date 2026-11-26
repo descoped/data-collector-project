@@ -1,5 +1,6 @@
 package io.descoped.dc.api.content;
 
+@SuppressWarnings("try") // close() keeps AutoCloseable's throws Exception; narrowing it is the owner's decision
 public interface ContentStream extends AutoCloseable {
 
     String lastPosition(String topic);

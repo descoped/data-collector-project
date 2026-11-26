@@ -50,10 +50,12 @@ public class BuildContext {
         return nodeBuilderById.containsKey(id);
     }
 
+    @SuppressWarnings("unchecked") // the caller names the type of the instances
     <R> Map<String, R> nodeInstanceById() {
         return (Map<String, R>) nodeInstanceById;
     }
 
+    @SuppressWarnings("unchecked") // the caller names the instance's type
     <R> R getInstance(String id) {
         return (R) nodeInstanceById.get(id);
     }
@@ -66,6 +68,7 @@ public class BuildContext {
         nodeInstanceById.put(id, instance);
     }
 
+    @SuppressWarnings("unchecked") // the instances under a key are of the type the caller names
     <V extends Base> V cacheInstanceIfAbsent(String key, Function<? super String, V> mappingFunction) {
         return (V) nodeInstanceById.computeIfAbsent(key, mappingFunction);
     }

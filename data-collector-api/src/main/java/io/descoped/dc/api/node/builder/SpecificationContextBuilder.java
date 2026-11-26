@@ -63,6 +63,7 @@ public class SpecificationContextBuilder extends ConfigurationBuilder {
      * TODO the ExecutionContext.join() and overlays of context state must be improved. Possible race conditions here.
      * see FlowBuilder.end() and NodeBuilder.build().
      */
+    @SuppressWarnings("unchecked") // the caller names the node type it builds
     @Override
     public <R extends Base> R build(BuildContext buildContext) {
         ExecutionContext context = ExecutionContext.empty();
