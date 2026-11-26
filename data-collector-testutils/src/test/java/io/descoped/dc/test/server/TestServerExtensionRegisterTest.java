@@ -7,8 +7,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.platform.commons.support.HierarchyTraversalMode;
 import org.junit.platform.commons.support.ReflectionSupport;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.lang.reflect.Field;
@@ -25,8 +23,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * compareAndIfInjectionPointExistsSetFieldValue() method.
  */
 class TestServerExtensionRegisterTest {
-
-    private static final Logger LOG = LoggerFactory.getLogger(TestServerExtensionRegisterTest.class);
 
     @RegisterExtension
     static TestServerExtension extension = new TestServerExtension();
@@ -56,12 +52,12 @@ class TestServerExtensionRegisterTest {
     @Disabled("The check it tests is commented out in TestServerExtension.compareAndIfInjectionPointExistsSetFieldValue (a 2.x TODO)")
     @Test
     void thatInjectFieldIsIllegalWhenExpectedFieldStateIfAlreadySet() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            List<Field> injectFields = ReflectionSupport.findFields(TestServerExtensionTest.class, field -> field.isAnnotationPresent(Inject.class), HierarchyTraversalMode.TOP_DOWN);
-            assertFalse(injectFields.isEmpty());
-            TestServerExtensionTest test = new TestServerExtensionTest();
-            extension.compareAndIfInjectionPointExistsSetFieldValue(test, injectFields.get(0), test, TestClient.create(null));
-        });
+        List<Field> injectFields = ReflectionSupport.findFields(TestServerExtensionTest.class, field -> field.isAnnotationPresent(Inject.class), HierarchyTraversalMode.TOP_DOWN);
+        assertFalse(injectFields.isEmpty());
+        TestServerExtensionTest test = new TestServerExtensionTest();
+        Field field = injectFields.get(0);
+        TestClient client = TestClient.create(null);
+        assertThrows(IllegalArgumentException.class, () -> extension.compareAndIfInjectionPointExistsSetFieldValue(test, field, test, client));
     }
 
     /*
@@ -72,21 +68,20 @@ class TestServerExtensionRegisterTest {
     @Test
     @DisplayName("Try to inject TestClient on TestServerExtension that doesn't declare a valid injection point")
     void thatInjectFieldIsInvalid() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            List<Field> injectFields = ReflectionSupport.findFields(TestServerExtensionTest.class, field -> field.isAnnotationPresent(Inject.class), HierarchyTraversalMode.TOP_DOWN);
-            assertFalse(injectFields.isEmpty());
-            extension.compareAndIfInjectionPointExistsSetFieldValue(null, injectFields.get(0), extension, TestClient.create(null));
-        });
+        List<Field> injectFields = ReflectionSupport.findFields(TestServerExtensionTest.class, field -> field.isAnnotationPresent(Inject.class), HierarchyTraversalMode.TOP_DOWN);
+        assertFalse(injectFields.isEmpty());
+        Field field = injectFields.get(0);
+        TestClient client = TestClient.create(null);
+        assertThrows(IllegalArgumentException.class, () -> extension.compareAndIfInjectionPointExistsSetFieldValue(null, field, extension, client));
     }
 
     @Test
     void thatInjectFieldIsNotAllowedOnFinalField() {
-        assertThrows(TestServerException.class, () -> {
-            List<Field> injectFields = ReflectionSupport.findFields(Immutable.class, field -> field.isAnnotationPresent(Inject.class), HierarchyTraversalMode.TOP_DOWN);
-            assertFalse(injectFields.isEmpty());
-            Immutable immutable = new Immutable();
-            extension.compareAndIfInjectionPointExistsSetFieldValue(null, injectFields.get(0), immutable, "test");
-        });
+        List<Field> injectFields = ReflectionSupport.findFields(Immutable.class, field -> field.isAnnotationPresent(Inject.class), HierarchyTraversalMode.TOP_DOWN);
+        assertFalse(injectFields.isEmpty());
+        Immutable immutable = new Immutable();
+        Field field = injectFields.get(0);
+        assertThrows(TestServerException.class, () -> extension.compareAndIfInjectionPointExistsSetFieldValue(null, field, immutable, "test"));
     }
 
     static class Immutable {

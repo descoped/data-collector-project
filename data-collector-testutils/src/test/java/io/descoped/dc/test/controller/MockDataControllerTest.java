@@ -44,7 +44,7 @@ class MockDataControllerTest {
         ResponseHelper<String> eventsResponse = client.get(String.format("/api/events?position=%s&pageSize=%s&stopAt=25", cursor, size)).expect200Ok();
         LOG.trace("{}", eventsResponse.body());
         ArrayNode arrayNode = JsonParser.createJsonParser().fromJson(eventsResponse.body(), ArrayNode.class);
-        assertEquals(arrayNode.size(), 0);
+        assertEquals(0, arrayNode.size());
     }
 
     @Test
@@ -79,7 +79,7 @@ class MockDataControllerTest {
         LOG.trace("{}", eventsResponse.body());
         Document doc = AbstractResource.deserializeXml(eventsResponse.body().getBytes());
         NodeList entryList = doc.getDocumentElement().getElementsByTagName("entry");
-        assertEquals(entryList.getLength(), 0);
+        assertEquals(0, entryList.getLength());
     }
 
     @Test
@@ -108,7 +108,7 @@ class MockDataControllerTest {
     }
 
     @Test
-    void testFailUntilGivenNumberOfRetries() throws InterruptedException {
+    void testFailUntilGivenNumberOfRetries() {
         String cursor = "1";
         int size = 10;
         int retries = 5;

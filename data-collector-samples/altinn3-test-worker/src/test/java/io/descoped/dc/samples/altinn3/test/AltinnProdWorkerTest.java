@@ -36,7 +36,7 @@ import java.util.Map;
 import static io.descoped.dc.api.Builders.*;
 import static io.descoped.dc.api.node.builder.SpecificationBuilder.GLOBAL_CONFIGURATION;
 
-public class AltinnProdWorkerTest {
+class AltinnProdWorkerTest {
 
     static final Logger LOG = LoggerFactory.getLogger(AltinnProdWorkerTest.class);
 
@@ -161,7 +161,7 @@ public class AltinnProdWorkerTest {
     @Disabled("Needs Maskinporten credentials for Altinn 3 (tt02), the business certificate bundle and Google Secret Manager")
     @Test
     void collect() {
-        String serialized = specificationBuilder.serialize();
+        specificationBuilder.serialize();
         //LOG.trace("{}", serialized);
 
         Worker.newBuilder()
@@ -227,7 +227,7 @@ public class AltinnProdWorkerTest {
 
     @Disabled("Generator, not a test: writes this sample's specification to examples/specs; run it by hand to regenerate the file")
     @Test
-    public void writeTargetConsumerSpec() throws IOException {
+    void writeTargetConsumerSpec() throws IOException {
         Path currentPath = CommonUtils.currentPath().getParent().getParent();
         Path targetPath = currentPath.resolve("examples");
 

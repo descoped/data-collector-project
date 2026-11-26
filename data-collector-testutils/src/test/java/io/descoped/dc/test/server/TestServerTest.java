@@ -12,10 +12,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class TestServerTest {
+class TestServerTest {
 
     @Test
-    public void testServer() throws InterruptedException {
+    void testServer() {
         DynamicConfiguration configuration = DynamicConfiguration.builder()
                 .value("http.host", "0.0.0.0")
                 .value("http.cors.allow.origin", ".*")
@@ -51,8 +51,9 @@ public class TestServerTest {
         assertThrows(TestServerException.class, () -> {
             throw new TestServerException("Error message");
         });
+        TestServerException exception = new TestServerException(new RuntimeException());
         assertThrows(TestServerException.class, () -> {
-            throw new TestServerException(new RuntimeException());
+            throw exception;
         });
     }
 }

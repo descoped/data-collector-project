@@ -1,9 +1,15 @@
 package io.descoped.dc.test.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import io.descoped.dc.api.util.JsonParser;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.StringWriter;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RenderEventListTest {
 
@@ -20,8 +26,8 @@ class RenderEventListTest {
     void renderXmlList() {
         StringWriter output = listResource.renderTemplate("event-list-xml.ftl", listResource.getListDataModel(1, 10, -1));
         String xml = listResource.compactXml(output.toString());
-        //xml = resource.prettyXml(xml);
         System.out.printf("%s%n", xml);
+        assertEquals(10, xml.split("<entry>", -1).length - 1);
     }
 
     @Test
@@ -30,6 +36,7 @@ class RenderEventListTest {
         String xml = listResource.compactXml(output.toString());
         xml = itemResource.prettyXml(xml);
         System.out.printf("%s%n", xml);
+        assertTrue(xml.contains("<id>1</id>"), xml);
     }
 
     @Test
@@ -38,6 +45,7 @@ class RenderEventListTest {
         String json = output.toString();
         json = listResource.compactJson(json);
         System.out.printf("%s%n", json);
+        assertEquals(10, JsonParser.createJsonParser().fromJson(json, ArrayNode.class).size());
     }
 
     @Test
@@ -46,5 +54,6 @@ class RenderEventListTest {
         String json = output.toString();
         json = listResource.compactJson(json);
         System.out.printf("%s%n", json);
+        assertEquals("1", JsonParser.createJsonParser().fromJson(json, JsonNode.class).get("id").asText());
     }
 }

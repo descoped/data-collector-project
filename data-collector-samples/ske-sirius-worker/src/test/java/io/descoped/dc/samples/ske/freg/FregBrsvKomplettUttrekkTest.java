@@ -38,7 +38,7 @@ import static io.descoped.dc.api.Builders.status;
 import static io.descoped.dc.api.Builders.statusCode;
 import static io.descoped.dc.api.Builders.whenVariableIsNull;
 
-public class FregBrsvKomplettUttrekkTest {
+class FregBrsvKomplettUttrekkTest {
 
     static final SpecificationBuilder specificationBuilder = Specification.start("SKE-FREG-BRSV-UTTREKK-BATCH", "Collect FREG BRSV Bulk Uttrekk", "maskinporten-jwt-grant")
             .configure(context()
@@ -135,7 +135,7 @@ public class FregBrsvKomplettUttrekkTest {
 
     @Disabled("Needs SKE's production certificate bundle (ske-prod-certs) and Google Secret Manager or the business certificate volume, and Maskinporten")
     @Test
-    public void fregUttrekkBatch() {
+    void fregUttrekkBatch() {
         Worker.newBuilder()
                 .configuration(DynamicConfiguration.builder()
                         .classpath("application-override.properties") // gitignored
@@ -164,7 +164,7 @@ public class FregBrsvKomplettUttrekkTest {
 
     @Disabled("Needs SKE's production certificate bundle (ske-prod-certs) and Google Secret Manager or the business certificate volume, and Maskinporten")
     @Test
-    public void fregUttrekkBatchWithSecretManager() {
+    void fregUttrekkBatchWithSecretManager() {
         DynamicConfiguration securityConfiguration = DynamicConfiguration.builder()
                 .classpath("application-override.properties")
                 .build();
@@ -209,7 +209,7 @@ public class FregBrsvKomplettUttrekkTest {
 
     @Disabled("Generator, not a test: writes this sample's specification to examples/specs; run it by hand to regenerate the file")
     @Test
-    public void writeTargetConsumerSpec() throws IOException {
+    void writeTargetConsumerSpec() throws IOException {
         Path currentPath = CommonUtils.currentPath().getParent().getParent();
         Path targetPath = currentPath.resolve("examples");
 

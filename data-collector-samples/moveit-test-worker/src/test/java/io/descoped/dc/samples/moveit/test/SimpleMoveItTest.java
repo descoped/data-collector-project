@@ -141,9 +141,7 @@ public class SimpleMoveItTest {
         for (int i = 0; i < arrayNodeFileItems.size(); i++) {
             JsonNode itemNode = arrayNodeFileItems.get(i);
             String fileId = jq(itemNode, ".id");
-            String fileName = jq(itemNode, ".name");
             String fileNamePath = jq(itemNode, ".path");
-            String fileUploadStamp = jq(itemNode, ".uploadStamp");
             //LOG.trace("id: {}", fileId);
 
             Response responseFileInfo = GET("/api/v1/files/" + fileId, accessToken);

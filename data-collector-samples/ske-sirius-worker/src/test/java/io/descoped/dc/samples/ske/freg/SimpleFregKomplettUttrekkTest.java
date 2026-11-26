@@ -83,8 +83,7 @@ public class SimpleFregKomplettUttrekkTest {
             Thread.sleep(15 * 1000);
         }
         assertEquals(200, response.statusCode(), new String(response.body()));
-        List<JsonNode> personDocumentIdList = JqHelper.queryList(response.body(), ".dokumentidentifikator[]");
-        return personDocumentIdList;
+        return JqHelper.queryList(response.body(), ".dokumentidentifikator[]");
     }
 
     Response getPersonDocument(String personDocumentId) {

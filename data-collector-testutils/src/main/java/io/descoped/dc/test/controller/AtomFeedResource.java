@@ -41,16 +41,16 @@ class AtomFeedResource extends AbstractResource {
         String stopAt = getQueryParam(exchange.getQueryParameters(), "stopAt", "1025");
 
         Optional<String> contentTypeHeader = getContentTypeHeader(exchange);
-        String contentType = contentTypeHeader.orElse("application/xml");
+        String contentType = contentTypeHeader.orElse(APPLICATION_XML);
 
-        if ("application/xml".equals(contentType)) {
+        if (APPLICATION_XML.equals(contentType)) {
             String payload = renderAtomFeedAsXml(fromMarker, pageSize, stopAt);
             exchange.setStatusCode(200);
-            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/xml");
+            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, APPLICATION_XML);
             exchange.getResponseSender().send(payload);
             return;
 
-        } else if ("application/json".equals(contentType)) {
+        } else if (APPLICATION_JSON.equals(contentType)) {
             throw new UnsupportedOperationException();
         }
 

@@ -52,7 +52,7 @@ import static io.descoped.dc.api.Builders.whenVariableIsNull;
  * https://www.brreg.no/produkter-og-tjenester/apne-data/beskrivelse-av-tjenesten-data-fra-enhetsregisteret/
  * https://data.brreg.no/enhetsregisteret/api/docs/index.html
  */
-public class EnhetsregisteretUpdatesWorkerTest {
+class EnhetsregisteretUpdatesWorkerTest {
 
     static final DynamicConfiguration configuration = DynamicConfiguration.builder()
             .value("content.stream.connector", "rawdata")
@@ -130,7 +130,7 @@ public class EnhetsregisteretUpdatesWorkerTest {
 
     @Tag("live")
     @Test
-    public void thatWorkerCollectEnhetsregisteret() throws InterruptedException {
+    void thatWorkerCollectEnhetsregisteret() {
         Worker.newBuilder()
                 .configuration(configuration.asMap())
                 .stopAtNumberOfIterations(500)
@@ -145,7 +145,7 @@ public class EnhetsregisteretUpdatesWorkerTest {
     void consumeLocalRawdataStore() throws Exception {
         int pos = 0;
         var jsonParser = JsonParser.createJsonParser();
-        Function<byte[], String> toJson = (bytes) -> jsonParser.toPrettyJSON(jsonParser.fromJson(new String(bytes), ObjectNode.class));
+        Function<byte[], String> toJson = bytes -> jsonParser.toPrettyJSON(jsonParser.fromJson(new String(bytes), ObjectNode.class));
         var dashLine = IntStream.range(0, 80).mapToObj(i -> "-").reduce("", String::concat);
 
         try (var client = ProviderConfigurator.configure(RawdataClientInitializer.class, configuration.find("rawdata.client.provider").orElse(null), configuration.asMap())) {
@@ -216,7 +216,7 @@ public class EnhetsregisteretUpdatesWorkerTest {
 
     @Disabled("Generator, not a test: writes this sample's specification to examples/specs; run it by hand to regenerate the file")
     @Test
-    public void writeTargetConsumerSpec() throws IOException {
+    void writeTargetConsumerSpec() throws IOException {
         Path currentPath = CommonUtils.currentPath().getParent().getParent();
         Path targetPath = currentPath.resolve("examples");
 

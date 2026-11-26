@@ -62,8 +62,8 @@ public class GetFregXsdTest {
     }
 
     private CertificateContext getBusinessSSLContext(Map<String, String> providerConfig) {
-        try (SecretManagerClient client = SecretManagerClient.create(providerConfig)) {
-            CertificateFactory certificateFactory = CertificateFactory.create(new GoogleBusinessSSLResource(client));
+        try (SecretManagerClient secretManagerClient = SecretManagerClient.create(providerConfig)) {
+            CertificateFactory certificateFactory = CertificateFactory.create(new GoogleBusinessSSLResource(secretManagerClient));
             return certificateFactory.getCertificateContext("ssb-prod-certs");
         }
     }
@@ -128,8 +128,7 @@ public class GetFregXsdTest {
 
         @Override
         public void close() {
+            // the secret manager client is closed by its owner
         }
     }
-
-    ;
 }

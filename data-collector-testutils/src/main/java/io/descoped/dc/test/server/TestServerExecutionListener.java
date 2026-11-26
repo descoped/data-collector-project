@@ -159,8 +159,8 @@ public class TestServerExecutionListener implements TestExecutionListener {
     }
 
     RuntimeException handleException(Exception e) {
-        if (e instanceof RuntimeException) {
-            return (RuntimeException) e;
+        if (e instanceof RuntimeException runtimeException) {
+            return runtimeException;
         }
         return new LoadTestClassException(e);
     }

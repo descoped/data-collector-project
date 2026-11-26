@@ -35,7 +35,7 @@ class TestServerExtensionTest {
 
     @ConfigurationOverride({"k1", "v1"})
     @Test
-    void testMethodConfigurationOverride1() throws Exception {
+    void testMethodConfigurationOverride1() {
         assertNotNull(testClient);
         assertNotNull(testServer);
         assertConfiguration("testMethodConfigurationOverride1", "k1", "v1");
@@ -43,7 +43,7 @@ class TestServerExtensionTest {
 
     @ConfigurationOverride({"k2", "v2"})
     @Test
-    void testMethodConfigurationOverride2() throws Exception {
+    void testMethodConfigurationOverride2() {
         assertNotNull(testClient);
         assertNotNull(testServer);
         assertConfiguration("testMethodConfigurationOverride2", "k2", "v2");

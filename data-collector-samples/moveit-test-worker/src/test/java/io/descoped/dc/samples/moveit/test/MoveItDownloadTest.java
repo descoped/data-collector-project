@@ -53,7 +53,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * Copy 'src/test/resources/application-sample.properties' to 'src/test/resources/application-ignore.properties' and
  * configure your username and password.
  */
-public class MoveItDownloadTest {
+class MoveItDownloadTest {
 
     static final Logger LOG = LoggerFactory.getLogger(MoveItDownloadTest.class);
 
@@ -165,7 +165,7 @@ public class MoveItDownloadTest {
 
     @Disabled("Generator, not a test: writes this sample's specification to examples/specs; run it by hand to regenerate the file")
     @Test
-    public void writeTargetConsumerSpec() throws IOException {
+    void writeTargetConsumerSpec() throws IOException {
         Path currentPath = CommonUtils.currentPath().getParent().getParent();
         Path targetPath = currentPath.resolve("examples");
 

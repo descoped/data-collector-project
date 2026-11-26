@@ -34,7 +34,7 @@ import static io.descoped.dc.api.Builders.xpath;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 // https://skatteetaten.github.io/folkeregisteret-api-dokumentasjon/oppslag/
-public class FregSvalbardWithMaskinportenWorkerTest {
+class FregSvalbardWithMaskinportenWorkerTest {
 
     static final SpecificationBuilder specificationBuilder = Specification.start("SKE-FREG-BRSV-KONSUMENT", "Collect FREG Svalbard", "maskinporten-jwt-grant")
             .configure(context()
@@ -124,7 +124,7 @@ public class FregSvalbardWithMaskinportenWorkerTest {
 
     @Disabled("Needs SKE's Maskinporten client and the business certificate volume")
     @Test
-    public void thatWorkerCollectFregData() {
+    void thatWorkerCollectFregData() {
         Path scanDirectory = CommonUtils.currentPath().resolve("certs");
         assertTrue(scanDirectory.toFile().exists());
         Worker.newBuilder()
