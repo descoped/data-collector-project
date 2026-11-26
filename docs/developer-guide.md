@@ -468,6 +468,7 @@ provider `safe-configuration`, and holds these keys:
 | `public.certificate` | PEM | File name of the certificate, relative to the directory |
 | `archive.certificate` | PKCS#12 | File name of the archive, relative to the directory |
 | `secret.passphrase` | both | Passphrase. Required: the walk stops at a bundle without it. |
+| `trust.certificates` | both, optional | File name of a PEM file of CA certificates, the bundle's trust anchors |
 
 A bundle with both `private.key` and `public.certificate` is PEM; one with `archive.certificate` is PKCS#12. When a
 bundle name occurs twice, or a bundle has a missing key or file, the walk stops: bundles after it in the walk are not
@@ -476,7 +477,7 @@ set. See [`examples/README.md`](../examples/README.md) for the layout used with 
 
 From Google Secret Manager, with `WorkerBuilder.useBusinessSSLResourceSupplier(Supplier)`: the supplier returns a
 `io.descoped.dc.api.security.BusinessSSLResource` (bundle name, type `pem` or `p12`, certificate, private key, archive,
-passphrase). The server's implementation is `io.descoped.dc.application.ssl.SecretManagerSSLResource`, used when
+passphrase, and optional trust anchors, `trustCertificates()`). The server's implementation is `io.descoped.dc.application.ssl.SecretManagerSSLResource`, used when
 `data.collector.sslBundle.provider` is set; it reads the `data.collector.sslBundle.*` keys. See
 [Administration](administration.md).
 
@@ -490,8 +491,9 @@ A specification selects a bundle in two places:
   `headerClaims().x509CertChain("<bundle>")`. `JwtTokenBodyPublisherProducerHandler` signs the grant with the bundle's
   private key (RS256) and puts the bundle's certificates in the `x5c` header.
 
-The bundle's `SSLContext` uses TLSv1.2. Its trust manager first asks the JDK's default trust manager; when that rejects
-the server's chain, it accepts the chain if the last certificate of the chain equals the bundle's own certificate.
+The bundle's `SSLContext` uses TLSv1.2. Its trust manager is the JDK's PKIX trust manager over `cacerts`, and over the
+bundle's trust anchors too when it has some (`TrustManagers`): a server's chain is verified up to a trust anchor, and is
+never trusted by comparing it with the bundle's own certificate.
 
 ## Writing a content store connector
 

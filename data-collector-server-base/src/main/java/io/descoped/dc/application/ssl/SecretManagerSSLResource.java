@@ -96,6 +96,13 @@ public class SecretManagerSSLResource implements BusinessSSLResource {
     }
 
     @Override
+    public char[] trustCertificates() {
+        return configuration.find("data.collector.sslBundle.trustCertificates")
+                .map(secretName -> asUTF8Chars(readBytesOrNull(secretName)))
+                .orElse(null);
+    }
+
+    @Override
     public char[] passphrase() {
         return asUTF8Chars(readBytesOrNull(configuration.find("data.collector.sslBundle.passphrase").orElse(null)));
     }

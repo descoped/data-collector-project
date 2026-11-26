@@ -49,11 +49,9 @@ public class RecoveryContentStoreComponent implements Component {
         }
         Map<String, String> configMap = new LinkedHashMap<>(this.configuration.asMap());
 
-        // remove data encryption keys in recovery, because encrypted data will be passed from ContentStore-consumer to RecoveryContentStore-producer
-        // we don't want double encryption
-        configMap.remove("rawdata.encryption.key");
-        configMap.remove("rawdata.encryption.salt");
-        configMap.put("recovery.rawdata.encryption.credentials.ignore", "true");
+        // the recovery store copies content that is already encrypted, so it is configured without encryption: every
+        // rawdata.encryption.* key is removed (the primary store has no way to turn its own encryption off)
+        configMap.keySet().removeIf(key -> key.startsWith("rawdata.encryption."));
 
         // custom rule to ensure that producer writes that to recovery folder
         String gscRecoveryFolder = configuration.find("local-temp-folder").orElse(null);

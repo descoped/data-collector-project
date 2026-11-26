@@ -110,7 +110,7 @@ Read by the rawdata connector. See [Encryption of rawdata content](#encryption-o
 
 | Key | Default | Meaning |
 |---|---|---|
-| `rawdata.encryption.provider` | not set | `google-secret-manager`, or `dynamic-secret-configuration` (`dynamic-configuration` is accepted for it). Not set: the key and salt are read from the configuration. |
+| `rawdata.encryption.provider` | not set | `google-secret-manager`, or `dynamic-secret-configuration` (`dynamic-configuration` is accepted for it). Not set: the key and salt are read from the configuration. Any other value stops the server. |
 | `rawdata.encryption.key` | not set | The password; with `google-secret-manager`, the name of the secret that holds it. |
 | `rawdata.encryption.salt` | not set | The salt; with `google-secret-manager`, the name of the secret that holds it. |
 | `rawdata.encryption.gcp.projectId` | not set | Google Cloud project of the secrets. Required with `google-secret-manager`. |
@@ -148,6 +148,7 @@ See [Client certificates](#client-certificates).
 | `data.collector.sslBundle.privateCertificate` | not set | `pem`: name of the secret with the private key. |
 | `data.collector.sslBundle.archiveCertificate` | not set | PKCS#12: name of the secret with the archive. |
 | `data.collector.sslBundle.passphrase` | not set | Name of the secret with the passphrase. |
+| `data.collector.sslBundle.trustCertificates` | not set | Name of the secret with the bundle's trust anchors: CA certificates in PEM, for servers whose chain is not in the JDK's `cacerts`. Not set: `cacerts` only. |
 
 ### Integrity check and recovery settings
 
@@ -496,6 +497,11 @@ The rawdata connector can encrypt the content of every message it writes. The ke
 salt with PBKDF2-HMAC-SHA256, 65 536 iterations, into a 256-bit AES key, as encryption-util 2.0.1 derived it, and
 content is encrypted with encryption-util's `AES256` algorithm.
 
+Encryption fails closed. Without any `rawdata.encryption.*` key, content is not encrypted. Once any of them is set,
+the server starts only with encryption: an unknown `rawdata.encryption.provider`, only one of key and salt, a secret
+that is not found, or an empty value stops it with an error that names the problem, never the secret. Content is never
+written in clear instead.
+
 The password and salt are found like this:
 
 | `rawdata.encryption.provider` | Password and salt |
@@ -555,6 +561,7 @@ bundle directory.
 |---|---|
 | PEM | `private.key` (key file), `public.certificate` (certificate file), `secret.passphrase` |
 | PKCS#12 | `archive.certificate` (archive file), `secret.passphrase` |
+| both, optional | `trust.certificates`: a PEM file of CA certificates, the trust anchors of the servers the bundle is used with when their chain is not in the JDK's `cacerts` |
 
 ```properties
 secret.passphrase=changeit
@@ -562,8 +569,8 @@ private.key=testauth-key.pem
 public.certificate=testauth-public.pem
 ```
 
-When a PEM or PKCS#12 bundle lacks `secret.passphrase` or one of its files, or a second bundle has the same name, the
-server logs a warning, skips that bundle and stops scanning. The image declares `/certs` as a volume; set `data.collector.certs.directory=/certs`,
+When a PEM or PKCS#12 bundle lacks `secret.passphrase` or one of its files (`trust.certificates` included, when it is
+set), or a second bundle has the same name, the server logs a warning, skips that bundle and stops scanning. The image declares `/certs` as a volume; set `data.collector.certs.directory=/certs`,
 as the example profiles do.
 
 ### From Google Secret Manager

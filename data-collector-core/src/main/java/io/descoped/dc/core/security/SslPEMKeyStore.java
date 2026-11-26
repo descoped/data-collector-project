@@ -19,7 +19,6 @@ import org.bouncycastle.pkcs.PKCSException;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 import java.io.CharArrayReader;
 import java.io.IOException;
@@ -107,7 +106,7 @@ class SslPEMKeyStore implements SslKeyStore {
 
             // Create SSL socket factory
             SSLContext context = SSLContext.getInstance(certificateBundle.protocol);
-            TrustManager[] trustManagers = {new BusinessSSLTrustManager(cert)};
+            TrustManager[] trustManagers = {TrustManagers.create(certificateBundle.trustCertificates)};
             context.init(keyManagerFactory.getKeyManagers(), trustManagers, new SecureRandom());
 
             return new CertificateContext(context, (X509TrustManager) trustManagers[0], new KeyPair(cert.getPublicKey(), privateKey));
@@ -115,75 +114,6 @@ class SslPEMKeyStore implements SslKeyStore {
         } catch (IOException | CertificateException | UnrecoverableKeyException | NoSuchAlgorithmException |
                  KeyStoreException | KeyManagementException e) {
             throw new RuntimeException(e);
-        }
-    }
-
-    static class BusinessSSLTrustManager implements X509TrustManager {
-
-        private final X509TrustManager defaultTrustManager;
-        private final X509Certificate[] acceptedIssuers;
-
-        BusinessSSLTrustManager(X509Certificate... acceptedIssuers) {
-            if (acceptedIssuers == null || acceptedIssuers.length == 0) {
-                throw new IllegalStateException("Business SSL Certificate must be applied!");
-            }
-            this.acceptedIssuers = acceptedIssuers;
-
-            TrustManagerFactory tmf;
-            try {
-                tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-                tmf.init((KeyStore) null);
-            } catch (NoSuchAlgorithmException | KeyStoreException e) {
-                throw new RuntimeException(e);
-            }
-
-            X509TrustManager x509Tm = null;
-            for (TrustManager tm : tmf.getTrustManagers()) {
-                if (tm instanceof X509TrustManager x509TrustManager) {
-                    x509Tm = x509TrustManager;
-                    break;
-                }
-            }
-
-            if (x509Tm == null) {
-                throw new IllegalStateException("No X509TrustManager found");
-            }
-
-            this.defaultTrustManager = x509Tm;
-        }
-
-        @Override
-        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-            defaultTrustManager.checkClientTrusted(chain, authType);
-        }
-
-        private boolean isChainTrusted(X509Certificate[] chain) {
-            if (chain == null || chain.length == 0) {
-                return false;
-            }
-            for (X509Certificate cert : acceptedIssuers) {
-                if (cert.equals(chain[chain.length - 1])) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        @Override
-        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-            try {
-                defaultTrustManager.checkServerTrusted(chain, authType);
-            } catch (CertificateException e) {
-                // If the default trust manager fails, check against our accepted issuers
-                if (!isChainTrusted(chain)) {
-                    throw e;
-                }
-            }
-        }
-
-        @Override
-        public X509Certificate[] getAcceptedIssuers() {
-            return acceptedIssuers.clone();
         }
     }
 }

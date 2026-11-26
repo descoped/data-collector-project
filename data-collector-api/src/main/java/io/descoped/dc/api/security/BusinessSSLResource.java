@@ -16,6 +16,16 @@ public interface BusinessSSLResource extends AutoCloseable {
 
     char[] passphrase();
 
+    /**
+     * The bundle's trust anchors: CA certificates in PEM, added to the JDK's {@code cacerts} to verify the servers the
+     * bundle is used with, whose chains are not in {@code cacerts}.
+     *
+     * @return the certificates, or {@code null} or empty for {@code cacerts} only
+     */
+    default char[] trustCertificates() {
+        return null;
+    }
+
     @Override
     void close();
 
