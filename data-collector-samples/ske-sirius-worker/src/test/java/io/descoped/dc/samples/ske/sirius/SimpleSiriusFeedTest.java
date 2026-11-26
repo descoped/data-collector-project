@@ -204,7 +204,7 @@ class SimpleSiriusFeedTest {
             futures.add(requestFuture);
         }
 
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture<?>[0]))
                 .join();
 
         writtenFiles.addAll(fileWriter.positionAndFilenameMap.values());
@@ -390,7 +390,7 @@ class SimpleSiriusFeedTest {
         }
 
         private static String toPrettyXMLWithCommentFix(Node node) {
-            return toPrettyXML((Node) node).replaceFirst("-->", "-->\n");
+            return toPrettyXML(node).replaceFirst("-->", "-->\n");
         }
 
         static String toPrettyXML(String xml) {
