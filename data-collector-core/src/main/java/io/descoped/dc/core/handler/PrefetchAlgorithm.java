@@ -9,6 +9,10 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
+/**
+ * Decides when to prefetch the next page: it counts the expected and the completed positions, and runs the prefetch
+ * when the number of pending positions falls below the threshold and no prefetch is pending.
+ */
 public class PrefetchAlgorithm {
 
     static final Logger LOG = LoggerFactory.getLogger(PrefetchAlgorithm.class);
@@ -22,6 +26,14 @@ public class PrefetchAlgorithm {
     final AtomicLong positionCompletedCounter = new AtomicLong();
     final AtomicLong pendingPrefetches = new AtomicLong(1);
 
+    /**
+     * Creates the algorithm; it starts with one prefetch pending, the first page.
+     *
+     * @param prefetchThreshold the number of pending positions below which the next page is prefetched
+     * @param prefetchRunnable  the prefetch of the next page
+     * @param termination       the worker's termination signal
+     * @param monitor           the health monitor to update with the counts, or {@code null}
+     */
     public PrefetchAlgorithm(int prefetchThreshold, Runnable prefetchRunnable, Termination termination, HealthWorkerMonitor monitor) {
         this.prefetchThreshold = prefetchThreshold;
         this.prefetchRunnable = prefetchRunnable;
@@ -29,6 +41,11 @@ public class PrefetchAlgorithm {
         this.monitor = monitor;
     }
 
+    /**
+     * A position observer that reports expected and completed positions to this algorithm.
+     *
+     * @return a new position observer
+     */
     public PositionObserver getPositionObserver() {
         return new PositionObserver(expectedConsumerFunction(), completedConsumerFunction());
     }

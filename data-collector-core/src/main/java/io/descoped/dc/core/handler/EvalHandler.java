@@ -9,9 +9,18 @@ import io.descoped.dc.api.node.Eval;
 
 import java.util.List;
 
+/**
+ * Executes an {@code Eval} query: when the node has a query, it evaluates it on the data and binds the result to the
+ * node's variable, then evaluates the node's expression. Only string literal queries are supported.
+ */
 @Handler(forClass = Eval.class)
 public class EvalHandler extends AbstractQueryHandler<Eval> {
 
+    /**
+     * Creates the handler of a node.
+     *
+     * @param node the node to execute
+     */
     public EvalHandler(Eval node) {
         super(node);
     }

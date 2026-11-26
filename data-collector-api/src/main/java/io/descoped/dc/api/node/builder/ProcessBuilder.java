@@ -16,6 +16,10 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Builds a {@link Process} node, which runs a {@link Processor} on the current response and returns the variables it
+ * outputs.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class ProcessBuilder extends NodeBuilder {
 
@@ -27,6 +31,12 @@ public class ProcessBuilder extends NodeBuilder {
     @JsonProperty
     Set<String> requiredOutputs = new LinkedHashSet<>();
 
+    /**
+     * Creates the builder of a processor given by its class, for specifications built in Java.
+     *
+     * @param processorClass the processor's class
+     * @throws NullPointerException if {@code processorClass} is {@code null}
+     */
     public ProcessBuilder(Class<? extends Processor> processorClass) {
         super(BuilderType.Process);
         this.processorClass = Objects.requireNonNull(processorClass, "processorClass");
@@ -36,12 +46,19 @@ public class ProcessBuilder extends NodeBuilder {
      * Creates the builder of a processor registered under a name ({@link ProcessorProvider}).
      *
      * @param processor the provider's name
+     * @throws NullPointerException if {@code processor} is {@code null}
      */
     public ProcessBuilder(String processor) {
         super(BuilderType.Process);
         this.processor = Objects.requireNonNull(processor, "processor");
     }
 
+    /**
+     * Adds a variable the processor is required to output.
+     *
+     * @param variable the variable's name
+     * @return this builder
+     */
     public ProcessBuilder output(String variable) {
         requiredOutputs.add(variable);
         return this;

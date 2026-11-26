@@ -4,9 +4,16 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.descoped.dc.api.node.Base;
 import io.descoped.dc.api.node.JsonToken;
 
+/**
+ * Builds a {@link JsonToken} query, which reads a JSON response body as a stream of tokens, one object at a time,
+ * instead of as one document. The query has no expression of its own.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class JsonTokenBuilder extends QueryBuilder {
 
+    /**
+     * Creates the builder.
+     */
     public JsonTokenBuilder() {
         super(BuilderType.QueryJsonToken);
     }

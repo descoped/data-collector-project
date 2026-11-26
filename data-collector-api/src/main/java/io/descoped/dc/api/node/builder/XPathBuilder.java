@@ -7,12 +7,20 @@ import io.descoped.dc.api.node.XPath;
 
 import java.util.Objects;
 
+/**
+ * Builds an {@link XPath} query, which reads values from an XML document with an XPath expression.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class XPathBuilder extends QueryBuilder {
 
     @JsonProperty
     String expression;
 
+    /**
+     * Creates the builder.
+     *
+     * @param expression the XPath expression
+     */
     public XPathBuilder(String expression) {
         super(BuilderType.QueryXPath);
         this.expression = expression;

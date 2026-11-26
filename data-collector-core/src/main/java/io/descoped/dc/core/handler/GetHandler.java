@@ -16,12 +16,22 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
+/**
+ * Executes a {@code Get} node: sends an HTTP GET request and handles its response. When a step of the node is a
+ * sequence that splits with a JSON or XML token query, the body is written to a temporary file; the first
+ * retry-while rule of the node, if any, applies to the request.
+ */
 @SuppressWarnings("unchecked")
 @Handler(forClass = Get.class)
 public class GetHandler extends OperationHandler<Get> {
 
     private static final Logger LOG = LoggerFactory.getLogger(GetHandler.class);
 
+    /**
+     * Creates the handler of a node.
+     *
+     * @param node the node to execute
+     */
     public GetHandler(Get node) {
         super(node);
     }

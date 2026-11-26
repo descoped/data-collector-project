@@ -18,6 +18,10 @@ import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
+/**
+ * The {@link Client} on the {@code java.net.http} client. Sending wraps an {@code IOException}, or an interruption
+ * (with the interrupt status kept), in a {@code RuntimeException}.
+ */
 public class HttpClientDelegate implements Client {
 
     final HttpClient httpClient;
@@ -92,6 +96,10 @@ public class HttpClientDelegate implements Client {
         return httpClient;
     }
 
+    /**
+     * Builds an {@link HttpClientDelegate}; the provider of {@link Client.Builder}. The default version is HTTP/2.
+     * The trust manager is not kept: the client takes its trust managers from the SSL context.
+     */
     public static class ClientBuilder implements Builder {
 
         private Version version = Version.HTTP_2;

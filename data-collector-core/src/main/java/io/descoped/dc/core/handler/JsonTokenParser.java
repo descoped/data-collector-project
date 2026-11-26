@@ -12,11 +12,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.function.Consumer;
 
+/**
+ * The document parser of {@code JsonToken} queries: serializes and deserializes JSON documents, and reads a JSON
+ * array as a stream of tokens, one object at a time.
+ */
 @SupportHandler(forClass = JsonToken.class, selectorClass = DocumentParserFeature.class)
 public class JsonTokenParser implements DocumentParserFeature {
 
     private final JsonParser jsonParser;
 
+    /**
+     * Creates a parser.
+     */
     public JsonTokenParser() {
         jsonParser = JsonParser.createJsonParser();
     }

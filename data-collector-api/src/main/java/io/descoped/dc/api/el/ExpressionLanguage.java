@@ -23,6 +23,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Evaluates the expressions of a specification on the variables of an execution context, in a sandbox: only
+ * the classes on an allow-list and the bound functions can be used, and there is no {@code new}, no loops, no
+ * pragmas and no scripts. Expressions read the configuration keys under {@link #ENV_PREFIX} as {@code ENV}.
+ */
 public class ExpressionLanguage {
 
     private static final Logger LOG = LoggerFactory.getLogger(ExpressionLanguage.class);
@@ -123,6 +128,12 @@ public class ExpressionLanguage {
         }
     }
 
+    /**
+     * Creates the expression language on a copy of the context's variables, with the configuration from the
+     * context's services.
+     *
+     * @param context the context
+     */
     public ExpressionLanguage(ExecutionContext context) {
         this.configuration = context.services().get(ConfigurationMap.class);
         this.variables = new LinkedHashMap<>(context.variables());
@@ -151,12 +162,24 @@ public class ExpressionLanguage {
         return Collections.unmodifiableMap(environment);
     }
 
+    /**
+     * Whether a string holds an expression, {@code ${...}}.
+     *
+     * @param expr the string, or {@code null}
+     * @return {@code true} if it holds one
+     */
     public boolean isExpression(String expr) {
         if (expr == null) return false;
         Matcher m = EXPRESSION_REGEX.matcher(expr);
         return m.find();
     }
 
+    /**
+     * The body of the first expression in a string.
+     *
+     * @param expr the string
+     * @return the expression without its {@code ${...}} delimiters, or the string itself if it holds none
+     */
     public String getExpression(String expr) {
         Matcher m = EXPRESSION_REGEX.matcher(expr);
         if (m.find()) {
@@ -165,6 +188,14 @@ public class ExpressionLanguage {
         return expr;
     }
 
+    /**
+     * Evaluates the first expression in a string, or the string as an expression if it holds none.
+     *
+     * @param expr the string
+     * @return the value
+     * @throws EvaluationException   if the expression fails with a checked exception
+     * @throws IllegalStateException if a registered {@link ExpressionFunctions} has a name that is not valid or is taken
+     */
     public Object evaluateExpression(String expr) {
         AtomicReference<String> expressionRef = new AtomicReference<>();
         try {
@@ -183,6 +214,12 @@ public class ExpressionLanguage {
         }
     }
 
+    /**
+     * Replaces each expression in a string with its value.
+     *
+     * @param expr the string
+     * @return the string with the values
+     */
     public String evaluateExpressions(String expr) {
         Matcher m = MULTI_EXPRESSION_REGEX.matcher(expr);
 

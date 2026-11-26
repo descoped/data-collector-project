@@ -3,11 +3,20 @@ package io.descoped.dc.core.handler;
 import java.util.Arrays;
 import java.util.Objects;
 
+/**
+ * The current entry of a page: the entry as a parsed document node and its serialized content.
+ */
 public class PageEntryState {
 
     final Object nodeObject;
     final byte[] content;
 
+    /**
+     * Creates the state of an entry.
+     *
+     * @param nodeObject the entry as a parsed document node
+     * @param content    the entry's serialized content
+     */
     public PageEntryState(Object nodeObject, byte[] content) {
         this.nodeObject = nodeObject;
         this.content = content;

@@ -27,9 +27,16 @@ import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.function.Consumer;
 
+/**
+ * The document parser of {@code XPath} queries: serializes and deserializes XML documents without DTDs or external
+ * entities, namespace-unaware. It does not deserialize by tokens.
+ */
 @SupportHandler(forClass = XPath.class, selectorClass = DocumentParserFeature.class)
 public class XPathParser implements DocumentParserFeature {
 
+    /**
+     * Creates a parser.
+     */
     public XPathParser() {
         // the parser keeps no state
     }

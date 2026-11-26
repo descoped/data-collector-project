@@ -33,12 +33,22 @@ import static org.w3c.dom.Node.NOTATION_NODE;
 import static org.w3c.dom.Node.PROCESSING_INSTRUCTION_NODE;
 import static org.w3c.dom.Node.TEXT_NODE;
 
+/**
+ * Executes an {@code XPath} query: evaluates the node's XPath expression, with its expressions evaluated first, on an
+ * XML document given as a {@code Document}, bytes or a string. A list or an object result is given as documents, one
+ * per node; a string literal is the text of an element, or the value of an attribute or a text node.
+ */
 @Handler(forClass = XPath.class)
 public class XPathHandler extends AbstractQueryHandler<XPath> {
 
     private final XPathFactory xpathFactory;
     private final DocumentParserFeature parser;
 
+    /**
+     * Creates the handler of a node.
+     *
+     * @param node the node to execute
+     */
     public XPathHandler(XPath node) {
         super(node);
         parser = Queries.parserFor(node.getClass());
@@ -132,9 +142,17 @@ public class XPathHandler extends AbstractQueryHandler<XPath> {
         return evaluateXPath(document, NODE, converter);
     }
 
+    /**
+     * A namespace context that resolves prefixes and namespace URIs with the declarations of a document.
+     */
     public static class IgnoreNamespaceResolver implements NamespaceContext {
         private final Document document;
 
+        /**
+         * Creates a resolver of a document's declarations.
+         *
+         * @param document the document
+         */
         public IgnoreNamespaceResolver(Document document) {
             this.document = document;
         }

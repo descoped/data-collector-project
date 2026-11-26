@@ -5,10 +5,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+/**
+ * The thread-safe implementation of {@link Services}.
+ */
 public class InjectionParameters implements Services {
 
     private final Map<Class<?>, AtomicReference<Object>> instanceMap = new ConcurrentHashMap<>();
 
+    /**
+     * Creates empty services.
+     */
     public InjectionParameters() {
         // no parameters until they are put
     }
@@ -39,6 +45,11 @@ public class InjectionParameters implements Services {
         return this;
     }
 
+    /**
+     * Registers the services of another instance, replacing those of the same class.
+     *
+     * @param injectionParameters the other instance
+     */
     public void putAll(InjectionParameters injectionParameters) {
         for (Map.Entry<Class<?>, AtomicReference<Object>> entry : injectionParameters.instanceMap.entrySet()) {
             instanceMap.put(entry.getKey(), entry.getValue());

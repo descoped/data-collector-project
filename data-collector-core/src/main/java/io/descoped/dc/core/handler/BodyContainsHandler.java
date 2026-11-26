@@ -6,9 +6,18 @@ import io.descoped.dc.api.http.Response;
 import io.descoped.dc.api.node.BodyContains;
 import io.descoped.dc.api.node.ResponsePredicate;
 
+/**
+ * Executes a {@code BodyContains} predicate: the result is true when the node's query, evaluated as a string literal
+ * on the response body, equals the node's string. Without a response it returns an empty context.
+ */
 @Handler(forClass = BodyContains.class)
 public class BodyContainsHandler extends AbstractResponsePredicateHandler<BodyContains> {
 
+    /**
+     * Creates the handler of a node.
+     *
+     * @param node the node to execute
+     */
     public BodyContainsHandler(BodyContains node) {
         super(node);
     }

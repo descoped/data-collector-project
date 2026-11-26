@@ -2,6 +2,9 @@ package io.descoped.dc.api.el;
 
 import io.descoped.dc.api.util.CommonUtils;
 
+/**
+ * The built-in expression functions {@code cast}: string to number conversions.
+ */
 public class ELCast {
 
     /**
@@ -11,6 +14,13 @@ public class ELCast {
         // no state
     }
 
+    /**
+     * Parses a string as {@code Float}.
+     *
+     * @param value the string
+     * @return the value, or {@code null} if the string is {@code null}
+     * @throws NumberFormatException if the string is not a number of the type
+     */
     public Float toFloat(String value) {
         if (value == null) {
             return null;
@@ -24,6 +34,13 @@ public class ELCast {
         }
     }
 
+    /**
+     * Parses a string as {@code Double}.
+     *
+     * @param value the string
+     * @return the value, or {@code null} if the string is {@code null}
+     * @throws NumberFormatException if the string is not a number of the type
+     */
     public Double toDouble(String value) {
         if (value == null) {
             return null;
@@ -37,6 +54,13 @@ public class ELCast {
         }
     }
 
+    /**
+     * Parses a string as {@code Integer}.
+     *
+     * @param value the string
+     * @return the value, or {@code null} if the string is {@code null}
+     * @throws NumberFormatException if the string is not a number of the type
+     */
     public Integer toInteger(String value) {
         if (value == null) {
             return null;
@@ -50,6 +74,13 @@ public class ELCast {
         }
     }
 
+    /**
+     * Parses a string as {@code Long}.
+     *
+     * @param value the string
+     * @return the value, or {@code null} if the string is {@code null}
+     * @throws NumberFormatException if the string is not a number of the type
+     */
     public Long toLong(String value) {
         if (value == null) {
             return null;

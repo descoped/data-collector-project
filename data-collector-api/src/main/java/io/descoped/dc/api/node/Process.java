@@ -4,6 +4,9 @@ import io.descoped.dc.api.Processor;
 
 import java.util.Set;
 
+/**
+ * A node that runs a {@link Processor} on the current context.
+ */
 public interface Process extends Node {
 
     /**
@@ -22,6 +25,11 @@ public interface Process extends Node {
      */
     String processor();
 
+    /**
+     * The variables the processor is required to output; the node fails if the output lacks any of them.
+     *
+     * @return the variable names
+     */
     Set<String> requiredOutputs();
 
 }

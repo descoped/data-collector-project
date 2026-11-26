@@ -12,6 +12,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Builds an {@link AddContent} node, which buffers content in the content store under a position and a content key,
+ * to be published later by a {@code Publish} node.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class AddContentBuilder extends NodeBuilder {
 
@@ -24,12 +28,25 @@ public class AddContentBuilder extends NodeBuilder {
     @JsonProperty
     Map<String, Object> state = new LinkedHashMap<>();
 
+    /**
+     * Creates the builder without state.
+     *
+     * @param positionVariableExpression the expression that gives the position
+     * @param contentKey                 the content key; may be an expression
+     */
     public AddContentBuilder(String positionVariableExpression, String contentKey) {
         super(BuilderType.AddContent);
         this.positionVariableExpression = positionVariableExpression;
         this.contentKey = contentKey;
     }
 
+    /**
+     * Adds a state entry to store with the content, replacing an earlier one with the same key.
+     *
+     * @param key   the entry's key
+     * @param value the entry's value; may be an expression
+     * @return this builder
+     */
     public AddContentBuilder storeState(String key, Object value) {
         state.put(key, value);
         return this;

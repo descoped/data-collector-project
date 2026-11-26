@@ -16,6 +16,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * The health resource {@code worker-history}: the resources of completed workers, newest first.
+ */
 @HealthRenderPriority(priority = 15)
 public class HealthWorkerHistoryResource implements HealthResource {
 
@@ -58,6 +61,13 @@ public class HealthWorkerHistoryResource implements HealthResource {
         return reversedList;
     }
 
+    /**
+     * Adds a snapshot of the worker's resource to the history. The history keeps the latest 25: when it is full, the
+     * oldest entry is removed before the new one is added.
+     *
+     * @param workerResource the worker's health resource
+     * @throws WorkerException when the thread is interrupted while waiting for the lock
+     */
     public void add(HealthWorkerResource workerResource) {
         try {
             lock.lockInterruptibly();
@@ -68,8 +78,9 @@ public class HealthWorkerHistoryResource implements HealthResource {
         try {
             JsonParser jsonParser = JsonParser.createJsonParser();
             ObjectNode convertedNode = jsonParser.mapper().convertValue(workerResource.resource(), ObjectNode.class);
-            if (historyList.size() > MAX_HISTORY_CAPACITY) {
-                historyList.remove(historyList.size() - 1);
+            // the latest MAX_HISTORY_CAPACITY workers: the oldest goes first
+            while (historyList.size() >= MAX_HISTORY_CAPACITY) {
+                historyList.remove(0);
             }
             historyList.add(convertedNode);
 

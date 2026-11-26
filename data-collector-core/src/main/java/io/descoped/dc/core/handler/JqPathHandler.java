@@ -21,6 +21,10 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.Optional.ofNullable;
 
+/**
+ * Executes a {@code JqPath} query: evaluates the node's jq expression (jq 1.6), with its expressions evaluated first,
+ * on a JSON document given as an {@code ObjectNode}, bytes or a string.
+ */
 @Handler(forClass = JqPath.class)
 public class JqPathHandler extends AbstractQueryHandler<JqPath> {
 
@@ -34,6 +38,11 @@ public class JqPathHandler extends AbstractQueryHandler<JqPath> {
         BuiltinFunctionLoader.getInstance().loadFunctions(JQ_VERSION, rootScope);
     }
 
+    /**
+     * Creates the handler of a node.
+     *
+     * @param node the node to execute
+     */
     public JqPathHandler(JqPath node) {
         super(node);
         jsonParser = Queries.parserFor(node.getClass());

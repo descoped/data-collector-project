@@ -12,11 +12,21 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.function.Consumer;
 
+/**
+ * Entry points for evaluating queries and for the document parsers of query types.
+ */
 public class Queries {
 
     private Queries() {
     }
 
+    /**
+     * The document parser registered for a query type.
+     *
+     * @param queryClass the query type, or a class implementing it as its first interface
+     * @return the parser
+     * @throws IllegalStateException if no parser is registered for the query type
+     */
     @SuppressWarnings("unchecked") // a query node's first interface is its query type
     public static DocumentParserFeature parserFor(Class<? extends Query> queryClass) {
         if (!queryClass.isInterface()) {
@@ -26,10 +36,23 @@ public class Queries {
         return new DocumentParserWrapper(parser);
     }
 
+    /**
+     * A query evaluator of a query, with an empty context.
+     *
+     * @param query the query
+     * @return the evaluator, which executes the query's handler on each evaluation
+     */
     public static QueryFeature from(Query query) {
         return new QueryHandlerWrapper(query);
     }
 
+    /**
+     * A query evaluator of a query, with a copy of a context.
+     *
+     * @param context the context, copied
+     * @param query   the query
+     * @return the evaluator, which executes the query's handler on each evaluation
+     */
     public static QueryFeature from(ExecutionContext context, Query query) {
         return new QueryHandlerWrapper(context, query);
     }

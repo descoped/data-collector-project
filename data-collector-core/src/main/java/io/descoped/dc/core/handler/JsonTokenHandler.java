@@ -9,9 +9,17 @@ import io.descoped.dc.api.node.JsonToken;
 
 import java.nio.file.Path;
 
+/**
+ * Executes a {@code JsonToken} query: the result is the file the response body was written to.
+ */
 @Handler(forClass = JsonToken.class)
 public class JsonTokenHandler extends AbstractHandler<JsonToken> {
 
+    /**
+     * Creates the handler of a node.
+     *
+     * @param node the node to execute
+     */
     public JsonTokenHandler(JsonToken node) {
         super(node);
     }

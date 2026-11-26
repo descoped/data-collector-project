@@ -10,6 +10,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Builds the {@link Security} configuration of a specification: the SSL bundle of its client certificate and its
+ * identities.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class SecurityBuilder extends ConfigurationBuilder {
 
@@ -18,15 +22,30 @@ public class SecurityBuilder extends ConfigurationBuilder {
     @JsonProperty("identities")
     List<IdentityBuilder> identities = new ArrayList<>();
 
+    /**
+     * Creates the builder without an SSL bundle or identities.
+     */
     public SecurityBuilder() {
         super(BuilderType.Security);
     }
 
+    /**
+     * Sets the name of the SSL bundle the HTTP client uses.
+     *
+     * @param bundleName the SSL bundle's name
+     * @return this builder
+     */
     public SecurityBuilder sslBundleName(String bundleName) {
         this.bundleName = bundleName;
         return this;
     }
 
+    /**
+     * Adds an identity.
+     *
+     * @param identityBuilder the identity's builder
+     * @return this builder
+     */
     public SecurityBuilder identity(IdentityBuilder identityBuilder) {
         this.identities.add(identityBuilder);
         return this;
@@ -63,11 +82,20 @@ public class SecurityBuilder extends ConfigurationBuilder {
                 '}';
     }
 
+    /**
+     * The {@link Security} configuration this builder builds.
+     */
     public static class SecurityNode extends LeafNode implements Security {
 
         private final String sslBundleName;
         private final List<Identity> identities;
 
+        /**
+         * Creates the node.
+         *
+         * @param sslBundleName the name of the SSL bundle, or {@code null} for none
+         * @param identities    the identities
+         */
         public SecurityNode(String sslBundleName, List<Identity> identities) {
             this.sslBundleName = sslBundleName;
             this.identities = identities;

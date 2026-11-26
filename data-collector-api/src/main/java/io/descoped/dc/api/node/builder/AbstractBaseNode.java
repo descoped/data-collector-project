@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 /**
- * Base for node implementation classes
+ * Base for node implementation classes: implements the type checks and casts of {@link Base}.
  */
 public abstract class AbstractBaseNode implements Base {
 

@@ -14,6 +14,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Flow;
 
+/**
+ * The {@link Request} on a {@code java.net.http} request.
+ */
 public class HttpRequestDelegate implements Request {
 
     final HttpRequest httpRequest;
@@ -41,6 +44,10 @@ public class HttpRequestDelegate implements Request {
         return httpRequest;
     }
 
+    /**
+     * Builds an {@link HttpRequestDelegate}; the provider of {@link Request.Builder}. A PUT or POST needs a body of bytes
+     * or a body publisher, and the body publisher must be an {@code HttpRequest.BodyPublisher}.
+     */
     public static class RequestBuilder implements Request.Builder {
 
         String url;

@@ -13,6 +13,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
+/**
+ * Base for the builders of flow nodes: the nodes of a specification's execution tree, which carry the global
+ * configuration and can have children.
+ */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class NodeBuilder extends AbstractBuilder {
 
@@ -20,12 +24,22 @@ public abstract class NodeBuilder extends AbstractBuilder {
         super(type);
     }
 
+    /**
+     * Serializes this builder to pretty-printed JSON.
+     *
+     * @return the JSON
+     */
     public String serialize() {
         return JsonParser.createJsonParser().toPrettyJSON(this);
     }
 
+    /**
+     * Serializes this builder to YAML.
+     *
+     * @return the YAML
+     */
     public String serializeAsYaml() {
-        return JsonParser.createJsonParser().toPrettyJSON(this);
+        return JsonParser.createYamlParser().toPrettyJSON(this);
     }
 
     /**
@@ -37,6 +51,12 @@ public abstract class NodeBuilder extends AbstractBuilder {
     abstract <R extends Base> R build(BuildContext buildContext);
 
     // see FLowBuilder.end()
+    /**
+     * Builds the node with an empty {@link BuildContext} that holds a default (empty) global configuration.
+     *
+     * @param <R> the node type the caller expects
+     * @return the node
+     */
     public <R extends Base> R build() {
         BuildContext buildContext = BuildContext.empty();
         Configurations.Builder configurationsBuilder = new Configurations.Builder();
@@ -45,10 +65,19 @@ public abstract class NodeBuilder extends AbstractBuilder {
         return build(buildContext);
     }
 
+    /**
+     * Base for flow node implementations: holds the global configuration and traverses the node tree depth first,
+     * in pre-order.
+     */
     public abstract static class FlowNode extends AbstractBaseNode implements Node {
 
         final Configurations configurations;
 
+        /**
+         * Creates the node; subclasses call it.
+         *
+         * @param configurations the global configuration of the specification
+         */
         protected FlowNode(Configurations configurations) {
             this.configurations = configurations;
         }

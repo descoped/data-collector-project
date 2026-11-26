@@ -8,9 +8,18 @@ import io.descoped.dc.api.node.StringBodyPublisherProducer;
 
 import java.util.Objects;
 
+/**
+ * Executes a {@code StringBodyPublisherProducer} node: evaluates the expressions in the node's text and returns it as
+ * bytes, the {@code BodyPublisherProducer} state.
+ */
 @Handler(forClass = StringBodyPublisherProducer.class)
 public class StringBodyPublisherProducerHandler extends AbstractHandler<StringBodyPublisherProducer> {
 
+    /**
+     * Creates the handler of a node.
+     *
+     * @param node the node to execute
+     */
     public StringBodyPublisherProducerHandler(StringBodyPublisherProducer node) {
         super(node);
     }

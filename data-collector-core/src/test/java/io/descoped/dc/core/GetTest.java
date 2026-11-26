@@ -407,6 +407,18 @@ class GetTest {
         assertThrows(IllegalStateException.class, () -> Executor.execute(node, input));
     }
 
+    // #57: every required output must be present, and a process without required outputs passes the check
+    @Test
+    void thatEveryRequiredOutputMustBePresent() {
+        ExecutionContext input = ExecutionContext.empty().state(Response.class,
+                new MockResponse("http://example.com", new Headers(), 200, "[{\"id\": \"1\"}]".getBytes()));
+        Process oneOfTwo = process(ReturnNextPagePosition.class).output("nextPosition").output("missing").build();
+        Process none = process(ReturnNextPagePosition.class).build();
+
+        assertThrows(IllegalStateException.class, () -> Executor.execute(oneOfTwo, input));
+        assertNotNull(Executor.execute(none, input));
+    }
+
     @Test
     void thatXpathReturnsList() {
         List<?> list = Queries.from(xpath("/feed/entry").build()).evaluateList(xml.getBytes());

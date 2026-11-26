@@ -1,5 +1,8 @@
 package io.descoped.dc.core.controller;
 
+/**
+ * An empty class that keeps this package in the module, so that it can be exported and opened.
+ */
 public class CircumventIllegalModulePackage {
 
     /**

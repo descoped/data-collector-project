@@ -16,11 +16,21 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.concurrent.Flow;
 
+/**
+ * Executes a {@code BodyPublisher} node: builds the request body publisher for its encoding (plain text, URL encoded
+ * form data or multipart form data), sets the {@code Content-Type} header on the request builder for the form
+ * encodings, and returns the publisher as the {@code BODY_PUBLISHER_RESULT} state.
+ */
 @Handler(forClass = BodyPublisher.class)
 public class BodyPublisherHandler extends AbstractHandler<BodyPublisher> {
 
     private static final Logger LOG = LoggerFactory.getLogger(BodyPublisherHandler.class);
 
+    /**
+     * Creates the handler of a node.
+     *
+     * @param node the node to execute
+     */
     public BodyPublisherHandler(BodyPublisher node) {
         super(node);
     }

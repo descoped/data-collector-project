@@ -13,11 +13,21 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 
+/**
+ * Executes a {@code Publish} node: when the content store holds content for the evaluated position, it marks the
+ * position completed and publishes, in order, the positions that the reordering buffer releases, then reports them
+ * to the position observer and the health monitor.
+ */
 @Handler(forClass = Publish.class)
 public class PublishHandler extends AbstractNodeHandler<Publish> {
 
     private static final Logger LOG = LoggerFactory.getLogger(PublishHandler.class);
 
+    /**
+     * Creates the handler of a node.
+     *
+     * @param node the node to execute
+     */
     public PublishHandler(Publish node) {
         super(node);
     }

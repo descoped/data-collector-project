@@ -22,6 +22,9 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
+ * The Jackson deserializer of the builders: reads a specification, or any of its nodes, from JSON or YAML, choosing
+ * each node's builder by its {@code type} property ({@link BuilderType}).
+ * <p>
  * TODO Rewrite to a generic deserializer
  */
 public class NodeBuilderDeserializer extends StdDeserializer<AbstractBuilder> {
@@ -37,10 +40,18 @@ public class NodeBuilderDeserializer extends StdDeserializer<AbstractBuilder> {
     private static final String RESPONSE_VALIDATORS = "responseValidators";
     private static final String RETURN_VARIABLES = "returnVariables";
 
+    /**
+     * Creates the deserializer.
+     */
     public NodeBuilderDeserializer() {
         this(null);
     }
 
+    /**
+     * Creates the deserializer of a value class.
+     *
+     * @param vc the class of the values it deserializes
+     */
     protected NodeBuilderDeserializer(Class<?> vc) {
         super(vc);
     }

@@ -16,6 +16,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * Builds a {@link Parallel} node, which splits a page into entries with a query and, for each entry concurrently,
+ * sets its variables and runs its steps, the pipes. The node also holds an optional publish node, which the engine
+ * does not run: a publish step goes among the pipes.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class ParallelBuilder extends NodeBuilder {
 
@@ -28,21 +33,45 @@ public class ParallelBuilder extends NodeBuilder {
     @JsonProperty("publish")
     PublishBuilder publishBuilder;
 
+    /**
+     * Creates the builder without variables, steps or publish node.
+     *
+     * @param splitBuilder the query that splits the page into entries
+     */
     public ParallelBuilder(QueryBuilder splitBuilder) {
         super(BuilderType.Parallel);
         this.splitBuilder = splitBuilder;
     }
 
+    /**
+     * Adds a variable read from each entry, replacing an earlier one with the same name.
+     *
+     * @param identifier   the variable's name
+     * @param queryBuilder the query that reads the variable's value from the entry
+     * @return this builder
+     */
     public ParallelBuilder variable(String identifier, QueryBuilder queryBuilder) {
         variables.put(identifier, queryBuilder);
         return this;
     }
 
+    /**
+     * Adds a step to run for each entry.
+     *
+     * @param builder the step's builder
+     * @return this builder
+     */
     public ParallelBuilder pipe(NodeBuilder builder) {
         pipes.add(builder);
         return this;
     }
 
+    /**
+     * Sets the publish node, which the node holds but the engine does not run.
+     *
+     * @param publishBuilder the publish node's builder
+     * @return this builder
+     */
     public ParallelBuilder publish(PublishBuilder publishBuilder) {
         this.publishBuilder = publishBuilder;
         return this;

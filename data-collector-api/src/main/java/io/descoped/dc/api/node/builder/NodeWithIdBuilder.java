@@ -6,6 +6,9 @@ import io.descoped.dc.api.node.NodeWithId;
 
 import java.util.Objects;
 
+/**
+ * Base for the builders of flow nodes that have an id, by which other nodes refer to them.
+ */
 public abstract class NodeWithIdBuilder extends NodeBuilder {
 
     @JsonProperty
@@ -45,6 +48,9 @@ public abstract class NodeWithIdBuilder extends NodeBuilder {
                 '}';
     }
 
+    /**
+     * Base for flow node implementations that have an id.
+     */
     public abstract static class FlowNodeWithId extends FlowNode implements NodeWithId {
         final String id;
 

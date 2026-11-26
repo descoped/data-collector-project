@@ -14,11 +14,20 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+/**
+ * Executes a {@code RegEx} query: evaluates the node's sub-query as a string literal, and returns the first match of
+ * the node's regular expression in it, or {@code null}. Only string literal queries are supported.
+ */
 @Handler(forClass = RegEx.class)
 public class RegExHandler extends AbstractQueryHandler<RegEx> {
 
     static final Map<String, Pattern> patternCache = new ConcurrentHashMap<>();
 
+    /**
+     * Creates the handler of a node.
+     *
+     * @param node the node to execute
+     */
     public RegExHandler(RegEx node) {
         super(node);
     }

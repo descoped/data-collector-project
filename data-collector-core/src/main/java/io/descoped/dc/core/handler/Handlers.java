@@ -24,6 +24,10 @@ import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.returns;
 
+/**
+ * The registry of the handlers: it finds the handler classes of this package by their {@code Handler},
+ * {@code SupportHandler} and {@code CompositionHandler} annotations, and creates a handler for a node.
+ */
 public class Handlers {
 
     private static final boolean USE_BYTE_BUDDY = false;
@@ -43,6 +47,15 @@ public class Handlers {
     }
 
     // the handlers are registered by their annotations: the class of a node's handler is an AbstractHandler of that node
+    /**
+     * Creates the handler of a node, registered for the node's type.
+     *
+     * @param node the node
+     * @param <N>  the type of the node
+     * @return a new handler of the node
+     * @throws IllegalStateException if no handler is registered for the node's type
+     * @throws RuntimeException      if the handler cannot be created
+     */
     @SuppressWarnings("unchecked")
     public static <N extends Base> AbstractHandler<N> createHandlerFor(N node) {
         try {
@@ -78,6 +91,16 @@ public class Handlers {
         }
     }
 
+    /**
+     * Creates the support handler registered for a node type and a selector class, with its no-argument constructor.
+     *
+     * @param forNodeClass  the node type
+     * @param selectorClass the selector class
+     * @param <R>           the type of the support handler
+     * @return a new support handler
+     * @throws IllegalStateException if no support handler is registered for the pair
+     * @throws RuntimeException      if the support handler cannot be created
+     */
     @SuppressWarnings("unchecked") // the caller names the support handler's type
     public static <R> R createSupportHandlerFor(Class<? extends Base> forNodeClass, Class<?> selectorClass) {
         try {
@@ -98,6 +121,17 @@ public class Handlers {
         }
     }
 
+    /**
+     * Creates the composition handler registered for a node type and a selector node type, for a node.
+     *
+     * @param node              the node
+     * @param forNodeClass      the node type
+     * @param selectorNodeClass the selector node type
+     * @param <N>               the type of the node
+     * @return a new composition handler of the node
+     * @throws IllegalStateException if no composition handler is registered for the pair
+     * @throws RuntimeException      if the composition handler cannot be created
+     */
     @SuppressWarnings("unchecked") // as createHandlerFor
     public static <N extends Base> AbstractHandler<N> createCompositionHandlerFor(N node,
                                                                                   Class<? extends Base> forNodeClass,

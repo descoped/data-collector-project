@@ -12,6 +12,10 @@ import java.util.Optional;
 
 import static java.util.Optional.ofNullable;
 
+/**
+ * The {@link Response} read from a {@code java.net.http} response: its URL, headers, status code, a copy of its body
+ * and the previous response, if any.
+ */
 public class HttpResponseDelegate implements Response {
 
     final String url;
@@ -67,6 +71,10 @@ public class HttpResponseDelegate implements Response {
         return ofNullable(previousResponse);
     }
 
+    /**
+     * Builds an {@link HttpResponseDelegate} from a {@code java.net.http} response; the provider of
+     * {@link Response.Builder}. Without a response it builds an empty response with status 406 (Not Acceptable).
+     */
     @SuppressWarnings("unchecked")
     public static class ResponseBuilder implements Builder {
 

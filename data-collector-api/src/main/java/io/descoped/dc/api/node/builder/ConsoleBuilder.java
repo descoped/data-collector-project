@@ -8,9 +8,15 @@ import io.descoped.dc.api.node.Node;
 
 import java.util.Iterator;
 
+/**
+ * Builds a {@link Console} node; when the engine executes it, the console handler of the core logs the state.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class ConsoleBuilder extends NodeBuilder {
 
+    /**
+     * Creates the builder.
+     */
     public ConsoleBuilder() {
         super(BuilderType.Console);
     }

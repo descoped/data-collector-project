@@ -29,6 +29,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * The base of the handlers of HTTP operations: it sends the request with the context's and the node's headers to the
+ * evaluated URL, retries on errors, validates the response, adds the page to the content store when the paginate
+ * handler asks for it, and executes the node's steps on the response.
+ *
+ * @param <T> the type of operation node the handler executes
+ */
 public abstract class OperationHandler<T extends Operation> extends AbstractNodeHandler<T> {
 
     private static final String RETRY_COUNT = "data.collector.http.request.retryCount";
@@ -37,6 +44,11 @@ public abstract class OperationHandler<T extends Operation> extends AbstractNode
 
     private static final Logger LOG = LoggerFactory.getLogger(OperationHandler.class);
 
+    /**
+     * Creates a handler for an operation node.
+     *
+     * @param node the node to execute
+     */
     protected OperationHandler(T node) {
         super(node);
     }

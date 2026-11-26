@@ -15,9 +15,16 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * Builds a {@link Specification}: its id, name, configuration and functions (the nodes with ids), and the function
+ * the execution starts at. It serializes to JSON or YAML and is read back with {@link NodeBuilderDeserializer}.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class SpecificationBuilder extends AbstractBuilder {
 
+    /**
+     * The key of the global configuration among the node instances of a {@link BuildContext}.
+     */
     public static final String GLOBAL_CONFIGURATION = "GLOBAL_CONFIGURATION";
 
     @JsonProperty("id")
@@ -32,6 +39,13 @@ public class SpecificationBuilder extends AbstractBuilder {
     @JsonProperty("functions")
     Map<String, NodeBuilder> nodeBuilderById = new LinkedHashMap<>();
 
+    /**
+     * Creates the builder.
+     *
+     * @param specificationId the specification's id
+     * @param name            the specification's name
+     * @param startFunctionId the id of the function the execution starts at
+     */
     @ConfigSetter
     public SpecificationBuilder(String specificationId, String name, String startFunctionId) {
         super(BuilderType.Specification);
@@ -40,20 +54,42 @@ public class SpecificationBuilder extends AbstractBuilder {
         this.startFunctionId = startFunctionId;
     }
 
+    /**
+     * The specification's id.
+     *
+     * @return the id
+     */
     public String getId() {
         return specificationId;
     }
 
+    /**
+     * The specification's name.
+     *
+     * @return the name
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Adds a configuration section, such as the specification's context or security.
+     *
+     * @param builder the configuration's builder
+     * @return this builder
+     */
     @ConfigSetter
     public SpecificationBuilder configure(ConfigurationBuilder builder) {
         configurationBuilders.add(builder);
         return this;
     }
 
+    /**
+     * Adds a function under its id, replacing an earlier one with the same id.
+     *
+     * @param builder the function's builder; its id must be set
+     * @return this builder
+     */
     @ConfigSetter
     public SpecificationBuilder function(NodeWithIdBuilder builder) {
         nodeBuilderById.put(builder.getId(), builder);
@@ -62,6 +98,11 @@ public class SpecificationBuilder extends AbstractBuilder {
 
     /*
      * see NodeBuilder.build()
+     */
+    /**
+     * Builds the specification: first the configuration, then every function.
+     *
+     * @return the specification
      */
     public Specification end() {
         BuildContext buildContext = BuildContext.fromNodeBuilderById(nodeBuilderById);
@@ -85,14 +126,31 @@ public class SpecificationBuilder extends AbstractBuilder {
         return Specification.create(specificationId, name, configurations, buildContext.getInstance(startFunctionId), buildContext.nodeInstanceById());
     }
 
+    /**
+     * The builder of a function.
+     *
+     * @param nodeId the function's id
+     * @return the builder
+     * @throws java.util.NoSuchElementException if no function has that id
+     */
     public NodeBuilder get(String nodeId) {
         return Optional.ofNullable(nodeBuilderById.get(nodeId)).orElseThrow();
     }
 
+    /**
+     * Serializes this builder to pretty-printed JSON.
+     *
+     * @return the JSON
+     */
     public String serialize() {
         return JsonParser.createJsonParser().toPrettyJSON(this);
     }
 
+    /**
+     * Serializes this builder to YAML.
+     *
+     * @return the YAML
+     */
     public String serializeAsYaml() {
         return JsonParser.createYamlParser().toPrettyJSON(this);
     }

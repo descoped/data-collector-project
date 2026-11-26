@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 
+/**
+ * Base for the builders of identities in the security configuration; each identity has an id.
+ */
 public abstract class IdentityBuilder extends LeafNodeBuilder {
 
     @JsonProperty
@@ -28,10 +31,21 @@ public abstract class IdentityBuilder extends LeafNodeBuilder {
         return Objects.hash(super.hashCode(), id);
     }
 
+    /**
+     * Base for identity node implementations.
+     */
     public abstract class IdentityNode extends LeafNode {
 
+        /**
+         * The identity's id.
+         */
         protected final String id;
 
+        /**
+         * Creates the node; subclasses call it.
+         *
+         * @param id the identity's id
+         */
         protected IdentityNode(String id) {
             this.id = id;
         }

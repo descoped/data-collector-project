@@ -20,11 +20,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * Executes a {@code Sequence} node: splits the response into entries (by tokens from the file the body was written
+ * to, when the response has a body handler), evaluates the node's expected query on each entry to get its position,
+ * and registers the positions as expected in the reordering buffer, the position observer and the page context. It
+ * throws {@code EndOfStreamException} when the page has no entries.
+ */
 @Handler(forClass = Sequence.class)
 public class SequenceHandler extends AbstractNodeHandler<Sequence> {
 
     private static final Logger LOG = LoggerFactory.getLogger(SequenceHandler.class);
 
+    /**
+     * Creates the handler of a node.
+     *
+     * @param node the node to execute
+     */
     public SequenceHandler(Sequence node) {
         super(node);
     }

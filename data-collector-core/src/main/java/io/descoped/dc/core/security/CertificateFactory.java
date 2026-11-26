@@ -10,6 +10,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * The certificate contexts of the loaded certificate bundles, by bundle name. A bundle's secrets are cleared from
+ * memory once its context is built.
+ */
 public class CertificateFactory {
 
     private static final Logger LOG = LoggerFactory.getLogger(CertificateFactory.class);
@@ -20,10 +24,22 @@ public class CertificateFactory {
         this.certificateContextMap = certificateContextMap;
     }
 
+    /**
+     * The names of the loaded bundles.
+     *
+     * @return the bundle names
+     */
     public Set<String> getBundleNames() {
         return certificateContextMap.keySet();
     }
 
+    /**
+     * The certificate context of a bundle.
+     *
+     * @param bundleName the bundle's name
+     * @return the bundle's context
+     * @throws IllegalArgumentException when no bundle has the name
+     */
     public CertificateContext getCertificateContext(String bundleName) {
         if (!certificateContextMap.containsKey(bundleName)) {
             throw new IllegalArgumentException("Unable to resolve certificate bundle: " + bundleName);
@@ -57,6 +73,14 @@ public class CertificateFactory {
         }
     }
 
+    /**
+     * Scans the directory tree for {@code secret.properties} files and loads each as a bundle, PEM or PKCS#12, named
+     * after the file's directory. An incomplete bundle or a bundle name found twice ends the scan.
+     *
+     * @param scanDirectory the directory to scan
+     * @return the factory with the loaded bundles
+     * @throws RuntimeException when the directory cannot be read
+     */
     public static CertificateFactory scanAndCreate(Path scanDirectory) {
         if (LOG.isInfoEnabled()) {
             LOG.info("Certificate location: {}", scanDirectory.toAbsolutePath().normalize());
@@ -68,6 +92,13 @@ public class CertificateFactory {
         return factoryBuilder.build();
     }
 
+    /**
+     * Loads the bundle of the resource, PEM or PKCS#12, and closes the resource.
+     *
+     * @param businessSSLResource the bundle's resource
+     * @return the factory with the one bundle
+     * @throws NullPointerException when the resource is {@code null}
+     */
     public static CertificateFactory create(BusinessSSLResource businessSSLResource) {
         Objects.requireNonNull(businessSSLResource);
         // load secrets

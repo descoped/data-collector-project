@@ -1,3 +1,7 @@
+/**
+ * The specification DSL of the Data Collector, its expression language, and the service interfaces of the engine:
+ * HTTP, content stores, health and metrics.
+ */
 module io.descoped.dc.api {
     // Types of these modules appear in this module's exported API.
     requires transitive io.descoped.service.provider.api;

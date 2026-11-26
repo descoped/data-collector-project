@@ -12,7 +12,6 @@ module io.descoped.dc.server {
     requires transitive io.descoped.dc.application;
     requires io.descoped.dc.content.rawdata;
     requires io.descoped.rawdata.api;
-    requires io.descoped.secrets.api;
     // The rawdata and secrets providers are runtime dependencies: their API modules declare `uses`, so the
     // providers resolve on the module path without being required.
 

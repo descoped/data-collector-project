@@ -9,11 +9,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.function.Consumer;
 
+/**
+ * The document parser of {@code JqPath} queries: serializes and deserializes JSON documents. It does not deserialize
+ * by tokens.
+ */
 @SupportHandler(forClass = JqPath.class, selectorClass = DocumentParserFeature.class)
 public class JqPathParser implements DocumentParserFeature {
 
     private final JsonParser jsonParser;
 
+    /**
+     * Creates a parser.
+     */
     public JqPathParser() {
         jsonParser = JsonParser.createJsonParser();
     }

@@ -12,10 +12,19 @@ import java.net.http.HttpRequest;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Flow;
 
+/**
+ * Executes a {@code Put} node: sends an HTTP PUT request with the body of the node's body publisher, or no body
+ * without one, and handles its response.
+ */
 @SuppressWarnings("unchecked")
 @Handler(forClass = Put.class)
 public class PutHandler extends OperationHandler<Put> {
 
+    /**
+     * Creates the handler of a node.
+     *
+     * @param node the node to execute
+     */
     public PutHandler(Put node) {
         super(node);
     }

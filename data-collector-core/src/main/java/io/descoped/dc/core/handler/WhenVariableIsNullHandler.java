@@ -5,9 +5,18 @@ import io.descoped.dc.api.handler.Handler;
 import io.descoped.dc.api.node.WhenVariableIsNull;
 import io.descoped.dc.core.handler.state.ConditionType;
 
+/**
+ * Executes a {@code WhenVariableIsNull} condition: the until-condition result is true when the node's variable is
+ * missing from the context or {@code null}.
+ */
 @Handler(forClass = WhenVariableIsNull.class)
 public class WhenVariableIsNullHandler extends AbstractHandler<WhenVariableIsNull> {
 
+    /**
+     * Creates the handler of a node.
+     *
+     * @param node the node to execute
+     */
     public WhenVariableIsNullHandler(WhenVariableIsNull node) {
         super(node);
     }

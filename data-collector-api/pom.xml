@@ -17,7 +17,6 @@
 
     <properties>
         <!-- doclint missing: the Javadoc of the public API follows in a pull request of its own. -->
-        <doclint.exclusions>,-missing</doclint.exclusions>
     </properties>
 
     <dependencies>

@@ -10,9 +10,18 @@ import io.descoped.dc.core.executor.Executor;
 
 import java.util.Map;
 
+/**
+ * Executes an {@code Execute} node: evaluates the node's input variable queries on the current page entry (or the
+ * response body), checks that every required input variable is set, and executes the target node with them.
+ */
 @Handler(forClass = Execute.class)
 public class ExecuteHandler extends AbstractNodeHandler<Execute> {
 
+    /**
+     * Creates the handler of a node.
+     *
+     * @param node the node to execute
+     */
     public ExecuteHandler(Execute node) {
         super(node);
     }

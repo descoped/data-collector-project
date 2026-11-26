@@ -6,6 +6,9 @@ import io.descoped.dc.api.node.Operation;
 
 import java.util.Objects;
 
+/**
+ * Base for the builders of HTTP operation nodes (get, post, put, delete), which have an id and a URL.
+ */
 public abstract class OperationBuilder extends NodeWithIdBuilder {
 
     @JsonProperty

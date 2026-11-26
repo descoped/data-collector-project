@@ -2,14 +2,29 @@ package io.descoped.dc.api.handler;
 
 import java.util.Objects;
 
+/**
+ * The result of a query, kept in the execution state.
+ *
+ * @param <T> the result's type
+ */
 public class QueryResult<T> {
 
     private final T result;
 
+    /**
+     * Creates the result.
+     *
+     * @param result the result
+     */
     public QueryResult(T result) {
         this.result = result;
     }
 
+    /**
+     * The result.
+     *
+     * @return the result
+     */
     public T getResult() {
         return result;
     }

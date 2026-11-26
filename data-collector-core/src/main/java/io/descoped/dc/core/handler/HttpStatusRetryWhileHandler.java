@@ -10,6 +10,10 @@ import io.descoped.dc.api.security.Masking;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Executes an {@code HttpStatusRetryWhile} rule: when the response has the rule's status code, it sleeps for the
+ * rule's duration and returns {@code TRY_AGAIN} true; otherwise {@code TRY_AGAIN} false.
+ */
 @Handler(forClass = HttpStatusRetryWhile.class)
 public class HttpStatusRetryWhileHandler extends AbstractHandler<HttpStatusRetryWhile> {
 
@@ -17,6 +21,11 @@ public class HttpStatusRetryWhileHandler extends AbstractHandler<HttpStatusRetry
 
     static String TRY_AGAIN = "TRY_AGAIN";
 
+    /**
+     * Creates the handler of a node.
+     *
+     * @param node the node to execute
+     */
     public HttpStatusRetryWhileHandler(HttpStatusRetryWhile node) {
         super(node);
     }

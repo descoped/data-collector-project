@@ -8,6 +8,10 @@ import io.descoped.dc.api.node.Query;
 
 import java.util.Objects;
 
+/**
+ * Builds an {@link Eval} query, which evaluates an expression of the expression language. When it has a query, the
+ * query's result is first bound to a variable that the expression can use.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class EvalBuilder extends QueryBuilder {
 
@@ -18,11 +22,23 @@ public class EvalBuilder extends QueryBuilder {
     @JsonProperty("expression")
     String elExpression;
 
+    /**
+     * Creates the builder of an expression without a query.
+     *
+     * @param elExpression the expression
+     */
     public EvalBuilder(String elExpression) {
         super(BuilderType.QueryEval);
         this.elExpression = elExpression;
     }
 
+    /**
+     * Creates the builder of an expression with a query.
+     *
+     * @param queryBuilder   the query whose result is bound to the variable
+     * @param bindToVariable the name of the variable
+     * @param elExpression   the expression
+     */
     public EvalBuilder(QueryBuilder queryBuilder, String bindToVariable, String elExpression) {
         super(BuilderType.QueryEval);
         this.queryBuilder = queryBuilder;

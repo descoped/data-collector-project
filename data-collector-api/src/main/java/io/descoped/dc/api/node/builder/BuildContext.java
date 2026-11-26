@@ -30,10 +30,22 @@ public class BuildContext {
         return new BuildContext(nodeBuilderById, new LinkedHashMap<>());
     }
 
+    /**
+     * Creates a context without builders or node instances.
+     *
+     * @return the context
+     */
     public static BuildContext empty() {
         return new BuildContext(new LinkedHashMap<>(), new LinkedHashMap<>());
     }
 
+    /**
+     * Creates a context on the given maps, which it uses as they are, without copying them.
+     *
+     * @param nodeBuilderById  the builders by node id
+     * @param nodeInstanceById the node instances already built, by id
+     * @return the context
+     */
     public static BuildContext of(Map<String, NodeBuilder> nodeBuilderById, Map<String, Object> nodeInstanceById) {
         return new BuildContext(nodeBuilderById, nodeInstanceById);
     }
@@ -73,6 +85,11 @@ public class BuildContext {
         return (V) nodeInstanceById.computeIfAbsent(key, mappingFunction);
     }
 
+    /**
+     * Whether the context holds neither builders nor node instances.
+     *
+     * @return {@code true} if both maps are empty
+     */
     public boolean isEmpty() {
         return nodeBuilderById.isEmpty() && nodeInstanceById.isEmpty();
     }
