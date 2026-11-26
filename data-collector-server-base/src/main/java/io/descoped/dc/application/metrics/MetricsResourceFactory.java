@@ -90,7 +90,7 @@ public class MetricsResourceFactory {
         return metricsResourceClass.cast(metricsResources.get(metricsResourceClass));
     }
 
-
+    // the factory's loader: dc's modules share the application loader on the module path and the class path
     private static Class<? extends MetricsResource> loadClass(String name) {
         try {
             return Class.forName(name, false, MetricsResourceFactory.class.getClassLoader()).asSubclass(MetricsResource.class);

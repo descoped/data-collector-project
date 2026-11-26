@@ -183,7 +183,7 @@ public class HealthResourceFactory {
         }
     }
 
-
+    // the factory's loader: dc's modules share the application loader on the module path and the class path
     private static Class<? extends HealthResource> loadClass(String name) {
         try {
             return Class.forName(name, false, HealthResourceFactory.class.getClassLoader()).asSubclass(HealthResource.class);
