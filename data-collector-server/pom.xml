@@ -27,6 +27,13 @@
             <groupId>io.descoped.dc</groupId>
             <artifactId>data-collector-api</artifactId>
             <version>${project.version}</version>
+            <exclusions>
+                <!-- commons-jexl3's commons-logging: jcl-over-slf4j provides the module org.apache.commons.logging here -->
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.descoped.dc</groupId>
