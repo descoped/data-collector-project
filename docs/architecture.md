@@ -328,8 +328,13 @@ It also holds across a crash of the process. rawdata-client 3.2 guarantees in ev
 returned survives a crash, and that once a producer of a topic exists, its last message holds everything published
 before, a crashed process's publishes included. So the worker opens the producers of its topic, and of the page
 topic when a paginate adds page content, before it or the specification's `contentStream` expressions read what is
-committed. With the `filesystem` and `gcs` providers, `local-temp-folder` must be on a disk that outlives the process;
-a lost disk loses what was not uploaded.
+committed.
+
+This rests on one assumption about deployment: with the `filesystem` and `gcs` providers, `local-temp-folder` is on
+durable, persistent storage, such as a persistent block device (AWS EBS, a GCE persistent disk) or a
+`PersistentVolume`. On ephemeral storage (EC2 instance store, the container's writable layer, `emptyDir`, `tmpfs`) the
+guarantees fall away: what was not uploaded is lost, and a resumed run does not know. See
+[Administration](administration.md#content-store).
 
 The content API is in `io.descoped.dc.api.content`: `ContentStore` (buffer, publish, lock, last position, monitor),
 `ContentStream` (producers and consumers per topic), `ContentStreamProducer`, `ContentStreamConsumer`,

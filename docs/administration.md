@@ -103,12 +103,31 @@ The class path defaults also hold the `postgres.driver.*` and `rawdata.postgres.
 
 `local-temp-folder` is also read by the server: the recovery content store uses its value with the suffix `-recovery`.
 
-**`local-temp-folder` must outlive the process** with the `filesystem` and `gcs` providers. rawdata-client forces each
-publish to disk there before it returns, and uploads what a crashed process left there when the next one opens the
-topic, so a task resumed after a crash or a restart writes every position once. In a container, mount it on a
-persistent volume (the examples mount `/target` from the host). On a volume that is lost with the container, what was
-not uploaded yet is lost too. Each publish costs one disk sync: on a network disk that bounds a topic at a few hundred
-publish calls per second.
+**`local-temp-folder` must be on durable, persistent storage** with the `filesystem` and `gcs` providers. dc's
+durability rests on it:
+
+- rawdata-client forces each publish to disk in `local-temp-folder` before it returns.
+- When the next process opens the topic, rawdata-client uploads what a crashed process left there.
+- dc counts a returned publish as committed and resumes after it.
+
+That holds only if the folder survives the process, the container and the machine.
+
+| Storage for `local-temp-folder` | Durable? |
+|---|---|
+| A persistent block device: AWS EBS, GCE persistent disk, Azure managed disk | yes |
+| A Kubernetes `PersistentVolume` backed by such a device | yes |
+| A local disk of a server that is not rebuilt | yes |
+| EC2 instance store (ephemeral) and other instance-local NVMe that is wiped when the instance stops or is replaced | **no** |
+| The container's writable layer, a Kubernetes `emptyDir`, or `tmpfs` | **no** |
+
+On storage that is not durable, the guarantees fall away. A crash, a restart on another machine, or a replaced
+instance loses every publish that was not yet uploaded (up to one upload window, `avro-file.max.seconds`). dc then
+resumes behind them without knowing that anything is missing, so the topic silently lacks those positions. The
+examples mount `/target` from the host.
+
+Each publish costs one disk sync: on a network block device such as EBS that bounds a topic at a few hundred publish
+calls per second. The `postgres` provider does not use `local-temp-folder`; there the database's own storage must be
+durable.
 
 ### Encryption
 
@@ -342,6 +361,11 @@ Put `application.properties` (and optionally `application-defaults.properties` a
 `application-override.properties`) in `conf`. Mount a directory for whatever the content store writes (the examples
 mount one on `/target`), and one for `data.collector.integrityCheck.database.location` if the indexes should outlive
 the container.
+
+With the `filesystem` or `gcs` provider, the mount that holds `local-temp-folder` must be durable, persistent storage,
+such as an AWS EBS volume, a GCE persistent disk or a Kubernetes `PersistentVolume`. On EC2 instance store, the
+container's writable layer, `emptyDir` or `tmpfs`, a crash or a replaced instance silently loses publishes that were
+not uploaded yet (see [Content store](#content-store)).
 
 ## Running without Docker
 
