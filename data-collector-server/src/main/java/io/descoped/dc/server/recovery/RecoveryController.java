@@ -20,6 +20,9 @@ import static io.descoped.dc.api.http.Request.Method.DELETE;
 import static io.descoped.dc.api.http.Request.Method.GET;
 import static io.descoped.dc.api.http.Request.Method.PUT;
 
+/**
+ * Serves {@code /recovery}: copies a topic to another without duplicate positions.
+ */
 public class RecoveryController implements Controller {
 
     private static final Logger LOG = LoggerFactory.getLogger(RecoveryController.class);
@@ -31,6 +34,11 @@ public class RecoveryController implements Controller {
     private final RecoveryService service;
 
 
+    /**
+     * Creates the controller.
+     *
+     * @param service the recovery service
+     */
     public RecoveryController(RecoveryService service) {
         this.service = service;
         dispatcher = PathDispatcher.create();

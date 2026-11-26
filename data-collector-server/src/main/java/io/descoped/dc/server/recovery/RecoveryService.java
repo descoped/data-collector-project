@@ -22,6 +22,9 @@ import static io.descoped.dc.server.db.SequenceDbHelper.getSequenceDatabaseLocat
  * Run the integrity checker before running recovery.
  */
 
+/**
+ * Runs recoveries: copies a topic to another, one message per position, from an integrity check's index.
+ */
 public class RecoveryService implements Service {
 
     private static final Logger LOG = LoggerFactory.getLogger(RecoveryService.class);
@@ -32,6 +35,13 @@ public class RecoveryService implements Service {
     final Map<String, CompletableFuture<RecoveryWorker>> jobFutures = new ConcurrentHashMap<>();
     final Map<String, RecoveryWorker> jobs = new ConcurrentHashMap<>();
 
+    /**
+     * Creates the service.
+     *
+     * @param configuration the configuration
+     * @param contentStoreComponent         the content store copied from
+     * @param recoveryContentStoreComponent the content store copied to
+     */
     public RecoveryService(DynamicConfiguration configuration, ContentStoreComponent contentStoreComponent, RecoveryContentStoreComponent recoveryContentStoreComponent) {
         this.configuration = configuration;
         this.contentStoreComponent = contentStoreComponent;

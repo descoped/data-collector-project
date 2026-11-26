@@ -26,6 +26,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * Exports a topic's messages to files, when {@code data.collector.rawdata.dump.enabled} is set.
+ */
 public class RawdataFileSystemService implements Service {
 
     private static final Logger LOG = LoggerFactory.getLogger(RawdataFileSystemService.class);
@@ -36,6 +39,12 @@ public class RawdataFileSystemService implements Service {
     private CompletableFuture<Void> consumerFuture;
     private Path workDir;
 
+    /**
+     * Creates the service.
+     *
+     * @param configuration the configuration
+     * @param contentStoreComponent the content store
+     */
     public RawdataFileSystemService(DynamicConfiguration configuration, ContentStoreComponent contentStoreComponent) {
         this.configuration = configuration;
         ContentStore contentStore = contentStoreComponent.getDelegate();
@@ -100,6 +109,7 @@ public class RawdataFileSystemService implements Service {
         }
     }
 
+    @SuppressWarnings("try") // ContentStreamConsumer.close() is declared to throw Exception
     CompletableFuture<Void> createFuture(String topic, Path targetPath) {
         Metadata metadata = new Metadata();
         Detector detector = new DefaultDetector();
@@ -155,6 +165,11 @@ public class RawdataFileSystemService implements Service {
         return "";
     }
 
+    /**
+     * The directory the messages are exported to.
+     *
+     * @return the directory
+     */
     public Path getWorkDir() {
         Objects.requireNonNull(workDir);
         return workDir;

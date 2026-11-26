@@ -29,6 +29,9 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static io.descoped.dc.server.db.SequenceDbHelper.getSequenceDatabaseLocation;
 
+/**
+ * Copies a topic to another, one message per position, from an integrity check's index.
+ */
 public class RecoveryWorker {
 
     private static final Logger LOG = LoggerFactory.getLogger(RecoveryWorker.class);
@@ -39,6 +42,13 @@ public class RecoveryWorker {
     private final RecoveryMonitor monitor = new RecoveryMonitor();
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
+    /**
+     * Creates the worker.
+     *
+     * @param configuration the configuration
+     * @param contentStoreComponent         the content store copied from
+     * @param recoveryContentStoreComponent the content store copied to
+     */
     public RecoveryWorker(DynamicConfiguration configuration,
                           ContentStoreComponent contentStoreComponent,
                           RecoveryContentStoreComponent recoveryContentStoreComponent) {
@@ -47,6 +57,12 @@ public class RecoveryWorker {
         this.recoveryContentStore = recoveryContentStoreComponent.getDelegate();
     }
 
+    /**
+     * Copies a topic.
+     *
+     * @param sourceTopic the topic copied from
+     * @param targetTopic the topic copied to
+     */
     public void recover(String sourceTopic, String targetTopic) {
         LOG.info("Copy from {} to {}", sourceTopic, targetTopic);
         monitor.setStarted();
@@ -170,14 +186,27 @@ public class RecoveryWorker {
         monitor.resetBufferedPositions();
     }
 
+    /**
+     * The recovery's progress.
+     *
+     * @return the monitor
+     */
     public RecoveryMonitor monitor() {
         return monitor;
     }
 
+    /**
+     * The recovery's summary.
+     *
+     * @return the summary
+     */
     public RecoveryMonitor.Summary summary() {
         return monitor.build();
     }
 
+    /**
+     * Stops the recovery.
+     */
     public void terminate() {
         closed.set(true);
     }

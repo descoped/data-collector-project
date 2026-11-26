@@ -18,6 +18,9 @@ import java.util.stream.Stream;
 
 import static org.lmdbjava.DbiFlags.MDB_CREATE;
 
+/**
+ * The LMDB environment of a topic, in a directory of its own.
+ */
 public class LmdbEnvironment implements AutoCloseable {
 
     private static final Logger LOG = LoggerFactory.getLogger(LmdbEnvironment.class);
@@ -29,6 +32,13 @@ public class LmdbEnvironment implements AutoCloseable {
     private final int mapSize;
     private Dbi<ByteBuffer> db;
 
+    /**
+     * Creates the environment's directory; the environment opens on first use.
+     *
+     * @param configuration the configuration
+     * @param databaseDir   the parent directory
+     * @param topic         the topic
+     */
     public LmdbEnvironment(DynamicConfiguration configuration, Path databaseDir, String topic) {
         this.databaseDir = databaseDir.resolve(topic);
         createDirectories(this.databaseDir);
@@ -37,6 +47,11 @@ public class LmdbEnvironment implements AutoCloseable {
         env = createEnvironment();
     }
 
+    /**
+     * Deletes a directory and everything in it.
+     *
+     * @param path the directory
+     */
     public static void removePath(Path path) {
         try {
             if (path.toFile().exists()) {
@@ -49,14 +64,29 @@ public class LmdbEnvironment implements AutoCloseable {
         }
     }
 
+    /**
+     * The environment.
+     *
+     * @return the environment
+     */
     public Env<ByteBuffer> env() {
         return env;
     }
 
+    /**
+     * The largest key the environment takes.
+     *
+     * @return the size, in bytes
+     */
     public int maxKeySize() {
         return env.getMaxKeySize();
     }
 
+    /**
+     * The environment's directory.
+     *
+     * @return the directory
+     */
     public Path getDatabaseDir() {
         return databaseDir;
     }
@@ -86,6 +116,11 @@ public class LmdbEnvironment implements AutoCloseable {
                 .open(databaseDir.toFile());
     }
 
+    /**
+     * Opens the topic's database, creating it if needed.
+     *
+     * @return the database
+     */
     public Dbi<ByteBuffer> open() {
         if (!closed.get() && db != null) {
             return db;
@@ -102,6 +137,11 @@ public class LmdbEnvironment implements AutoCloseable {
         }
     }
 
+    /**
+     * Whether the environment is closed.
+     *
+     * @return true after it is closed
+     */
     public boolean isClosed() {
         return closed.get();
     }

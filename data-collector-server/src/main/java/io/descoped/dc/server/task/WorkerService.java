@@ -28,6 +28,9 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+/**
+ * Runs specifications as workers, one at a time for each specification id.
+ */
 public class WorkerService implements Service {
 
     private static final Logger LOG = LoggerFactory.getLogger(WorkerService.class);
@@ -42,6 +45,15 @@ public class WorkerService implements Service {
     private final Consumer<WorkerLifecycleCallback> workerLifecycleCallback;
     private final ContentStore contentStore;
 
+    /**
+     * Creates the service; the execution plan is printed when {@code data.collector.print-execution-plan} is set.
+     *
+     * @param configuration the configuration
+     * @param metricsResourceFactory       the metrics resources
+     * @param healthResourceFactory        the health resources
+     * @param businessSSLResourceComponent the business certificate resource
+     * @param contentStoreComponent        the content store
+     */
     public WorkerService(DynamicConfiguration configuration,
                          MetricsResourceFactory metricsResourceFactory,
                          HealthResourceFactory healthResourceFactory,
@@ -51,6 +63,17 @@ public class WorkerService implements Service {
                 Boolean.parseBoolean(configuration.find("data.collector.print-execution-plan").orElse(null)), null);
     }
 
+    /**
+     * Creates the service.
+     *
+     * @param configuration                the configuration
+     * @param metricsResourceFactory       the metrics resources
+     * @param healthResourceFactory        the health resources
+     * @param businessSSLResourceComponent the business certificate resource
+     * @param contentStoreComponent        the content store
+     * @param printExecutionPlan           whether each specification's execution plan is printed
+     * @param workerLifecycleCallback      called around each worker's start and finish, or {@code null}
+     */
     public WorkerService(DynamicConfiguration configuration,
                          MetricsResourceFactory metricsResourceFactory,
                          HealthResourceFactory healthResourceFactory,
@@ -113,6 +136,12 @@ public class WorkerService implements Service {
         }
     }
 
+    /**
+     * Starts a worker for a specification, unless one runs for its id.
+     *
+     * @param specificationBuilder the specification
+     * @return the worker's id, or {@code null} if the task was rejected
+     */
     public String createOrRejectTask(SpecificationBuilder specificationBuilder) {
         if ("".equals(specificationBuilder.getId())) {
             LOG.warn("The specification id is empty!");
@@ -154,11 +183,22 @@ public class WorkerService implements Service {
         }
     }
 
+    /**
+     * The running workers.
+     *
+     * @return the tasks
+     */
     public List<WorkManager.Task> list() {
         return workManager.list();
     }
 
     // TODO lock prevents onWorkerFinish to complete
+    /**
+     * Cancels a worker.
+     *
+     * @param workerId the worker's id
+     * @return true if it was found
+     */
     public boolean cancelTask(String workerId) {
         WorkManager.JobId jobId = workManager.get(UUID.fromString(workerId));
         if (jobId == null) {

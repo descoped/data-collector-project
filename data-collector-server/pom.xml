@@ -16,10 +16,10 @@
     <description>The data collector server: runs specifications as tasks over HTTP, with integrity check and recovery of rawdata topics.</description>
 
     <properties>
-        <!-- Lint and doclint groups this module still breaks (javac -Xlint:all -Werror, Javadoc doclint all with
-             warnings failing); its revision empties both lists. -->
-        <doclint.exclusions>,-missing</doclint.exclusions>
-        <lint.exclusions>,-deprecation,-missing-explicit-ctor,-opens,-rawtypes,-requires-automatic,-requires-transitive-automatic,-try,-unchecked</lint.exclusions>
+        <!-- requires: Tika, Undertow and lmdbjava are automatic modules, so javac warns on every requires
+             of them. opens: worker.config is a package of resources only (worker.config/page-test.json), which
+             javac does not see. Neither can be changed in this module. -->
+        <lint.exclusions>,-opens,-requires-automatic,-requires-transitive-automatic</lint.exclusions>
     </properties>
 
     <dependencies>

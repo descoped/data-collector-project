@@ -24,6 +24,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+/**
+ * Reads the first and the last position of a topic's index.
+ */
 public class SequenceDbHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(SequenceDbHelper.class);
@@ -31,11 +34,23 @@ public class SequenceDbHelper {
     private final LmdbEnvironment lmdbEnvironment;
     private final Dbi<ByteBuffer> dbi;
 
+    /**
+     * Creates the helper.
+     *
+     * @param lmdbEnvironment the index's environment
+     * @param dbi             the index's database
+     */
     public SequenceDbHelper(LmdbEnvironment lmdbEnvironment, Dbi<ByteBuffer> dbi) {
         this.lmdbEnvironment = lmdbEnvironment;
         this.dbi = dbi;
     }
 
+    /**
+     * The directory of the topics' indexes: {@code data.collector.integrityCheck.database.location}, or {@code lmdb} in the working directory.
+     *
+     * @param configuration the configuration
+     * @return the directory
+     */
     public static Path getSequenceDatabaseLocation(DynamicConfiguration configuration) {
         String location = configuration.find("data.collector.integrityCheck.database.location").orElse(null);
         return ((Supplier<Path>) () -> {
@@ -61,6 +76,11 @@ public class SequenceDbHelper {
         }).get();
     }
 
+    /**
+     * The index's first position.
+     *
+     * @return the position and its message id
+     */
     public PositionAndIdVersion findFirstPosition() {
         final PositionAndIdVersion positionAndIdVersion = new PositionAndIdVersion();
         try (Txn<ByteBuffer> txn = lmdbEnvironment.env().txnRead()) {
@@ -74,6 +94,11 @@ public class SequenceDbHelper {
         return positionAndIdVersion;
     }
 
+    /**
+     * The index's last position.
+     *
+     * @return the position and its message id
+     */
     public PositionAndIdVersion findLastPosition() {
         final PositionAndIdVersion positionAndIdVersion = new PositionAndIdVersion();
         handlePositionDuplicates(event -> positionAndIdVersion.compareAndSet(event.idSet().iterator().next(), event.sequenceKey().position()));
