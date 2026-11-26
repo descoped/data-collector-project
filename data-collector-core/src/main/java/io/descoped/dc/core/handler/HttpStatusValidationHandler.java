@@ -29,22 +29,9 @@ public class HttpStatusValidationHandler extends AbstractHandler<HttpStatusValid
 
         boolean success = false;
         for (Map.Entry<HttpStatus, List<ResponsePredicate>> entry : node.success().entrySet()) {
-            // true when statusCode in success list and no predicates should be evaluated
-            if (entry.getKey().code() == statusCode && entry.getValue().isEmpty()) {
-                success = true;
-                break;
-            }
-
-            // evaluate predicates
+            // true when statusCode is in the success list: its predicates are evaluated, but do not decide
             if (entry.getKey().code() == statusCode) {
-                for (ResponsePredicate responsePredicate : entry.getValue()) {
-                    // response predicate handler must evaluate state(Response.class).body
-                    ExecutionContext output = Executor.execute(responsePredicate, ExecutionContext.of(context));
-                    boolean test = output.state(ResponsePredicate.RESPONSE_PREDICATE_RESULT);
-                    if (!test) {
-                        break;
-                    }
-                }
+                evaluatePredicates(context, entry.getValue());
                 success = true;
                 break;
             }
@@ -63,6 +50,18 @@ public class HttpStatusValidationHandler extends AbstractHandler<HttpStatusValid
         return ExecutionContext.empty();
     }
 
+    // the predicates are evaluated until one is false
+    private void evaluatePredicates(ExecutionContext context, List<ResponsePredicate> responsePredicates) {
+        for (ResponsePredicate responsePredicate : responsePredicates) {
+            // response predicate handler must evaluate state(Response.class).body
+            ExecutionContext output = Executor.execute(responsePredicate, ExecutionContext.of(context));
+            boolean test = output.state(ResponsePredicate.RESPONSE_PREDICATE_RESULT);
+            if (!test) {
+                break;
+            }
+        }
+    }
+
     void throwHttpErrorException(Request request, Response response, int statusCode) {
         HttpStatus failedStatus = HttpStatus.valueOf(statusCode);
         String requestHeaders = request.headers().asMap().entrySet().stream().map(entry -> entry.getKey() + ": " +
@@ -71,7 +70,7 @@ public class HttpStatusValidationHandler extends AbstractHandler<HttpStatusValid
         String responseHeaders = response.headers().asMap().entrySet().stream().map(entry -> entry.getKey() + ": " +
                         String.join("\n\t", entry.getValue()))
                 .collect(Collectors.joining("\n\t"));
-        throw new HttpErrorException(String.format("Error dealing with response: %s [%s] %s%nBody:%n\t%s%nRequestHeaders:[%n\t%s%n]%nResponseHeaders:[%n\t%s%n]",
+        throw new HttpErrorException(String.format("Error dealing with response: %s [%s]\u00A0%s%nBody:%n\t%s%nRequestHeaders:[%n\t%s%n]%nResponseHeaders:[%n\t%s%n]",
                 response.url(), failedStatus.code(), failedStatus.reason(), new String(response.body(), StandardCharsets.UTF_8), requestHeaders, responseHeaders));
 
     }

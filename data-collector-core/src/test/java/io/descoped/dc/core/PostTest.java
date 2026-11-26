@@ -37,6 +37,7 @@ import static io.descoped.dc.api.Builders.whenVariableIsNull;
 import static io.descoped.dc.api.Builders.xpath;
 import static io.descoped.dc.api.node.builder.SpecificationBuilder.GLOBAL_CONFIGURATION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @ExtendWith(TestServerExtension.class)
 public class PostTest {
@@ -52,7 +53,6 @@ public class PostTest {
         builder.urlEncoded("foo=bar&foobar=baz");
         BodyPublisher bodyPublisher = builder.build(null);
         assertEquals(FormEncoding.APPLICATION_X_WWW_FORM_URLENCODED, bodyPublisher.getEncoding());
-//        assertEquals("foo=bar&foobar=baz", bodyPublisher.getUrlEncodedData().produce(ExecutionContext.empty()));
     }
 
     @Test
@@ -71,11 +71,7 @@ public class PostTest {
         BodyPublisher bodyPublisher = bodyPublisherBuilder.build(buildContext);
 
         assertEquals(FormEncoding.APPLICATION_X_WWW_FORM_URLENCODED, bodyPublisher.getEncoding());
-//        assertEquals("foo=bar&foobar=baz", bodyPublisher.getUrlEncodedData().produce());
 
-        ExecutionContext context = ExecutionContext.empty();
-
-//        LOG.trace("produce: {}", bodyPublisher.getUrlEncodedData().produce(context));
         LOG.trace("serialized: {}", bodyPublisherBuilder.serialize());
     }
 
@@ -118,6 +114,7 @@ public class PostTest {
                 .configuration(Map.of("ns_username", "user", "ns_password", "pass"))
                 .build()
                 .run();
+        assertNotNull(output);
     }
 }
 

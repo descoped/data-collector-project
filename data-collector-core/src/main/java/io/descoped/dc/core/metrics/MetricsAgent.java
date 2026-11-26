@@ -7,6 +7,9 @@ import java.lang.instrument.Instrumentation;
 
 public class MetricsAgent {
 
+    private MetricsAgent() {
+    }
+
     public static void premain(String agentArgs, Instrumentation inst) {
         HttpClientAgent.install(inst);
         ContentStoreAgent.install(inst);

@@ -41,6 +41,7 @@ public class PaginateHandler extends AbstractNodeHandler<Paginate> {
             return lifecycle.start(context);
 
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
     }
@@ -110,7 +111,6 @@ public class PaginateHandler extends AbstractNodeHandler<Paginate> {
             targetInput.state(ADD_PAGE_CONTENT_TO_POSITION, node.positionVariable());
 
             // add correlation-id on fan-out
-            //CorrelationIds.of(targetInput).add();
 
             ExecutionContext targetOutput = Executor.execute(target, targetInput);
 
@@ -118,7 +118,6 @@ public class PaginateHandler extends AbstractNodeHandler<Paginate> {
             output.merge(targetOutput);
 
             // TODO fix keep the previous page correlation-id reference
-            //CorrelationIds.create(input).tail(CorrelationIds.of(targetInput));
         }
 
         // set end-of-stream if until-condition is met

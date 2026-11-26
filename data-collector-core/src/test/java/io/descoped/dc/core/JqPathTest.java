@@ -24,9 +24,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class JqPathTest {
+class JqPathTest {
 
-    final String array_json = "{" +
+    final String arrayJson = "{" +
             "  \"items\" : [ {" +
             "    \"id\" : \"672842230\"," +
             "    \"name\" : \"f1.txt\"," +
@@ -121,7 +121,7 @@ public class JqPathTest {
             "  \"melding\": \"identifikator har ugyldig format. Forventet en personidentifikator på 11 siffer\"," +
             "  \"korrelasjonsid\": \"b0e88d88ab83b3cd417d2ee88a696afb\" " +
             "}";
-    String json_node = "{" +
+    String nodeJson = "{" +
             "    \"id\" : \"672842230\"," +
             "    \"name\" : \"f1.txt\"," +
             "    \"path\" : \"/Home/moveitapi/f1.txt\"," +
@@ -142,6 +142,7 @@ public class JqPathTest {
         List<JsonNode> out = new ArrayList<>();
         query.apply(childScope, in, out::add);
         System.out.printf("result: %s", out);
+        assertEquals("SP-002", out.get(0).textValue());
     }
 
     @Test
@@ -156,7 +157,7 @@ public class JqPathTest {
     void testQueryList() {
         JqPath jqPath = Builders.jqpath(".items[]").build();
         QueryFeature jq = Queries.from(jqPath);
-        List<?> itemNode = jq.evaluateList(array_json);
+        List<?> itemNode = jq.evaluateList(arrayJson);
         assertFalse(itemNode.isEmpty(), "result is empty");
         assertTrue(itemNode.size() > 1, "result is not >1");
         itemNode.forEach(n -> System.out.printf("%s%n", n));
@@ -166,8 +167,16 @@ public class JqPathTest {
     void testQueryObject() {
         JqPath jqPath = Builders.jqpath(".id").build();
         QueryFeature jq = Queries.from(jqPath);
-        JsonNode itemNode = (JsonNode) jq.evaluateObject(json_node);
+        JsonNode itemNode = (JsonNode) jq.evaluateObject(nodeJson);
         assertEquals("672842230", itemNode.textValue());
+    }
+
+    @Test
+    void testQueryObjectOnParsedDocument() throws JsonProcessingException {
+        ObjectNode document = (ObjectNode) JsonParser.createJsonParser().mapper().readTree(nodeJson);
+        QueryFeature jq = Queries.from(Builders.jqpath(".name").build());
+        JsonNode itemNode = (JsonNode) jq.evaluateObject(document);
+        assertEquals("f1.txt", itemNode.textValue());
     }
 
     @Test
@@ -175,7 +184,7 @@ public class JqPathTest {
         JqPath jqPath = Builders.jqpath(".kode").build();
         QueryFeature jq = Queries.from(jqPath);
         String result = jq.evaluateStringLiteral(json404withResponseError);
-        assertEquals(result, "SP-002");
+        assertEquals("SP-002", result);
     }
 
     @Test

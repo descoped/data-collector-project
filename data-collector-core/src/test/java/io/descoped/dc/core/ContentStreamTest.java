@@ -11,10 +11,12 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-public class ContentStreamTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+class ContentStreamTest {
 
     @Test
-    public void thatRawdataClient() {
+    void thatRawdataClient() {
         RawdataClient client = ProviderConfigurator.configure(RawdataClientInitializer.class, "memory", Map.of());
         ContentStream contentStream = new RawdataClientContentStream(client);
         ContentStreamProducer producer = contentStream.producer("ns");
@@ -27,5 +29,7 @@ public class ContentStreamTest {
         producer.produce(builder);
 
         producer.publish("1");
+
+        assertEquals("1", contentStream.lastPosition("ns"));
     }
 }

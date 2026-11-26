@@ -93,23 +93,25 @@ public class HttpResponseDelegate implements Response {
 
         @Override
         public Response build() {
-            return httpResponse == null ?
-                    new HttpResponseDelegate(
-                            "",
-                            new Headers(new LinkedHashMap<>()),
-                            HttpStatus.HTTP_NOT_ACCEPTABLE.code(),
-                            new byte[0],
-                            bodyHandler,
-                            previousResponse()
-                    ) :
-                    new HttpResponseDelegate(
-                            httpResponse.uri().toString(),
-                            new Headers(httpResponse.headers().map()),
-                            httpResponse.statusCode(),
-                            httpResponse.body() == null ? new byte[0] : Arrays.copyOf(httpResponse.body(), httpResponse.body().length),
-                            bodyHandler,
-                            previousResponse()
-                    );
+            if (httpResponse == null) {
+                return new HttpResponseDelegate(
+                        "",
+                        new Headers(new LinkedHashMap<>()),
+                        HttpStatus.HTTP_NOT_ACCEPTABLE.code(),
+                        new byte[0],
+                        bodyHandler,
+                        previousResponse()
+                );
+            }
+            byte[] body = httpResponse.body() == null ? new byte[0] : Arrays.copyOf(httpResponse.body(), httpResponse.body().length);
+            return new HttpResponseDelegate(
+                    httpResponse.uri().toString(),
+                    new Headers(httpResponse.headers().map()),
+                    httpResponse.statusCode(),
+                    body,
+                    bodyHandler,
+                    previousResponse()
+            );
         }
     }
 

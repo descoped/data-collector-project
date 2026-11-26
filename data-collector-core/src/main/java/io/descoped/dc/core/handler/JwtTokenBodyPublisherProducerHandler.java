@@ -24,17 +24,15 @@ import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Handler(forClass = JwtTokenBodyPublisherProducer.class)
 public class JwtTokenBodyPublisherProducerHandler extends AbstractHandler<JwtTokenBodyPublisherProducer> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JwtTokenBodyPublisherProducer.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JwtTokenBodyPublisherProducerHandler.class);
 
     public JwtTokenBodyPublisherProducerHandler(JwtTokenBodyPublisherProducer node) {
         super(node);
@@ -64,7 +62,7 @@ public class JwtTokenBodyPublisherProducerHandler extends AbstractHandler<JwtTok
 
         Map<String, Object> headers = new LinkedHashMap<>();
         headers.put("alg", jwtIdentity.headerClaims().alg());
-        headers.put("x5c", List.of(certificateContext.trustManager().getAcceptedIssuers()).stream().map(this::getEncodedCertificate).collect(Collectors.toList()));
+        headers.put("x5c", List.of(certificateContext.trustManager().getAcceptedIssuers()).stream().map(this::getEncodedCertificate).toList());
         jwtBuilder.withHeader(headers);
 
         jwtBuilder.withIssuer(evaluateExpression(jwtTokenContext, jwtIdentity.claims().issuer()));
@@ -81,8 +79,8 @@ public class JwtTokenBodyPublisherProducerHandler extends AbstractHandler<JwtTok
         }
         long expirationInSeconds = Long.parseLong(ttl);
         OffsetDateTime now = Instant.now().atOffset(ZoneOffset.UTC);
-        jwtBuilder.withIssuedAt(Date.from(now.toInstant()));
-        jwtBuilder.withExpiresAt(Date.from(now.plusSeconds(expirationInSeconds).toInstant()));
+        jwtBuilder.withIssuedAt(now.toInstant());
+        jwtBuilder.withExpiresAt(now.plusSeconds(expirationInSeconds).toInstant());
         jwtBuilder.withJWTId(UUID.randomUUID().toString());
 
         String token = jwtBuilder.sign(algorithm);
@@ -91,7 +89,6 @@ public class JwtTokenBodyPublisherProducerHandler extends AbstractHandler<JwtTok
         evalContext.variable(node.bindTo(), token);
 
         String jwtGrant = evaluateExpression(evalContext, node.token());
-        //System.out.printf("jwtGrant => %s%n", jwtGrant);
 
         LOG.info("Produce signed JwtGrant");
         return ExecutionContext.empty().state(BodyPublisherProducer.class, jwtGrant.getBytes());

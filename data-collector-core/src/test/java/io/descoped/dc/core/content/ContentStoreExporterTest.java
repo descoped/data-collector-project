@@ -22,22 +22,22 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class ContentStoreExporterTest {
+class ContentStoreExporterTest {
 
     @BeforeAll
-    public static void beforeAll() {
+    static void beforeAll() {
         ContentStoreAgent.install(ByteBuddyAgent.install());
     }
 
     @AfterAll
-    public static void afterAll() throws IOException {
+    static void afterAll() throws IOException {
         StringWriter sw = new StringWriter();
         TextFormat.write004(sw, CollectorRegistry.defaultRegistry.metricFamilySamples());
         System.out.printf("%s%n", sw);
     }
 
     @Test
-    public void name() {
+    void name() {
         ContentStore contentStore = ProviderConfigurator.configure(ContentStoreInitializer.class, "rawdata", Map.of("rawdata.client.provider", "memory"));
         assertNotNull(contentStore);
         HttpRequestInfo httpRequestInfo = new HttpRequestInfo(CorrelationIds.create(ExecutionContext.empty()), null, -1, new Headers(), new Headers(), -1);
@@ -48,4 +48,27 @@ public class ContentStoreExporterTest {
         contentStore.publish("topic", "1");
     }
 
+    static double sample(String name, String topic) {
+        Double value = CollectorRegistry.defaultRegistry.getSampleValue(name, new String[]{"topic"}, new String[]{topic});
+        return value == null ? 0 : value;
+    }
+
+    @Test
+    void thatInterceptorsCountContentStoreWrites() throws Exception {
+        String topic = "interceptor-topic";
+        double pages = sample("dc_content_stream_pagination_page_publish_count_total", topic);
+        double entries = sample("dc_content_stream_buffer_pagination_entry_count_total", topic);
+        double documents = sample("dc_content_stream_buffer_entry_document_count_total", topic);
+        double positions = sample("dc_content_stream_pagination_entry_publish_position_count_total", topic);
+
+        ContentStoreExporter.Paginate.intercept(() -> null, topic);
+        ContentStoreExporter.Entry.intercept(() -> null, topic);
+        ContentStoreExporter.Document.intercept(() -> null, topic);
+        ContentStoreExporter.Publish.intercept(() -> null, topic, new String[]{"1", "2"});
+
+        assertEquals(pages + 1, sample("dc_content_stream_pagination_page_publish_count_total", topic));
+        assertEquals(entries + 1, sample("dc_content_stream_buffer_pagination_entry_count_total", topic));
+        assertEquals(documents + 1, sample("dc_content_stream_buffer_entry_document_count_total", topic));
+        assertEquals(positions + 2, sample("dc_content_stream_pagination_entry_publish_position_count_total", topic));
+    }
 }

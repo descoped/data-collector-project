@@ -30,9 +30,11 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class OperationHandler<T extends Operation> extends AbstractNodeHandler<T> {
 
+    private static final String RETRY_COUNT = "data.collector.http.request.retryCount";
+
     private static final Logger LOG = LoggerFactory.getLogger(OperationHandler.class);
 
-    public OperationHandler(T node) {
+    protected OperationHandler(T node) {
         super(node);
     }
 
@@ -71,8 +73,7 @@ public abstract class OperationHandler<T extends Operation> extends AbstractNode
     int beforeRequest(ExecutionContext input) {
         // prepare get request
         ConfigurationMap configurationMap = input.services().get(ConfigurationMap.class);
-        int requestTimeout = configurationMap != null ? Integer.parseInt(configurationMap.get("data.collector.http.request.timeout.seconds")) : 15;
-        return requestTimeout;
+        return configurationMap != null ? Integer.parseInt(configurationMap.get("data.collector.http.request.timeout.seconds")) : 15;
     }
 
     Response doRequest(ExecutionContext input, int requestTimeout, Request.Builder requestBuilder) {
@@ -94,16 +95,13 @@ public abstract class OperationHandler<T extends Operation> extends AbstractNode
 
         // override default retry count
         ConfigurationMap configurationMap = input.services().get(ConfigurationMap.class);
-        int retryCount = configurationMap.contains("data.collector.http.request.retryCount") ? Integer.parseInt(configurationMap.get("data.collector.http.request.retryCount")) : 3;
-        int napOnRetryInMillis = configurationMap.contains("data.collector.http.request.napOnRetryInMillis") ? Integer.parseInt(configurationMap.get("data.collector.http.request.retryCount")) : 150;
+        int retryCount = configurationMap.contains(RETRY_COUNT) ? Integer.parseInt(configurationMap.get(RETRY_COUNT)) : 3;
+        int napOnRetryInMillis = configurationMap.contains("data.collector.http.request.napOnRetryInMillis") ? Integer.parseInt(configurationMap.get(RETRY_COUNT)) : 150;
 
         /*
          * Execute Request
          */
         Response response = sendAndRetryRequestOnError(input, client, request, requestTimeout, retryCount, napOnRetryInMillis);
-        //if (response != null) {
-        //    LOG.debug("\nrequest-url: {}\ndata: {}", response.url(), new String(response.body()));
-        //}
 
         long futureMillisSeconds = System.currentTimeMillis();
         long durationMillisSeconds = futureMillisSeconds - currentMillisSeconds;
@@ -120,7 +118,6 @@ public abstract class OperationHandler<T extends Operation> extends AbstractNode
         }
 
         // prepare http-request-info used by content producer
-        //CorrelationIds correlationIdBeforeChildren = CorrelationIds.of(input);
         HttpRequestInfo httpRequestInfo = new HttpRequestInfo(CorrelationIds.create(input), url, response.statusCode(), request.headers(), response.headers(), durationMillisSeconds);
         input.state(HttpRequestInfo.class, httpRequestInfo);
 
@@ -175,7 +172,6 @@ public abstract class OperationHandler<T extends Operation> extends AbstractNode
         }
 
         // return only variables declared in returnVariables
-        //CorrelationIds correlationIdsAfterChildren = CorrelationIds.of(input);
         ExecutionContext output = ExecutionContext.of(accumulated); //.merge(correlationIdsAfterChildren.context());
         node.returnVariables().forEach(variableKey -> output.state(variableKey, accumulated.state(variableKey)));
 
@@ -190,10 +186,10 @@ public abstract class OperationHandler<T extends Operation> extends AbstractNode
         Throwable stepNodeThrowable = failureCause.get();
         if (stepNodeThrowable instanceof EndOfStreamException) {
             output.state(PageContext.class).setEndOfStream(true);
-        } else if (stepNodeThrowable instanceof RuntimeException) {
-            throw (RuntimeException) stepNodeThrowable;
-        } else if (stepNodeThrowable instanceof Error) {
-            throw (Error) stepNodeThrowable;
+        } else if (stepNodeThrowable instanceof RuntimeException runtimeException) {
+            throw runtimeException;
+        } else if (stepNodeThrowable instanceof Error error) {
+            throw error;
         } else if (stepNodeThrowable instanceof Exception) {
             throw new ExecutionException(stepNodeThrowable);
         }
@@ -225,6 +221,10 @@ public abstract class OperationHandler<T extends Operation> extends AbstractNode
                 }
                 break;
             } catch (Exception e) {
+                // an interrupted thread (the worker is being stopped) does not try again
+                if (Thread.currentThread().isInterrupted()) {
+                    throw e instanceof RuntimeException runtimeException ? runtimeException : new ExecutionException(e);
+                }
                 HealthWorkerMonitor monitor = context.services().get(HealthWorkerMonitor.class);
                 if (monitor != null) {
                     monitor.request().incrementRequestRetryOnFailureCount();
@@ -246,11 +246,11 @@ public abstract class OperationHandler<T extends Operation> extends AbstractNode
                 .exceptionally(throwable -> {
                     failureCause.compareAndSet(null, throwable);
 
-                    if (throwable instanceof RuntimeException) {
-                        throw (RuntimeException) throwable;
+                    if (throwable instanceof RuntimeException runtimeException) {
+                        throw runtimeException;
                     }
-                    if (throwable instanceof Error) {
-                        throw (Error) throwable;
+                    if (throwable instanceof Error error) {
+                        throw error;
                     }
                     throw new ExecutionException(throwable);
                 });
@@ -260,21 +260,24 @@ public abstract class OperationHandler<T extends Operation> extends AbstractNode
 
             if (!inRetryWhileState) validateResponse(context, request, response);
 
-            if (failureCause.get() != null) {
-                // TODO should exception be rethrown
+            // TODO should exception be rethrown
+            if (failureCause.get() != null && LOG.isErrorEnabled()) {
                 LOG.error("Captured completable exception: {}", CommonUtils.captureStackTrace(failureCause.get()));
             }
 
             return response;
 
         } catch (Exception e) {
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
             failureCause.compareAndSet(null, e);
 
-            if (failureCause.get() instanceof RuntimeException) {
-                throw (RuntimeException) failureCause.get();
+            if (failureCause.get() instanceof RuntimeException runtimeException) {
+                throw runtimeException;
             }
-            if (failureCause.get() instanceof Error) {
-                throw (Error) failureCause.get();
+            if (failureCause.get() instanceof Error error) {
+                throw error;
             }
             throw new ExecutionException(failureCause.get());
         }
@@ -293,6 +296,7 @@ public abstract class OperationHandler<T extends Operation> extends AbstractNode
         try {
             Thread.sleep(millis);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 

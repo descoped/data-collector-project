@@ -26,7 +26,7 @@ public class CertificateFactory {
 
     public CertificateContext getCertificateContext(String bundleName) {
         if (!certificateContextMap.containsKey(bundleName)) {
-            throw new RuntimeException("Unable to resolve certificate bundle: " + bundleName);
+            throw new IllegalArgumentException("Unable to resolve certificate bundle: " + bundleName);
         }
         return certificateContextMap.get(bundleName);
     }
@@ -58,7 +58,9 @@ public class CertificateFactory {
     }
 
     public static CertificateFactory scanAndCreate(Path scanDirectory) {
-        LOG.info("Certificate location: {}", scanDirectory.toAbsolutePath().normalize().toString());
+        if (LOG.isInfoEnabled()) {
+            LOG.info("Certificate location: {}", scanDirectory.toAbsolutePath().normalize());
+        }
         CertificateScanner scanner = new CertificateScanner(scanDirectory); // TODO refactor CertificateScanner.findSecurityPropertyFilesAndLoad to use BusinessSSLResource
         scanner.scan();
         CertificateFactory.Builder factoryBuilder = new CertificateFactory.Builder();
@@ -70,7 +72,9 @@ public class CertificateFactory {
         Objects.requireNonNull(businessSSLResource);
         // load secrets
         try (businessSSLResource) {
-            LOG.info("Create Certificate: {}", businessSSLResource.bundleName());
+            if (LOG.isInfoEnabled()) {
+                LOG.info("Create Certificate: {}", businessSSLResource.bundleName());
+            }
             CertificateFactory.Builder factoryBuilder = new CertificateFactory.Builder();
 
             CertificateBundle.Builder bundleBuilder = new CertificateBundle.Builder();

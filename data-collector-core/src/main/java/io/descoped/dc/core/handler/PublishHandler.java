@@ -30,7 +30,6 @@ public class PublishHandler extends AbstractNodeHandler<Publish> {
         String positionValue = (String) el.evaluateExpression(node.positionVariableExpression());
 
         BufferedReordering<String> bufferedReordering = input.services().get(BufferedReordering.class);
-        //LOG.trace("Expected-Sequence: {}", bufferedReordering.expected());
 
         ContentStore contentStore = input.services().get(ContentStore.class);
         String topicName = node.configurations().flowContext().topic();
@@ -38,14 +37,12 @@ public class PublishHandler extends AbstractNodeHandler<Publish> {
             throw new IllegalStateException("Unable to resolve topic!");
         }
         Set<String> contentKeys = contentStore.contentKeys(topicName, positionValue);
-        //LOG.trace("Content-Keys: {}", contentKeys);
 
         HealthWorkerMonitor monitor = input.services().get(HealthWorkerMonitor.class);
 
         if (!contentKeys.isEmpty()) {
             contentStore.lock(topicName);
             try {
-                //LOG.trace("Add-Completed: {}", positionValue);
                 bufferedReordering.addCompleted(positionValue, orderedPositions -> {
                     if (monitor != null && monitor.contentStream().hasNotSetStartPosition()) {
                         monitor.contentStream().setStartPosition(orderedPositions.get(0));

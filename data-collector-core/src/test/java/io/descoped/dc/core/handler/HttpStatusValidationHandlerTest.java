@@ -20,7 +20,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class HttpStatusValidationHandlerTest {
+class HttpStatusValidationHandlerTest {
 
     static List<ValidatorPredicate> httpStatusValidationBuilderProvider() {
         List<ValidatorPredicate> validators = new ArrayList<>();
@@ -70,7 +70,7 @@ public class HttpStatusValidationHandlerTest {
     }
 
     @Test
-    public void allValidators() {
+    void allValidators() {
         assertDoesNotThrow(() -> {
             HttpStatusValidationBuilder builder = new HttpStatusValidationBuilder();
             for (ValidatorPredicate validatorPredicate : httpStatusValidationBuilderProvider()) {
@@ -92,7 +92,7 @@ public class HttpStatusValidationHandlerTest {
 
     @ParameterizedTest
     @MethodSource("httpStatusValidationBuilderProvider")
-    public void eachValidator(ValidatorPredicate validatorPredicate) {
+    void eachValidator(ValidatorPredicate validatorPredicate) {
         assertDoesNotThrow(() -> {
             HttpStatusValidationBuilder builder = new HttpStatusValidationBuilder();
             if (validatorPredicate.builder == null) {
@@ -111,7 +111,7 @@ public class HttpStatusValidationHandlerTest {
     }
 
     @Test
-    public void validateSuccess() {
+    void validateSuccess() {
         assertDoesNotThrow(() -> {
             HttpStatusValidationBuilder builder = new HttpStatusValidationBuilder();
             builder.success(200, 299);
@@ -121,16 +121,14 @@ public class HttpStatusValidationHandlerTest {
     }
 
     @Test
-    public void validateFailure() {
-        assertThrows(HttpErrorException.class, () -> {
-            HttpStatusValidationBuilder builder = new HttpStatusValidationBuilder();
-            builder.success(200, 299);
-            HttpStatusValidationHandler handler = new HttpStatusValidationHandler(builder.build());
-            handler.execute(ExecutionContext.empty()
-                    .state(Request.class, Request.newRequestBuilder().GET().url("http://example.com").build())
-                    .state(Response.class, mockResponse(new ValidatorPredicate(500, null, null)))
-            );
-        }, "Validator did not fail for 500");
+    void validateFailure() {
+        HttpStatusValidationBuilder builder = new HttpStatusValidationBuilder();
+        builder.success(200, 299);
+        HttpStatusValidationHandler handler = new HttpStatusValidationHandler(builder.build());
+        ExecutionContext context = ExecutionContext.empty()
+                .state(Request.class, Request.newRequestBuilder().GET().url("http://example.com").build())
+                .state(Response.class, mockResponse(new ValidatorPredicate(500, null, null)));
+        assertThrows(HttpErrorException.class, () -> handler.execute(context), "Validator did not fail for 500");
     }
 
     static class ValidatorPredicate {

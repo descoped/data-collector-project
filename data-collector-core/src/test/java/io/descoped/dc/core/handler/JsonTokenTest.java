@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static io.descoped.dc.api.Builders.addContent;
@@ -34,9 +36,10 @@ import static io.descoped.dc.api.Builders.parallel;
 import static io.descoped.dc.api.Builders.publish;
 import static io.descoped.dc.api.Builders.sequence;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(TestServerExtension.class)
-public class JsonTokenTest {
+class JsonTokenTest {
 
     static final Logger LOG = LoggerFactory.getLogger(JsonTokenTest.class);
 
@@ -49,14 +52,19 @@ public class JsonTokenTest {
     TestClient client;
 
     @Test
-    public void jsonTokenDocumentParser() {
+    void jsonTokenDocumentParser() {
         DocumentParserFeature parser = Queries.parserFor(JsonToken.class);
         InputStream source = new ByteArrayInputStream(JSON_ARRAY.getBytes());
-        parser.tokenDeserializer(source, entry -> LOG.trace("{}", new String(parser.serialize(entry))));
+        List<Object> entries = new ArrayList<>();
+        parser.tokenDeserializer(source, entry -> {
+            LOG.trace("{}", new String(parser.serialize(entry)));
+            entries.add(entry);
+        });
+        assertEquals(10, entries.size());
     }
 
     @Test
-    public void getJsonArray() throws IOException {
+    void getJsonArray() throws IOException {
         Request request = Request.newRequestBuilder()
                 .url(server.testURL("/api/events?gzip=true&position=1&pageSize=10"))
                 .GET()
@@ -87,7 +95,7 @@ public class JsonTokenTest {
     }
 
     @Test
-    public void jsonTokenSequentialParser() {
+    void jsonTokenSequentialParser() {
         ExecutionContext output = Worker.newBuilder()
                 .specification(Specification.start("test", "getPage", "page")
                         .function(get("page")
@@ -114,7 +122,7 @@ public class JsonTokenTest {
 
     @Tag("live")
     @Test
-    public void brregJsonTokenSequentialParser() {
+    void brregJsonTokenSequentialParser() {
         ExecutionContext output = Worker.newBuilder()
                 .specification(Specification.start("test", "getPage", "page")
                         .function(get("page")

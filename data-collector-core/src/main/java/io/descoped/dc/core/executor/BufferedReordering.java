@@ -14,6 +14,7 @@ public class BufferedReordering<ELEMENT> {
     private final Set<ELEMENT> completed = new LinkedHashSet<>();
 
     public BufferedReordering() {
+        // nothing expected or completed until added
     }
 
     public List<ELEMENT> expected() {

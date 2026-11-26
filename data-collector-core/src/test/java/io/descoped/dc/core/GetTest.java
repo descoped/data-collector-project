@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import io.descoped.dc.api.node.Process;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
@@ -38,7 +39,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Flow;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static io.descoped.dc.api.Builders.addContent;
 import static io.descoped.dc.api.Builders.bodyContains;
@@ -62,7 +62,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(TestServerExtension.class)
-public class GetTest {
+class GetTest {
 
     static final Logger LOG = LoggerFactory.getLogger(GetTest.class);
 
@@ -96,7 +96,7 @@ public class GetTest {
     }
 
     @Test
-    public void thatGetConsumesAndProcessTheEndpoint() {
+    void thatGetConsumesAndProcessTheEndpoint() {
         ExecutionContext output = Worker.newBuilder()
                 .specification(get("list")
                         .url(testServer.testURL("/api/events?position=${fromPosition}&pageSize=10"))
@@ -109,11 +109,11 @@ public class GetTest {
                 .run();
 
         assertNotNull(output);
-        assertEquals(output.variables().get("nextPosition"), 11L);
+        assertEquals(11L, output.variables().get("nextPosition"));
     }
 
     @Test
-    public void thatGetSequenceAndParallelRespectsExpectedPositionsAndParallelRun() {
+    void thatGetSequenceAndParallelRespectsExpectedPositionsAndParallelRun() {
         ExecutionContext output = Worker.newBuilder()
                 .specification(Specification.start("test", "getPage", "page")
                         .function(get("page")
@@ -142,7 +142,7 @@ public class GetTest {
     }
 
     @Test
-    public void thatGetEmptyFeed() {
+    void thatGetEmptyFeed() {
         ExecutionContext output = Worker.newBuilder()
                 .specification(Specification.start("test", "getPage", "loop")
                         .function(paginate("loop")
@@ -170,36 +170,32 @@ public class GetTest {
     }
 
     @Test
-    public void thatGetEmptyFeedWithRequestTimeoutSetToZero() {
-        assertThrows(CompletionException.class, () -> {
-            ExecutionContext output = Worker.newBuilder()
-                    .specification(Specification.start("test", "getPage", "loop")
-                            .function(paginate("loop")
-                                    .variable("fromPosition", "${nextPosition}")
-                                    .addPageContent("fromPosition")
-                                    .iterate(execute("feed"))
-                                    .prefetchThreshold(150)
-                                    .until(whenVariableIsNull("nextPosition"))
-                            )
-                            .function(get("feed")
-                                    .url(testServer.testURL("/api/events?position=${fromPosition}&pageSize=0"))
-                                    .pipe(sequence(xpath("/feed/entry"))
-                                            .expected(xpath("/entry/id"))
-                                    )
-                            )
-                    )
-                    .configuration(Map.of("content.stream.connector", "discarding", "data.collector.http.request.timeout.seconds", "0"))
-                    .header("Accept", "application/xml")
-                    .variable("fromPosition", 1)
-                    .build()
-                    .run();
-
-            assertNotNull(output);
-        });
+    void thatGetEmptyFeedWithRequestTimeoutSetToZero() {
+        Worker worker = Worker.newBuilder()
+                .specification(Specification.start("test", "getPage", "loop")
+                        .function(paginate("loop")
+                                .variable("fromPosition", "${nextPosition}")
+                                .addPageContent("fromPosition")
+                                .iterate(execute("feed"))
+                                .prefetchThreshold(150)
+                                .until(whenVariableIsNull("nextPosition"))
+                        )
+                        .function(get("feed")
+                                .url(testServer.testURL("/api/events?position=${fromPosition}&pageSize=0"))
+                                .pipe(sequence(xpath("/feed/entry"))
+                                        .expected(xpath("/entry/id"))
+                                )
+                        )
+                )
+                .configuration(Map.of("content.stream.connector", "discarding", "data.collector.http.request.timeout.seconds", "0"))
+                .header("Accept", "application/xml")
+                .variable("fromPosition", 1)
+                .build();
+        assertThrows(CompletionException.class, worker::run);
     }
 
     @Test
-    public void thatGetConsumesAndValidateCustom404Error() {
+    void thatGetConsumesAndValidateCustom404Error() {
         final SpecificationBuilder specificationBuilder = Specification.start("test", "getPage", "page")
                 .function(get("page")
                         .url(testServer.testURL("/api/events?position=${fromPosition}&pageSize=10"))
@@ -224,9 +220,7 @@ public class GetTest {
                 );
 
 
-//        LOG.trace("{}", JsonParser.createJsonParser().toPrettyJSON(specificationBuilder));
 
-//        if (true) return;
 
         ExecutionContext output = Worker.newBuilder()
                 .specification(specificationBuilder
@@ -243,7 +237,7 @@ public class GetTest {
 
     // replicate freg bulk uttrekk wait for false positive status code
     @Test
-    public void thatGetConsumesAndWaitUntilFalsePositiveOnCustom404Error() {
+    void thatGetConsumesAndWaitUntilFalsePositiveOnCustom404Error() {
         final SpecificationBuilder specification = Specification.start("test", "getPage", "page")
                 .function(get("page")
                         .url(testServer.testURL("/api/events?position=${fromPosition}&pageSize=10&retries=2"))
@@ -260,11 +254,9 @@ public class GetTest {
                                 .pipe(publish("${position}"))
                         ));
 
-        //LOG.trace("{}", JsonParser.createJsonParser().toPrettyJSON(specification));
         String json = JsonParser.createJsonParser().toPrettyJSON(specification);
         SpecificationBuilder deserializedSpecification = Specification.deserialize(json);
         assertEquals(specification, deserializedSpecification);
-        //if (true) return;
 
         ExecutionContext output = Worker.newBuilder()
                 .specification(specification
@@ -279,7 +271,7 @@ public class GetTest {
     }
 
     @Test
-    public void thatPaginateHandlePages() throws Exception {
+    void thatPaginateHandlePages() throws Exception {
         SpecificationBuilder specificationBuilder = Specification.start("test", "getPage", "page-loop")
                 .configure(context()
                         .topic("topic")
@@ -340,7 +332,7 @@ public class GetTest {
     }
 
     @Test
-    public void thatPaginateHandlePagesWithCommitBufferThreshold() throws Exception {
+    void thatPaginateHandlePagesWithCommitBufferThreshold() {
         SpecificationBuilder specificationBuilder = Specification.start("test", "getPage", "page-loop")
                 .configure(context()
                         .topic("topic")
@@ -397,29 +389,38 @@ public class GetTest {
     }
 
     @Test
-    public void thatProcessorReturnsNextPagePosition() {
+    void thatProcessorReturnsNextPagePosition() {
         ExecutionContext input = ExecutionContext.empty().state(Response.class,
                 new MockResponse("http://example.com", new Headers(), 200, "[{\"id\": \"1\"}, {\"id\": \"2\"}]".getBytes()));
 
         ExecutionContext output = Executor.execute(process(ReturnNextPagePosition.class).output("nextPosition").build(), input);
         assertNotNull(output);
 
-        assertEquals(output.variables().get("nextPosition"), 3L);
+        assertEquals(3L, output.variables().get("nextPosition"));
     }
 
     @Test
-    public void thatXpathReturnsList() {
-        List<?> list = Queries.from(xpath("/feed/entry").build()).evaluateList(xml.getBytes());
+    void thatProcessorWithoutRequiredOutputFails() {
+        ExecutionContext input = ExecutionContext.empty().state(Response.class,
+                new MockResponse("http://example.com", new Headers(), 200, "[{\"id\": \"1\"}]".getBytes()));
+        Process node = process(ReturnNextPagePosition.class).output("missing").build();
 
-        assertEquals(list.size(), 3);
+        assertThrows(IllegalStateException.class, () -> Executor.execute(node, input));
     }
 
     @Test
-    public void thatXpathReturnsItem() {
+    void thatXpathReturnsList() {
         List<?> list = Queries.from(xpath("/feed/entry").build()).evaluateList(xml.getBytes());
-        List<String> positionsList = list.stream().map(item -> Queries.from(xpath("/entry/id").build()).evaluateStringLiteral(item)).collect(Collectors.toList());
 
-        assertEquals(positionsList.size(), 3);
+        assertEquals(3, list.size());
+    }
+
+    @Test
+    void thatXpathReturnsItem() {
+        List<?> list = Queries.from(xpath("/feed/entry").build()).evaluateList(xml.getBytes());
+        List<String> positionsList = list.stream().map(item -> Queries.from(xpath("/entry/id").build()).evaluateStringLiteral(item)).toList();
+
+        assertEquals(3, positionsList.size());
     }
 
     static class MockResponse implements Response {

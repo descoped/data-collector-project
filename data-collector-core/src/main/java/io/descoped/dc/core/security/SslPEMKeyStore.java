@@ -60,15 +60,14 @@ class SslPEMKeyStore implements SslKeyStore {
         try (PEMParser pemParser = new PEMParser(new CharArrayReader(certificateBundle.privateKey))) {
             final Object pemObject = pemParser.readObject();
             final KeyPair kp;
-            if (pemObject instanceof PEMEncryptedKeyPair) {
+            if (pemObject instanceof PEMEncryptedKeyPair encryptedKeyPair) {
                 // Encrypted key - we will use provided password
                 final PEMDecryptorProvider decProv = new JcePEMDecryptorProviderBuilder().build(certificateBundle.passphrase);
-                kp = privateKeyConverter.getKeyPair(((PEMEncryptedKeyPair) pemObject).decryptKeyPair(decProv));
+                kp = privateKeyConverter.getKeyPair(encryptedKeyPair.decryptKeyPair(decProv));
 
-            } else if (pemObject instanceof PKCS8EncryptedPrivateKeyInfo) {
+            } else if (pemObject instanceof PKCS8EncryptedPrivateKeyInfo encryptedInfo) {
                 // Encrypted key - we will use provided password
                 try {
-                    final PKCS8EncryptedPrivateKeyInfo encryptedInfo = (PKCS8EncryptedPrivateKeyInfo) pemObject;
                     final InputDecryptorProvider provider = new JceOpenSSLPKCS8DecryptorProviderBuilder().build(certificateBundle.passphrase);
                     final PrivateKeyInfo privateKeyInfo = encryptedInfo.decryptPrivateKeyInfo(provider);
                     return privateKeyConverter.getPrivateKey(privateKeyInfo);
@@ -76,8 +75,8 @@ class SslPEMKeyStore implements SslKeyStore {
                     throw new IOException("Unable to decrypt private key!", e);
                 }
 
-            } else if (pemObject instanceof PrivateKeyInfo) {
-                return privateKeyConverter.getPrivateKey((PrivateKeyInfo) pemObject);
+            } else if (pemObject instanceof PrivateKeyInfo privateKeyInfo) {
+                return privateKeyConverter.getPrivateKey(privateKeyInfo);
 
             } else {
                 // Unencrypted key - no password needed
@@ -140,8 +139,8 @@ class SslPEMKeyStore implements SslKeyStore {
 
             X509TrustManager x509Tm = null;
             for (TrustManager tm : tmf.getTrustManagers()) {
-                if (tm instanceof X509TrustManager) {
-                    x509Tm = (X509TrustManager) tm;
+                if (tm instanceof X509TrustManager x509TrustManager) {
+                    x509Tm = x509TrustManager;
                     break;
                 }
             }

@@ -1,11 +1,8 @@
 package io.descoped.dc.core.handler;
 
-import io.descoped.dc.api.context.ExecutionContext;
 import io.descoped.dc.api.handler.DocumentParserFeature;
 import io.descoped.dc.api.handler.Handler;
 import io.descoped.dc.api.node.XPath;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -38,8 +35,6 @@ import static org.w3c.dom.Node.TEXT_NODE;
 
 @Handler(forClass = XPath.class)
 public class XPathHandler extends AbstractQueryHandler<XPath> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(XPathHandler.class);
 
     private final XPathFactory xpathFactory;
     private final DocumentParserFeature parser;
@@ -78,14 +73,9 @@ public class XPathHandler extends AbstractQueryHandler<XPath> {
         }
     }
 
-    @Override
-    public ExecutionContext execute(ExecutionContext input) {
-        return super.execute(input);
-    }
-
     Document asDocument(Object data) {
-        if (data instanceof Document) {
-            return (Document) data;
+        if (data instanceof Document document) {
+            return document;
 
         } else if (data instanceof byte[]) {
             return (Document) parser.deserialize((byte[]) data);
@@ -128,21 +118,11 @@ public class XPathHandler extends AbstractQueryHandler<XPath> {
                 case ELEMENT_NODE:
                     return node.getTextContent();
 
-                case ATTRIBUTE_NODE:
+                case ATTRIBUTE_NODE, TEXT_NODE:
                     return node.getNodeValue();
 
-
-                case TEXT_NODE:
-                    return node.getNodeValue();
-
-                case CDATA_SECTION_NODE:
-                case ENTITY_REFERENCE_NODE:
-                case ENTITY_NODE:
-                case PROCESSING_INSTRUCTION_NODE:
-                case DOCUMENT_NODE:
-                case DOCUMENT_TYPE_NODE:
-                case DOCUMENT_FRAGMENT_NODE:
-                case NOTATION_NODE:
+                case CDATA_SECTION_NODE, ENTITY_REFERENCE_NODE, ENTITY_NODE, PROCESSING_INSTRUCTION_NODE, DOCUMENT_NODE,
+                     DOCUMENT_TYPE_NODE, DOCUMENT_FRAGMENT_NODE, NOTATION_NODE:
                 default:
                     throw new IllegalArgumentException("Node-type not supported!");
             }
@@ -151,8 +131,8 @@ public class XPathHandler extends AbstractQueryHandler<XPath> {
         return evaluateXPath(document, NODE, converter);
     }
 
-    static public class IgnoreNamespaceResolver implements NamespaceContext {
-        private Document document;
+    public static class IgnoreNamespaceResolver implements NamespaceContext {
+        private final Document document;
 
         public IgnoreNamespaceResolver(Document document) {
             this.document = document;

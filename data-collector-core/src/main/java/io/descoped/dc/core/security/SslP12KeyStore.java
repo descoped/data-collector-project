@@ -48,10 +48,10 @@ class SslP12KeyStore implements SslKeyStore {
             String alias = keyStore.aliases().nextElement();
             Key key = keyStore.getKey(alias, certificateBundle.passphrase);
             KeyPair keyPair;
-            if (key instanceof PrivateKey) {
+            if (key instanceof PrivateKey privateKey) {
                 Certificate cert = keyStore.getCertificate(alias);
                 PublicKey publicKey = cert.getPublicKey();
-                keyPair = new KeyPair(publicKey, (PrivateKey) key);
+                keyPair = new KeyPair(publicKey, privateKey);
             } else {
                 final Path secretPropertiesPath = certificateBundle.secretPropertiesPath().map(Path::getParent).orElse(null);
                 throw new IllegalStateException("Could not obtain PublicKey for bundle: " + (secretPropertiesPath == null ? "[" + BusinessSSLResource.class.getSimpleName() + "]" : secretPropertiesPath));

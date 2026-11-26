@@ -63,13 +63,12 @@ public class RegExHandler extends AbstractQueryHandler<RegEx> {
 
     @Override
     public String evaluateStringLiteral(Object data) {
-        String text = (data instanceof byte[]) ? new String((byte[]) data, StandardCharsets.UTF_8) : (String) data;
+        String text = (data instanceof byte[] bytes) ? new String(bytes, StandardCharsets.UTF_8) : (String) data;
         try {
             Pattern pattern = patternCache.computeIfAbsent(node.expression(), Pattern::compile);
             Matcher matcher = pattern.matcher(text);
             if (matcher.find()) {
-                String value = matcher.group(0);
-                return value;
+                return matcher.group(0);
             }
 
         } catch (PatternSyntaxException e) {

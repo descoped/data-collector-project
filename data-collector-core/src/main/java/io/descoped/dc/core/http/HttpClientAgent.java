@@ -12,6 +12,9 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 
 public class HttpClientAgent {
 
+    private HttpClientAgent() {
+    }
+
     /*
      * Findings with ByteBuddy 1.10.8
      * - The hasSuperClass breaks if you invoke GetHandler.class.getName(). A fully qualified name must be assigned as string!

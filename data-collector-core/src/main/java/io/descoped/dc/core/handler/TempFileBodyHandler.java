@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.UUID;
 
 class TempFileBodyHandler extends FileBodyHandler {
 
@@ -18,7 +17,7 @@ class TempFileBodyHandler extends FileBodyHandler {
 
     static Path createTempFile() {
         try {
-            return Files.createTempFile(UUID.randomUUID().toString(), null);
+            return createOwnerOnlyTempFile();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -27,7 +26,7 @@ class TempFileBodyHandler extends FileBodyHandler {
     void dispose() {
         try {
             if (!Files.deleteIfExists(this.file)) {
-                throw new RuntimeException("Unable to remove file: " + this.file);
+                throw new IllegalStateException("Unable to remove file: " + this.file);
             }
             LOG.trace("Remove temp file: {}", this.file);
         } catch (IOException e) {

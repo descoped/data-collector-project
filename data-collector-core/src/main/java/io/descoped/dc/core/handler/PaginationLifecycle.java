@@ -113,49 +113,52 @@ class PaginationLifecycle {
     }
 
     private void monitorLifecycleUntilLoopConditionIsSatisfied(Termination termination, HealthWorkerMonitor monitor) throws InterruptedException {
-        boolean untilCondition = false;
+        boolean done = false;
 
         do {
 
             CompletableFuture<ExecutionContext> pageFuture = pageFutures.poll(1, TimeUnit.SECONDS);
 
-            if (pageFuture == null) {
-                continue;
+            if (pageFuture != null) {
+                done = completePage(pageFuture, termination, monitor);
             }
 
-            checkTerminationSignal(termination);
-
-            ExecutionContext outputContext = pageFuture.join();
-
-            PageContext pageContext = outputContext.state(PageContext.class);
-
-            // TODO wait for all tasks in parallel-handler instead of here
-            CompletableFuture.allOf(pageContext.parallelFutures().toArray(new CompletableFuture[0]))
-                    .thenApply(v -> {
-                        // decrement monitor prefetch count
-                        if (monitor != null) {
-                            monitor.request().decrementPrefetchCount();
-                        }
-                        return v;
-                    })
-                    .join();
-
-            if (pageContext.isEndOfStream()) {
-                LOG.info("Termination page!");
-
-            } else {
-                LOG.info("Page completion at: {}", pageContext.expectedPositions().get(pageContext.completionInfo().completedCount().intValue() - 1));
-            }
-
-            if (pageContext.isEndOfStream()) {
-                break;
-            }
-
-            untilCondition = evaluateUntilCondition(pageContext);
-
-        } while (!untilCondition);
+        } while (!done);
 
         LOG.info("Paginate has completed!");
+    }
+
+    // true when the page is the end of the stream, or the until condition is satisfied
+    private boolean completePage(CompletableFuture<ExecutionContext> pageFuture, Termination termination, HealthWorkerMonitor monitor) {
+        checkTerminationSignal(termination);
+
+        ExecutionContext outputContext = pageFuture.join();
+
+        PageContext pageContext = outputContext.state(PageContext.class);
+
+        // TODO wait for all tasks in parallel-handler instead of here
+        CompletableFuture.allOf(pageContext.parallelFutures().toArray(new CompletableFuture[0]))
+                .thenApply(v -> {
+                    // decrement monitor prefetch count
+                    if (monitor != null) {
+                        monitor.request().decrementPrefetchCount();
+                    }
+                    return v;
+                })
+                .join();
+
+        if (pageContext.isEndOfStream()) {
+            LOG.info("Termination page!");
+
+        } else {
+            LOG.info("Page completion at: {}", pageContext.expectedPositions().get(pageContext.completionInfo().completedCount().intValue() - 1));
+        }
+
+        if (pageContext.isEndOfStream()) {
+            return true;
+        }
+
+        return evaluateUntilCondition(pageContext);
     }
 
     private void checkTerminationSignal(Termination termination) {
@@ -169,7 +172,6 @@ class PaginationLifecycle {
         for (String nextPositionVariableName : pageContext.nextPositionVariableNames()) {
             conditionContext.variable(nextPositionVariableName, pageContext.nextPositionMap().get(nextPositionVariableName));
         }
-        boolean done = Conditions.untilCondition(paginateHandler.node.condition(), conditionContext);
-        return done;
+        return Conditions.untilCondition(paginateHandler.node.condition(), conditionContext);
     }
 }

@@ -9,8 +9,6 @@ import io.descoped.dc.api.http.Response;
 import io.descoped.dc.api.node.ForEach;
 import io.descoped.dc.api.node.Node;
 import io.descoped.dc.core.executor.Executor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -18,8 +16,6 @@ import java.util.List;
 public class ForEachHandler extends AbstractNodeHandler<ForEach> {
 
     public static final String ADD_BODY_CONTENT = ParallelHandler.ADD_BODY_CONTENT;
-    private static final Logger LOG = LoggerFactory.getLogger(ForEachHandler.class);
-
     public ForEachHandler(ForEach node) {
         super(node);
     }

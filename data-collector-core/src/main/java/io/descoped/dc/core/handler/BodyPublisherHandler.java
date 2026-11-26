@@ -37,49 +37,16 @@ public class BodyPublisherHandler extends AbstractHandler<BodyPublisher> {
 
         switch (node.getEncoding()) {
             case TEXT_PLAIN:
-                if (node.getPlainText() == null) {
-                    byteArrayBodyPublisher = HttpRequest.BodyPublishers.ofByteArray(new byte[0]);
-                } else {
-                    ExecutionContext bodyPublisherOutput = Executor.execute(node.getPlainText(), context);
-                    byte[] bytesPlainText = bodyPublisherOutput.state((Object) BodyPublisherProducer.class);
-                    byteArrayBodyPublisher = HttpRequest.BodyPublishers.ofByteArray(bytesPlainText);
-                }
+                byteArrayBodyPublisher = bytesPublisherOf(node.getPlainText(), context);
                 break;
 
             case APPLICATION_X_WWW_FORM_URLENCODED:
                 requestBuilder.header("Content-Type", node.getEncoding().getMimeType());
-                if (node.getUrlEncodedData() == null) {
-                    byteArrayBodyPublisher = HttpRequest.BodyPublishers.ofByteArray(new byte[0]);
-                } else {
-                    ExecutionContext bodyPublisherOutput = Executor.execute(node.getUrlEncodedData(), context);
-                    byte[] bytesUrlEncodedData = bodyPublisherOutput.state((Object) BodyPublisherProducer.class);
-                    byteArrayBodyPublisher = HttpRequest.BodyPublishers.ofByteArray(bytesUrlEncodedData);
-                }
+                byteArrayBodyPublisher = bytesPublisherOf(node.getUrlEncodedData(), context);
                 break;
 
             case MULTIPART_FORM_DATA:
-                MultipartBodyPublisher.Builder builder = MultipartBodyPublisher.newBuilder();
-                for (BodyPart part : node.getParts()) {
-                    if (part.isTextPart()) {
-                        builder.textPart(part.name, part.value);
-
-                    } else if (part.isFormPart()) {
-                        Objects.requireNonNull(part.filename);
-
-                        if (part.value instanceof byte[]) {
-                            byte[] partBytes = (byte[]) part.value;
-                            builder.formPart(part.name, part.filename, HttpRequest.BodyPublishers.ofByteArray(partBytes));
-
-                        } else if (part.value instanceof String) {
-                            String partString = (String) part.value;
-                            builder.formPart(part.name, part.filename, HttpRequest.BodyPublishers.ofByteArray(partString.getBytes()));
-
-                        } else {
-                            throw new UnsupportedOperationException();
-                        }
-                    }
-                }
-                MultipartBodyPublisher multipartBodyPublisher = builder.build();
+                MultipartBodyPublisher multipartBodyPublisher = multipartBodyPublisher();
 
                 requestBuilder.header("Content-Type", node.getEncoding().getMimeType() + ";boundary=" + multipartBodyPublisher.boundary());
                 byteArrayBodyPublisher = multipartBodyPublisher;
@@ -90,6 +57,39 @@ public class BodyPublisherHandler extends AbstractHandler<BodyPublisher> {
         }
 
         return ExecutionContext.empty().state(BodyPublisher.BODY_PUBLISHER_RESULT, byteArrayBodyPublisher);
+    }
+
+    // the bytes the producer gives, or none without a producer
+    private Flow.Publisher<ByteBuffer> bytesPublisherOf(BodyPublisherProducer producer, ExecutionContext context) {
+        if (producer == null) {
+            return HttpRequest.BodyPublishers.ofByteArray(new byte[0]);
+        }
+        ExecutionContext bodyPublisherOutput = Executor.execute(producer, context);
+        byte[] bytes = bodyPublisherOutput.state((Object) BodyPublisherProducer.class);
+        return HttpRequest.BodyPublishers.ofByteArray(bytes);
+    }
+
+    private MultipartBodyPublisher multipartBodyPublisher() {
+        MultipartBodyPublisher.Builder builder = MultipartBodyPublisher.newBuilder();
+        for (BodyPart part : node.getParts()) {
+            if (part.isTextPart()) {
+                builder.textPart(part.name, part.value);
+
+            } else if (part.isFormPart()) {
+                Objects.requireNonNull(part.filename);
+
+                if (part.value instanceof byte[] partBytes) {
+                    builder.formPart(part.name, part.filename, HttpRequest.BodyPublishers.ofByteArray(partBytes));
+
+                } else if (part.value instanceof String partString) {
+                    builder.formPart(part.name, part.filename, HttpRequest.BodyPublishers.ofByteArray(partString.getBytes()));
+
+                } else {
+                    throw new UnsupportedOperationException();
+                }
+            }
+        }
+        return builder.build();
     }
 
 }

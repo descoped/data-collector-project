@@ -56,9 +56,6 @@ public class ParallelHandler extends AbstractNodeHandler<Parallel> {
             countNumberOfIterations.incrementAndGet();
         }
 
-        // add correlation-id before fan-out
-        //CorrelationIds.of(input).add();
-
         FixedThreadPool threadPool = input.services().get(FixedThreadPool.class);
 
         PageContext pageContext = buildPageContext(input);
@@ -72,97 +69,105 @@ public class ParallelHandler extends AbstractNodeHandler<Parallel> {
         if (queueBufferThreshold > -1) pageCounter.incrementAndGet();
 
         if (response.bodyHandler().isPresent()) {
-            // split using sequential token deserializer
-            //doTokenizerQuery(input, response, positionList);
-            List<CompletableFuture<ExecutionContext>> parallelFutures = new ArrayList<>();
-            AtomicLong counter = new AtomicLong();
-            AtomicBoolean cancelLoop = new AtomicBoolean();
-            doTokenizerQuery(response, pageEntryDocument -> {
-                Consumer<Boolean> cancelCallback = test -> cancelLoop.compareAndSet(false, test);
-                CompletableFuture<ExecutionContext> parallelFuture = CompletableFuture
-                        .supplyAsync(handlePageEntryDocument(input, pageContext, parser, threadPool, pageEntryDocument, cancelCallback)::join, threadPool.getExecutor());
-
-                if (cancelLoop.get()) {
-                    return;
-                }
-
-                parallelFutures.add(parallelFuture);
-
-                if (counter.incrementAndGet() % 1000 == 0) {
-                    LOG.warn("Wait for buffered futures to complete");
-                    CompletableFuture.allOf(parallelFutures.toArray(new CompletableFuture[0]))
-                            .thenApply(v -> {
-                                parallelFutures.clear();
-                                return v;
-                            })
-                            .join();
-                }
-
-                if (counter.get() % 50000 == 0) {
-                    LOG.trace("Parallel count: {}", counter.get());
-                }
-            });
-            LOG.info("Parallel count: {}", counter.get());
-
-            LOG.warn("Wait for ALL buffered futures to complete");
-            CompletableFuture.allOf(parallelFutures.toArray(new CompletableFuture[0]))
-                    .thenApply(v -> {
-                        parallelFutures.clear();
-                        return v;
-                    })
-                    .join();
-
+            fanOutTokenized(input, response, pageContext, parser, threadPool);
         } else if (queueBufferThreshold > -1) {
-            List<CompletableFuture<ExecutionContext>> parallelFutures = new ArrayList<>();
-            AtomicLong counter = new AtomicLong();
-            AtomicBoolean cancelLoop = new AtomicBoolean();
-
-            List<?> pageList = Queries.from(input, node.splitQuery()).evaluateList(response.body());
-            for (Object pageEntryDocument : pageList) {
-                Consumer<Boolean> cancelCallback = test -> cancelLoop.compareAndSet(false, test);
-                CompletableFuture<ExecutionContext> parallelFuture = CompletableFuture
-                        .supplyAsync(handlePageEntryDocument(input, pageContext, parser, threadPool, pageEntryDocument, cancelCallback)::join, threadPool.getExecutor());
-
-                if (cancelLoop.get()) {
-                    break;
-                }
-
-                parallelFutures.add(parallelFuture);
-
-                if (counter.incrementAndGet() % queueBufferThreshold == 0) {
-                    LOG.warn("Wait for buffered futures to complete at: {} / {}", pageCounter.get(), counter.get());
-                    CompletableFuture.allOf(parallelFutures.toArray(new CompletableFuture[0]))
-                            .thenApply(v -> {
-                                parallelFutures.clear();
-                                return v;
-                            })
-                            .join();
-                }
-
-                if (counter.get() % 50000 == 0) {
-                    LOG.trace("Parallel count: {}", counter.get());
-                }
-            }
-            LOG.info("Parallel count: {}", counter.get());
-
-            // return remaining incomplete futures to PaginationLifecycle
-            parallelFutures.forEach(pageContext::addFuture);
-
+            fanOutBuffered(input, response, pageContext, parser, threadPool, queueBufferThreshold);
         } else {
-            // split by query
-            List<?> pageList = Queries.from(input, node.splitQuery()).evaluateList(response.body());
-            for (Object pageEntryDocument : pageList) {
-                CompletableFuture<ExecutionContext> parallelFuture = handlePageEntryDocument(input, pageContext, parser, threadPool, pageEntryDocument, test -> {
-                });
-                if (parallelFuture == null) {
-                    break;
-                }
-                pageContext.addFuture(parallelFuture);
-            }
+            fanOutByQuery(input, response, pageContext, parser, threadPool);
         }
 
-        //CorrelationIds correlationIds = CorrelationIds.of(input);
-        return ExecutionContext.empty().state(PageContext.class, pageContext); // .merge(correlationIds.context())
+        return ExecutionContext.empty().state(PageContext.class, pageContext);
+    }
+
+    private void fanOutTokenized(ExecutionContext input, Response response, PageContext pageContext, DocumentParserFeature parser, FixedThreadPool threadPool) {
+        // split using sequential token deserializer
+        List<CompletableFuture<ExecutionContext>> parallelFutures = new ArrayList<>();
+        AtomicLong counter = new AtomicLong();
+        AtomicBoolean cancelLoop = new AtomicBoolean();
+        doTokenizerQuery(response, pageEntryDocument -> {
+            Consumer<Boolean> cancelCallback = test -> cancelLoop.compareAndSet(false, test);
+            CompletableFuture<ExecutionContext> parallelFuture = CompletableFuture
+                    .supplyAsync(handlePageEntryDocument(input, pageContext, parser, threadPool, pageEntryDocument, cancelCallback)::join, threadPool.getExecutor());
+
+            if (cancelLoop.get()) {
+                return;
+            }
+
+            parallelFutures.add(parallelFuture);
+
+            if (counter.incrementAndGet() % 1000 == 0) {
+                LOG.warn("Wait for buffered futures to complete");
+                CompletableFuture.allOf(parallelFutures.toArray(new CompletableFuture[0]))
+                        .thenApply(v -> {
+                            parallelFutures.clear();
+                            return v;
+                        })
+                        .join();
+            }
+
+            if (counter.get() % 50000 == 0) {
+                LOG.trace("Parallel count: {}", counter.get());
+            }
+        });
+        LOG.info("Parallel count: {}", counter.get());
+
+        LOG.warn("Wait for ALL buffered futures to complete");
+        CompletableFuture.allOf(parallelFutures.toArray(new CompletableFuture[0]))
+                .thenApply(v -> {
+                    parallelFutures.clear();
+                    return v;
+                })
+                .join();
+    }
+
+    private void fanOutBuffered(ExecutionContext input, Response response, PageContext pageContext, DocumentParserFeature parser, FixedThreadPool threadPool, int queueBufferThreshold) {
+        List<CompletableFuture<ExecutionContext>> parallelFutures = new ArrayList<>();
+        AtomicLong counter = new AtomicLong();
+        AtomicBoolean cancelLoop = new AtomicBoolean();
+
+        List<?> pageList = Queries.from(input, node.splitQuery()).evaluateList(response.body());
+        for (Object pageEntryDocument : pageList) {
+            Consumer<Boolean> cancelCallback = test -> cancelLoop.compareAndSet(false, test);
+            CompletableFuture<ExecutionContext> parallelFuture = CompletableFuture
+                    .supplyAsync(handlePageEntryDocument(input, pageContext, parser, threadPool, pageEntryDocument, cancelCallback)::join, threadPool.getExecutor());
+
+            if (cancelLoop.get()) {
+                break;
+            }
+
+            parallelFutures.add(parallelFuture);
+
+            if (counter.incrementAndGet() % queueBufferThreshold == 0) {
+                LOG.warn("Wait for buffered futures to complete at: {} / {}", pageCounter.get(), counter.get());
+                CompletableFuture.allOf(parallelFutures.toArray(new CompletableFuture[0]))
+                        .thenApply(v -> {
+                            parallelFutures.clear();
+                            return v;
+                        })
+                        .join();
+            }
+
+            if (counter.get() % 50000 == 0) {
+                LOG.trace("Parallel count: {}", counter.get());
+            }
+        }
+        LOG.info("Parallel count: {}", counter.get());
+
+        // return remaining incomplete futures to PaginationLifecycle
+        parallelFutures.forEach(pageContext::addFuture);
+    }
+
+    private void fanOutByQuery(ExecutionContext input, Response response, PageContext pageContext, DocumentParserFeature parser, FixedThreadPool threadPool) {
+        // split by query
+        List<?> pageList = Queries.from(input, node.splitQuery()).evaluateList(response.body());
+        for (Object pageEntryDocument : pageList) {
+            CompletableFuture<ExecutionContext> parallelFuture = handlePageEntryDocument(input, pageContext, parser, threadPool, pageEntryDocument, test -> {
+            });
+            if (parallelFuture == null) {
+                break;
+            }
+            pageContext.addFuture(parallelFuture);
+        }
     }
 
     // return null will break callee loop
@@ -222,7 +227,7 @@ public class ParallelHandler extends AbstractNodeHandler<Parallel> {
                                                                 Object pageEntryDocument,
                                                                 byte[] serializedItem) {
 
-        CompletableFuture<ExecutionContext> parallelFuture = CompletableFuture
+        return CompletableFuture
                 .supplyAsync(() -> {
                     if (pageContext.isFailure()) {
                         pageContext.setEndOfStream(true);
@@ -262,26 +267,21 @@ public class ParallelHandler extends AbstractNodeHandler<Parallel> {
 
                     checkTerminationSignal(input.services().get(Termination.class));
 
-//                        if (true) throw new RuntimeException("blow");
 
                     pageContext.incrementCompletionCount();
 
                     return stepOutput;
 
                 }).exceptionally(throwable -> {
-                    if (!pageContext.failureCause().compareAndSet(null, throwable)) {
-                        //LOG.error("Unable to store throwable in failedException, already set. Current exception: {}", CommonUtils.captureStackTrace(throwable));
+                    pageContext.failureCause().compareAndSet(null, throwable);
+                    if (throwable instanceof RuntimeException runtimeException) {
+                        throw runtimeException;
                     }
-                    if (throwable instanceof RuntimeException) {
-                        throw (RuntimeException) throwable;
-                    }
-                    if (throwable instanceof Error) {
-                        throw (Error) throwable;
+                    if (throwable instanceof Error error) {
+                        throw error;
                     }
                     throw new ParallelException(throwable);
                 });
-
-        return parallelFuture;
     }
 
     void doTokenizerQuery(Response response, Consumer<Object> entry) {

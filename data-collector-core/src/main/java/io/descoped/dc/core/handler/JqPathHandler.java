@@ -41,14 +41,14 @@ public class JqPathHandler extends AbstractQueryHandler<JqPath> {
     }
 
     ObjectNode asDocument(Object data) {
-        if (data instanceof ObjectNode) {
-            return (ObjectNode) data;
+        if (data instanceof ObjectNode objectNode) {
+            return objectNode;
 
-        } else if (data instanceof byte[]) {
-            return (ObjectNode) jsonParser.deserialize((byte[]) data);
+        } else if (data instanceof byte[] bytes) {
+            return (ObjectNode) jsonParser.deserialize(bytes);
 
-        } else if (data instanceof String) {
-            return (ObjectNode) jsonParser.deserialize(((String) data).getBytes());
+        } else if (data instanceof String text) {
+            return (ObjectNode) jsonParser.deserialize(text.getBytes());
 
         } else {
             throw new IllegalArgumentException(String.format("Param value not supported [%s]: %s", data.getClass().getSimpleName(), data));
@@ -80,16 +80,7 @@ public class JqPathHandler extends AbstractQueryHandler<JqPath> {
             JsonQuery query = JsonQuery.compile(evaluateExpression(node.expression()), JQ_VERSION);
             AtomicReference<JsonNode> outputRef = new AtomicReference<>();
             query.apply(childScope, jsonNode, outputRef::set);
-            JsonNode output = outputRef.get();
-            /*
-            boolean isJsonValue = List.of(JsonNodeType.OBJECT, JsonNodeType.POJO, JsonNodeType.ARRAY).stream().noneMatch(type -> output.getNodeType() == type);
-            LOG.trace("isJson: {}", isJsonValue);
-            if (isJsonValue) {
-                ObjectNode objectNode = JsonParser.createJsonParser().createObjectNode();
-                return objectNode.set("value", output);
-            }
-             */
-            return output;
+            return outputRef.get();
         } catch (JsonQueryException e) {
             throw new RuntimeException(e);
         }
@@ -99,7 +90,7 @@ public class JqPathHandler extends AbstractQueryHandler<JqPath> {
     public String evaluateStringLiteral(Object data) {
         JsonNode jsonNode = null;
         try {
-            jsonNode = (data instanceof JsonNode) ? (JsonNode) data : asDocument(data);
+            jsonNode = (data instanceof JsonNode dataNode) ? dataNode : asDocument(data);
             Scope childScope = Scope.newChildScope(rootScope);
             JsonQuery query = JsonQuery.compile(evaluateExpression(node.expression()), JQ_VERSION);
             List<JsonNode> result = new ArrayList<>();
@@ -107,23 +98,17 @@ public class JqPathHandler extends AbstractQueryHandler<JqPath> {
             if (!result.isEmpty()) {
                 JsonNode firstNode = result.get(0);
                 switch (firstNode.getNodeType()) {
-                    case NUMBER:
-                        return firstNode.asText();
-
-                    case STRING:
+                    case NUMBER, STRING:
                         return firstNode.asText();
 
                     case NULL:
                         return null;
 
-                    case ARRAY:
-                    case BINARY:
-                    case BOOLEAN:
-                    case MISSING:
-                    case OBJECT:
-                    case POJO:
+                    case ARRAY, BINARY, BOOLEAN, MISSING, OBJECT, POJO:
                     default: {
-                        LOG.error("Expression: '{}' caused failure. Node-type {} is not valid for string literal => {}", node.expression(), firstNode.getNodeType(), firstNode);
+                        if (LOG.isErrorEnabled()) {
+                            LOG.error("Expression: '{}' caused failure. Node-type {} is not valid for string literal => {}", node.expression(), firstNode.getNodeType(), firstNode);
+                        }
                         return null;
                     }
                 }
@@ -131,7 +116,7 @@ public class JqPathHandler extends AbstractQueryHandler<JqPath> {
             return null;
 
         } catch (JsonQueryException e) {
-            throw new RuntimeException(e.getMessage() + " => Error with query: \"" + node.expression() + "\" " +
+            throw new IllegalStateException(e.getMessage() + " => Error with query: \"" + node.expression() + "\" " +
                     "on data:\n" +
                     ofNullable(jsonNode).map(JsonNode::toPrettyString).orElse(null) + "\n" +
                     CommonUtils.captureStackTrace(e));

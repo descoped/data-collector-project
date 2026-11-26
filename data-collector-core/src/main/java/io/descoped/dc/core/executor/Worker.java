@@ -45,6 +45,9 @@ import java.util.function.Supplier;
 public class Worker {
 
     private static final Logger LOG = LoggerFactory.getLogger(Worker.class);
+    private static final String HTTP_CLIENT_TIMEOUT_SECONDS = "data.collector.http.client.timeout.seconds";
+    private static final String HTTP_REQUEST_TIMEOUT_SECONDS = "data.collector.http.request.timeout.seconds";
+    private static final String CONTENT_STREAM_CONNECTOR = "content.stream.connector";
     private final UUID workerId;
     private final String specificationId;
     private final String name;
@@ -255,9 +258,9 @@ public class Worker {
 
         ConfigurationMap configurationMap = context.services().get(ConfigurationMap.class);
         if (configurationMap != null) {
-            int httpClientTimeoutSeconds = Integer.parseInt(configurationMap.get("data.collector.http.client.timeout.seconds"));
+            int httpClientTimeoutSeconds = Integer.parseInt(configurationMap.get(HTTP_CLIENT_TIMEOUT_SECONDS));
             monitor.request().setHttpClientTimeoutSeconds(httpClientTimeoutSeconds);
-            int httpRequestTimeoutSeconds = Integer.parseInt(configurationMap.get("data.collector.http.request.timeout.seconds"));
+            int httpRequestTimeoutSeconds = Integer.parseInt(configurationMap.get(HTTP_REQUEST_TIMEOUT_SECONDS));
             monitor.request().setHttpRequestTimeoutSeconds(httpRequestTimeoutSeconds);
         }
 
@@ -286,11 +289,11 @@ public class Worker {
         return CompletableFuture
                 .supplyAsync(this::run)
                 .exceptionally(throwable -> {
-                    if (throwable instanceof RuntimeException) {
-                        throw (RuntimeException) throwable;
+                    if (throwable instanceof RuntimeException runtimeException) {
+                        throw runtimeException;
                     }
-                    if (throwable instanceof Error) {
-                        throw (Error) throwable;
+                    if (throwable instanceof Error error) {
+                        throw error;
                     }
                     throw new WorkerException(throwable);
                 });
@@ -309,15 +312,15 @@ public class Worker {
         private SpecificationBuilder specificationBuilder;
         private NodeBuilder nodeBuilder;
         private ConfigurationMap configurationMap;
-        private Headers headers = new Headers();
-        private Services services = Services.create();
-        private Map<Object, Object> globalState = new LinkedHashMap<>();
-        private Map<String, Object> variables = new LinkedHashMap<>();
-        private Map<Object, Object> state = new LinkedHashMap<>();
+        private final Headers headers = new Headers();
+        private final Services services = Services.create();
+        private final Map<Object, Object> globalState = new LinkedHashMap<>();
+        private final Map<String, Object> variables = new LinkedHashMap<>();
+        private final Map<Object, Object> state = new LinkedHashMap<>();
         private Path sslFactoryScanDirectory;
         private String sslFactoryBundleName;
         private String topicName;
-        private List<WorkerObserver> workerObservers = new ArrayList<>();
+        private final List<WorkerObserver> workerObservers = new ArrayList<>();
         private ContentStore contentStore;
         private boolean keepContentStoreOpenOnWorkerCompletion;
         private Supplier<? extends BusinessSSLResource> businessSSLResourceSupplier;
@@ -437,93 +440,64 @@ public class Worker {
             if (specificationBuilder != null) {
                 specificationId = specificationBuilder.getId();
                 name = specificationBuilder.getName();
-                if (printConfiguration) {
+                if (printConfiguration && LOG.isInfoEnabled()) {
                     LOG.info("Execute specification:\n{}", specificationBuilder.serializeAsYaml());
                 }
                 targetNode = specificationBuilder.end().startFunction();
             } else if (nodeBuilder != null) {
                 specificationId = nodeBuilder.getClass().getSimpleName();
                 name = nodeBuilder.getClass().getSimpleName();
-                if (printConfiguration) {
+                if (printConfiguration && LOG.isInfoEnabled()) {
                     LOG.info("Execute specification:\n{}", nodeBuilder.serializeAsYaml());
                 }
                 targetNode = nodeBuilder.build();
             } else {
-                throw new RuntimeException("Flow- or NodeBuilder is undefined!");
+                throw new IllegalStateException("Flow- or NodeBuilder is undefined!");
             }
 
             if (targetNode == null) {
-                throw new RuntimeException("Start function is incorrect!");
+                throw new IllegalStateException("Start function is incorrect!");
             }
 
-            if (printExecutionPlan) {
+            if (printExecutionPlan && LOG.isInfoEnabled()) {
                 LOG.info("Execution plan:\n{}", targetNode.toPrintableExecutionPlan());
             }
 
             if ((sslFactoryScanDirectory != null && sslFactoryBundleName == null) || (businessSSLResourceSupplier != null && sslFactoryBundleName == null)) {
                 Security nodeSecurityConfig = targetNode.configurations().security();
                 if (nodeSecurityConfig == null) {
-                    throw new RuntimeException("Found CertificateFactory, but now bundleName is defined in neither Worker or FlowBuilder");
+                    throw new IllegalStateException("Found CertificateFactory, but now bundleName is defined in neither Worker or FlowBuilder");
                 }
                 sslFactoryBundleName = nodeSecurityConfig.sslBundleName();
             }
 
-            if (!configurationMap.contains("data.collector.http.client.timeout.seconds")) {
-                configurationMap.put("data.collector.http.client.timeout.seconds", "20");
+            if (!configurationMap.contains(HTTP_CLIENT_TIMEOUT_SECONDS)) {
+                configurationMap.put(HTTP_CLIENT_TIMEOUT_SECONDS, "20");
             }
 
-            if (!configurationMap.contains("data.collector.http.request.timeout.seconds")) {
-                configurationMap.put("data.collector.http.request.timeout.seconds", "15");
+            if (!configurationMap.contains(HTTP_REQUEST_TIMEOUT_SECONDS)) {
+                configurationMap.put(HTTP_REQUEST_TIMEOUT_SECONDS, "15");
             }
 
-            Client.Builder clientBuilder = Client.newClientBuilder();
-            if (configurationMap.contains("data.collector.http.version")) {
-                Client.Version httpVersion = Client.Version.valueOf(configurationMap.get("data.collector.http.version").toUpperCase());
-                clientBuilder.version(httpVersion);
-            }
-            if (configurationMap.contains("data.collector.http.followRedirects")) {
-                Client.Redirect redirectPolicy = Client.Redirect.valueOf(configurationMap.get("data.collector.http.followRedirects").toUpperCase());
-                clientBuilder.followRedirects(redirectPolicy);
-            }
-
-            CertificateFactory sslFactory = (sslFactoryScanDirectory != null ?
-                    CertificateFactory.scanAndCreate(sslFactoryScanDirectory) : // TODO use businessSSLResourceSupplier and implement load ssl bundle secret.properties
-                    businessSSLResourceSupplier == null ?
-                            null :
-                            // the supplier make requests to Google Secret Manager
-                            CertificateFactory.create(businessSSLResourceSupplier.get())
-            );
-            if (sslFactory != null) {
-                services.register(CertificateFactory.class, sslFactory);
-            }
-            if (sslFactory != null && sslFactoryBundleName != null) {
-                CertificateContext certificateContext = sslFactory.getCertificateContext(sslFactoryBundleName);
-                clientBuilder.sslContext(certificateContext.sslContext());
-                clientBuilder.x509TrustManager(certificateContext.trustManager());
-            }
-
-            clientBuilder.connectTimeout(Duration.ofSeconds(Long.parseLong(configurationMap.get("data.collector.http.client.timeout.seconds"))));
-            Client client = clientBuilder.build();
-            LOG.info("Configured HttpClient version: {}", client.version());
-            services.register(Client.class, client);
+            configureClient();
 
             if (topicName == null) {
                 FlowContext flowContext = targetNode.configurations().flowContext();
                 if (flowContext.topic() == null) {
-                    throw new RuntimeException("Topic name is undefined in neither Worker, Flow- or NodeBuilder!");
+                    throw new IllegalStateException("Topic name is undefined in neither Worker, Flow- or NodeBuilder!");
                 } else {
                     topicName = flowContext.topic();
                 }
             }
             globalState.put("global.topic", topicName);
 
-            if (!configurationMap.contains("content.stream.connector")) {
-                configurationMap.put("content.stream.connector", "discarding");
+            if (!configurationMap.contains(CONTENT_STREAM_CONNECTOR)) {
+                configurationMap.put(CONTENT_STREAM_CONNECTOR, "discarding");
             }
 
             if (contentStore == null) {
                 LOG.warn("ContentStore should be provided to WorkerBuilder! Creating a new instance.");
-                contentStore = ProviderConfigurator.configure(ContentStoreInitializer.class, configurationMap.get("content.stream.connector"), configurationMap.asMap());
+                contentStore = ProviderConfigurator.configure(ContentStoreInitializer.class, configurationMap.get(CONTENT_STREAM_CONNECTOR), configurationMap.asMap());
             }
             services.register(ContentStore.class, contentStore);
 
@@ -539,6 +513,45 @@ public class Worker {
                     .build();
 
             return new Worker(specificationId, name, workerObservers, targetNode, executionContext, keepContentStoreOpenOnWorkerCompletion);
+        }
+
+        private void configureClient() {
+            Client.Builder clientBuilder = Client.newClientBuilder();
+            if (configurationMap.contains("data.collector.http.version")) {
+                Client.Version httpVersion = Client.Version.valueOf(configurationMap.get("data.collector.http.version").toUpperCase());
+                clientBuilder.version(httpVersion);
+            }
+            if (configurationMap.contains("data.collector.http.followRedirects")) {
+                Client.Redirect redirectPolicy = Client.Redirect.valueOf(configurationMap.get("data.collector.http.followRedirects").toUpperCase());
+                clientBuilder.followRedirects(redirectPolicy);
+            }
+
+            CertificateFactory sslFactory = createSslFactory();
+            if (sslFactory != null) {
+                services.register(CertificateFactory.class, sslFactory);
+            }
+            if (sslFactory != null && sslFactoryBundleName != null) {
+                CertificateContext certificateContext = sslFactory.getCertificateContext(sslFactoryBundleName);
+                clientBuilder.sslContext(certificateContext.sslContext());
+                clientBuilder.x509TrustManager(certificateContext.trustManager());
+            }
+
+            clientBuilder.connectTimeout(Duration.ofSeconds(Long.parseLong(configurationMap.get(HTTP_CLIENT_TIMEOUT_SECONDS))));
+            Client client = clientBuilder.build();
+            LOG.info("Configured HttpClient version: {}", client.version());
+            services.register(Client.class, client);
+        }
+
+        private CertificateFactory createSslFactory() {
+            if (sslFactoryScanDirectory != null) {
+                // TODO use businessSSLResourceSupplier and implement load ssl bundle secret.properties
+                return CertificateFactory.scanAndCreate(sslFactoryScanDirectory);
+            }
+            if (businessSSLResourceSupplier == null) {
+                return null;
+            }
+            // the supplier make requests to Google Secret Manager
+            return CertificateFactory.create(businessSSLResourceSupplier.get());
         }
     }
 }

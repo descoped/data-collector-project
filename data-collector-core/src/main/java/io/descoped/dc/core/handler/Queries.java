@@ -14,6 +14,9 @@ import java.util.function.Consumer;
 
 public class Queries {
 
+    private Queries() {
+    }
+
     public static DocumentParserFeature parserFor(Class<? extends Query> queryClass) {
         if (!queryClass.isInterface()) {
             queryClass = (Class<? extends Query>) queryClass.getInterfaces()[0];

@@ -9,9 +9,9 @@ public abstract class AbstractHandler<N extends Base> implements Execution {
 
     protected final N node;
 
-    public AbstractHandler(N node) {
+    protected AbstractHandler(N node) {
         if (node instanceof Node && !(this instanceof AbstractNodeHandler)) {
-            throw new RuntimeException(node.getClass() + " is of type Node and should inherit AbstractNodeHandler and successor should invoke super.execute(input) in order to guarantee a configured context!");
+            throw new IllegalStateException(node.getClass() + " is of type Node and should inherit AbstractNodeHandler and successor should invoke super.execute(input) in order to guarantee a configured context!");
         }
         this.node = node;
     }

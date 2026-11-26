@@ -117,7 +117,7 @@ public class HttpRequestDelegate implements Request {
 
         private void validate(Object... objects) {
             if (!Arrays.stream(objects).allMatch(Objects::nonNull)) {
-                throw new RuntimeException("Null value");
+                throw new IllegalArgumentException("Null value");
             }
         }
 
@@ -159,6 +159,10 @@ public class HttpRequestDelegate implements Request {
 
                 case DELETE:
                     httpRequestBuilder.DELETE();
+                    break;
+
+                default:
+                    // OPTIONS: the method HttpRequest.Builder has by default, GET
                     break;
             }
 

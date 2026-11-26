@@ -9,11 +9,8 @@ import io.descoped.dc.core.handler.state.ConditionType;
 @Handler(forClass = WhenExpressionIsTrue.class)
 public class WhenExpressionIsNotTrueHandler extends AbstractHandler<WhenExpressionIsTrue> {
 
-    private final WhenExpressionIsTrue node;
-
     public WhenExpressionIsNotTrueHandler(WhenExpressionIsTrue node) {
         super(node);
-        this.node = node;
     }
 
     @Override

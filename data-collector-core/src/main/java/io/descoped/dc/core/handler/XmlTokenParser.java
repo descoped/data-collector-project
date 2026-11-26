@@ -30,6 +30,7 @@ import java.util.function.Consumer;
 public class XmlTokenParser implements DocumentParserFeature {
 
     public XmlTokenParser() {
+        // stateless
     }
 
     /**
@@ -49,7 +50,7 @@ public class XmlTokenParser implements DocumentParserFeature {
             Transformer transformer = transformerFactory.newTransformer();
             transformer.transform(new DOMSource((Node) document), new StreamResult(writer));
             return writer.toString().getBytes();
-        } catch (RuntimeException | Error e) {
+        } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
             throw new QueryException(e);
@@ -108,6 +109,6 @@ public class XmlTokenParser implements DocumentParserFeature {
 
     @Override
     public void tokenDeserializer(InputStream source, Consumer<Object> entryCallback) {
-
+        // not implemented in 2.x: an XML document gives no token entries
     }
 }

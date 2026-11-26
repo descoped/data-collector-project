@@ -5,7 +5,7 @@ import io.descoped.dc.api.node.Node;
 
 public abstract class AbstractNodeHandler<T extends Node> extends AbstractHandler<T> {
 
-    public AbstractNodeHandler(T node) {
+    protected AbstractNodeHandler(T node) {
         super(node);
     }
 

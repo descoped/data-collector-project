@@ -7,6 +7,9 @@ import io.descoped.dc.core.handler.state.ConditionType;
 
 public class Conditions {
 
+    private Conditions() {
+    }
+
     public static boolean untilCondition(Condition condition, ExecutionContext context) {
         ExecutionContext untilConditionOutput = Executor.execute(condition, context);
         return untilConditionOutput.state(ConditionType.UNTIL_CONDITION_RESULT);
