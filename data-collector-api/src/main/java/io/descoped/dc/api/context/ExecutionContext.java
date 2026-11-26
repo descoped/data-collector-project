@@ -65,15 +65,25 @@ public class ExecutionContext {
         // the contexts of a worker share its global state, which other threads write to: it is not copied onto
         // itself (#46)
         if (accumulated.globalState != copyOfThis.globalState) {
-            accumulated.globalState.putAll(copyOfThis.globalState);
+            putAll(accumulated.globalState, copyOfThis.globalState);
         }
         accumulated.state.putAll(copyOfThis.state);
         this.variables.putAll(accumulated.variables);
         if (this.globalState != accumulated.globalState) {
-            this.globalState.putAll(accumulated.globalState);
+            putAll(this.globalState, accumulated.globalState);
         }
         this.state.putAll(accumulated.state);
         return this;
+    }
+
+    // copies a global state that other threads may write to: toArray() of a synchronized map's entry set holds its
+    // lock (a worker's global state), and a concurrent map's is safe without one, so the copy is never read while the
+    // map changes structurally (#46)
+    private static void putAll(Map<Object, Object> target, Map<Object, Object> source) {
+        for (Object entry : source.entrySet().toArray()) {
+            Map.Entry<?, ?> e = (Map.Entry<?, ?>) entry;
+            target.put(e.getKey(), e.getValue());
+        }
     }
 
     /**

@@ -122,7 +122,6 @@ Read by the engine (`data-collector-core`) when a task is built. Every task gets
 | Key | Code default | Meaning |
 |---|---|---|
 | `data.collector.worker.threads` | available processors + 2 | Size of each task's fixed thread pool. |
-| `data.collector.worker.stop.timeoutInSeconds` | 30 | When the server stops, how long it waits for the running tasks it cancels before it closes the content store. |
 | `data.collector.http.version` | `HTTP_2` | `HTTP_1_1` or `HTTP_2` (any case). |
 | `data.collector.http.followRedirects` | not set: the Java HTTP client's default, `NEVER` | `NEVER`, `ALWAYS`, or `NORMAL` (always, except from HTTPS to HTTP); any case. |
 | `data.collector.http.client.timeout.seconds` | `20` | Connect timeout of the HTTP client. |
@@ -132,6 +131,15 @@ Read by the engine (`data-collector-core`) when a task is built. Every task gets
 | `data.collector.parallel.queueBuffer.threshold` | `-1` (off) | A value above `-1` makes a `Parallel` node wait for its running entries to finish after every this many entries of a page, for responses that are not streamed to a body handler. `0` fails with a division by zero. |
 | `data.collector.print-execution-plan` | `false` | `true` logs each task's specification (as YAML) and its execution plan when the task starts. |
 | `data.collector.secret-headers` | not set | Further secret headers, comma-separated, for services whose security schemes use headers of their own. See [Secrets in logs, messages and health](#secrets-in-logs-messages-and-health). |
+
+### Tasks
+
+Read by the server (`data-collector-server`) at start-up; a value that is not a whole, non-negative number of seconds
+stops the start.
+
+| Key | Code default | Meaning |
+|---|---|---|
+| `data.collector.worker.stop.timeoutInSeconds` | 30 | When the server stops, how long it waits for the running tasks it cancels before it closes the content store. |
 
 ### Secrets in logs, messages and health
 

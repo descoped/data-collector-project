@@ -41,7 +41,9 @@ public final class WorkerTasks {
     }
 
     /**
-     * Waits until every task is done, also the tasks added while it waits, and throws the first failure.
+     * Waits until every task is done, also the tasks added while it waits, and throws the first failure. It does not
+     * check the worker's termination itself: a terminated worker's tasks stop at their next step, so the wait is bound
+     * by the HTTP client's timeouts (and, when the server stops, by its stop timeout).
      *
      * @throws RuntimeException the first task's failure, as it was thrown; a checked exception wrapped in a
      *                          {@link CompletionException}

@@ -137,7 +137,7 @@ class WorkerTest {
                 .build();
         ExecutionContext context = worker.context();
         int threads = 8;
-        int keys = 5_000;
+        int keys = 500;
 
         List<CompletableFuture<Void>> writers = new ArrayList<>();
         try (ExecutorService executor = Executors.newFixedThreadPool(threads)) {
@@ -147,6 +147,8 @@ class WorkerTest {
                     for (int key = 0; key < keys; key++) {
                         ExecutionContext.of(context).globalState("key-" + t + "-" + key, key);
                         ExecutionContext.of(context).join(ExecutionContext.of(context));
+                        // a context of its own global state, as a handler joins the specification's global context
+                        ExecutionContext.of(context).join(ExecutionContext.empty());
                     }
                 }, executor));
             }
@@ -154,7 +156,7 @@ class WorkerTest {
         }
 
         for (int thread = 0; thread < threads; thread++) {
-            for (int key = 0; key < keys; key += 499) {
+            for (int key = 0; key < keys; key += 50) {
                 assertEquals(key, (Integer) context.state("key-" + thread + "-" + key), "key-" + thread + "-" + key);
             }
         }

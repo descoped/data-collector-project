@@ -120,7 +120,7 @@ public class WorkManager {
             LOG.warn("Workers still running after {} seconds: {}", timeout.toSeconds(), workerFutures.keySet().stream().map(jobId -> jobId.workerId).toList());
         } catch (ExecutionException _) {
             // a worker that failed is logged when it completes
-        } catch (InterruptedException e) {
+        } catch (InterruptedException _) {
             Thread.currentThread().interrupt();
         }
     }

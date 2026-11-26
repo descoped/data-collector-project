@@ -40,6 +40,7 @@ public class WorkerService implements Service {
     static final String STOP_TIMEOUT = "data.collector.worker.stop.timeoutInSeconds";
 
     private final DynamicConfiguration configuration;
+    private final Duration stopTimeout;
     private final MetricsResourceFactory metricsResourceFactory;
     private final HealthResourceFactory healthResourceFactory;
     private final WorkManager workManager = new WorkManager();
@@ -86,6 +87,7 @@ public class WorkerService implements Service {
                          boolean printExecutionPlan,
                          Consumer<WorkerLifecycleCallback> workerLifecycleCallback) {
         this.configuration = configuration;
+        this.stopTimeout = stopTimeout(configuration);
         this.metricsResourceFactory = metricsResourceFactory;
         this.healthResourceFactory = healthResourceFactory;
         this.businessSSLResourceComponent = businessSSLResourceComponent;
@@ -229,7 +231,21 @@ public class WorkerService implements Service {
 
     @Override
     public void stop() {
-        long timeoutInSeconds = configuration.find(STOP_TIMEOUT).map(Long::parseLong).orElse(30L);
-        workManager.cancel(Duration.ofSeconds(timeoutInSeconds));
+        workManager.cancel(stopTimeout);
+    }
+
+    // read at start-up, so a value that is not a number of seconds fails then, not when the server stops (#45)
+    static Duration stopTimeout(DynamicConfiguration configuration) {
+        String value = configuration.find(STOP_TIMEOUT).orElse("30");
+        long seconds;
+        try {
+            seconds = Long.parseLong(value.trim());
+        } catch (NumberFormatException _) {
+            throw new IllegalArgumentException(STOP_TIMEOUT + " is not a whole number of seconds");
+        }
+        if (seconds < 0) {
+            throw new IllegalArgumentException(STOP_TIMEOUT + " is negative");
+        }
+        return Duration.ofSeconds(seconds);
     }
 }
