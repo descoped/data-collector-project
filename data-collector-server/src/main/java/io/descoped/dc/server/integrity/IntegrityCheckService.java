@@ -39,6 +39,7 @@ public class IntegrityCheckService implements Service {
     private static final Logger LOG = LoggerFactory.getLogger(IntegrityCheckService.class);
 
     private static final String CLOSED = "CLOSED";
+    private static final String RUNNING = "RUNNING";
 
     final DynamicConfiguration configuration;
     final ContentStoreComponent contentStoreComponent;
@@ -102,7 +103,7 @@ public class IntegrityCheckService implements Service {
             return true;
         }
         IntegrityCheckJob job = jobs.get(topic);
-        return job != null && "RUNNING".equals(job.getSummary().status);
+        return job != null && RUNNING.equals(job.getSummary().status);
     }
 
     /**
@@ -112,7 +113,7 @@ public class IntegrityCheckService implements Service {
      * @return true if it was removed
      */
     public boolean removeJobIfClosed(String topic) {
-        if (jobs.containsKey(topic) && !"RUNNING".equals(jobs.get(topic).getSummary().status)) {
+        if (jobs.containsKey(topic) && !RUNNING.equals(jobs.get(topic).getSummary().status)) {
             jobs.remove(topic);
             return true;
         }
@@ -321,7 +322,7 @@ public class IntegrityCheckService implements Service {
             return;
         }
         IntegrityCheckJob job = jobs.get(topic);
-        if (job != null && "RUNNING".equals(job.getSummary().status)) {
+        if (job != null && RUNNING.equals(job.getSummary().status)) {
             job.terminate();
         } else if (active.contains(topic)) {
             // still opening its index: the job stops itself when it registers; checked again in case it registered
