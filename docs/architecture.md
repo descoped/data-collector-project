@@ -325,8 +325,9 @@ The `rawdata` connector:
 - Encrypts content and manifest with AES-256 (encryption-util) when it finds both an encryption key and salt that are
   not empty. They are read through secrets-client, from the configuration (`rawdata.encryption.key`,
   `rawdata.encryption.salt`), from a properties file, or from Google Secret Manager, depending on
-  `rawdata.encryption.provider`. When no key or salt is found, content is written unencrypted. See
-  [Administration](administration.md) for the keys.
+  `rawdata.encryption.provider`. Without any `rawdata.encryption.*` key, content is not encrypted; once one is set,
+  encryption fails closed: a missing or empty key or salt, or an unknown provider, stops the store from being created.
+  See [Administration](administration.md) for the keys.
 - Keeps a lock per topic, so concurrent publishes to a topic are serialized.
 
 The server's defaults select the `rawdata` connector with the rawdata-client `memory` provider. The rawdata providers

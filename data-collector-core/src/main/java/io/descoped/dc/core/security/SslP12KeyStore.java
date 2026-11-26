@@ -58,7 +58,7 @@ class SslP12KeyStore implements SslKeyStore {
             }
 
             X509Certificate cert = (X509Certificate) keyStore.getCertificate(alias);
-            TrustManager[] trustManagers = {new SslPEMKeyStore.BusinessSSLTrustManager(cert)};
+            TrustManager[] trustManagers = {TrustManagers.create(certificateBundle.trustCertificates)};
 
             SSLContext context = SSLContext.getInstance("TLSv1.2");
             context.init(
@@ -67,7 +67,7 @@ class SslP12KeyStore implements SslKeyStore {
                     new SecureRandom()
             );
 
-            return new CertificateContext(context, (X509TrustManager) trustManagers[0], keyPair);
+            return new CertificateContext(context, (X509TrustManager) trustManagers[0], keyPair, cert);
 
         } catch (IOException | NoSuchAlgorithmException | KeyStoreException | UnrecoverableKeyException |
                  KeyManagementException | CertificateException e) {

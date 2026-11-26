@@ -96,6 +96,20 @@ public class SecretManagerSSLResource implements BusinessSSLResource {
     }
 
     @Override
+    public char[] trustCertificates() {
+        // once configured, the trust anchors must be there: a handshake that fails later would hide the cause
+        return configuration.find("data.collector.sslBundle.trustCertificates")
+                .map(secretName -> {
+                    char[] certificates = asUTF8Chars(readBytesOrNull(secretName));
+                    if (certificates.length == 0) {
+                        throw new IllegalStateException("The secret named by data.collector.sslBundle.trustCertificates is missing or empty");
+                    }
+                    return certificates;
+                })
+                .orElse(new char[0]);
+    }
+
+    @Override
     public char[] passphrase() {
         return asUTF8Chars(readBytesOrNull(configuration.find("data.collector.sslBundle.passphrase").orElse(null)));
     }

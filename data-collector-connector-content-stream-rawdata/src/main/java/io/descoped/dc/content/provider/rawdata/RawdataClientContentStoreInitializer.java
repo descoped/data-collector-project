@@ -54,8 +54,9 @@ public class RawdataClientContentStoreInitializer implements ContentStoreInitial
      * rawdata.encryption.key  = the password, or with google-secret-manager the name of its secret
      * rawdata.encryption.salt = the salt, or with google-secret-manager the name of its secret
      *
-     * Without a provider, the key and salt are read from this configuration when both are set. Content is encrypted
-     * only when both a key and a salt are found and not empty.
+     * Without a provider, the key and salt are read from this configuration. Without any rawdata.encryption.* key the
+     * content is not encrypted. Once any is set, encryption fails closed: an unknown provider, or a key or salt that is
+     * missing or empty, stops the store from being created; content is never written in clear instead.
      */
 
     @Override
@@ -64,19 +65,21 @@ public class RawdataClientContentStoreInitializer implements ContentStoreInitial
             LOG.info("Content stream connector: {}", configuration.get("content.stream.connector"));
 
             LOG.info("Rawdata client provider: {}", configuration.get("rawdata.client.provider"));
-            LOG.info("Rawdata encryption enabled: {}", configuration.containsKey(ENCRYPTION_KEY));
+            LOG.info("Rawdata encryption enabled: {}", isEncryptionConfigured(configuration));
+        }
+
+        if (!isEncryptionConfigured(configuration)) {
+            return new RawdataClientContentStore(RawdataClient.create(configuration), null, null);
         }
 
         String encryptionProvider = configuration.get("rawdata.encryption.provider");
-        Map<String, String> secretsConfiguration = secretsConfiguration(encryptionProvider, configuration);
-
-        if (secretsConfiguration.isEmpty()) {
-            return new RawdataClientContentStore(RawdataClient.create(configuration), null, null);
+        if (encryptionProvider != null && !Set.of(DYNAMIC, DYNAMIC_CONFIGURATION, GOOGLE).contains(encryptionProvider)) {
+            throw new IllegalStateException("Unknown rawdata.encryption.provider");
         }
-
-        // Set in RecoveryContentStoreComponent
-        if (Boolean.parseBoolean(configuration.get("recovery.rawdata.encryption.credentials.ignore"))) {
-            return new RawdataClientContentStore(RawdataClient.create(configuration), null, null);
+        Map<String, String> secretsConfiguration = secretsConfiguration(encryptionProvider, configuration);
+        if (secretsConfiguration.isEmpty()) {
+            throw new IllegalStateException("Rawdata encryption is configured, but " + ENCRYPTION_KEY + " and " + ENCRYPTION_SALT
+                    + " are not both set");
         }
 
         LOG.debug("Load encryption credentials from: {}", encryptionProvider == null ? "application configuration" : encryptionProvider);
@@ -89,11 +92,22 @@ public class RawdataClientContentStoreInitializer implements ContentStoreInitial
             // secrets-client 2 returned null for a missing secret; 3 throws
             encryptionKey = readOrNull(() -> secretManagerClient.readChars(keySecretName));
             encryptionSalt = readOrNull(() -> secretManagerClient.readBytes(saltSecretName));
+            if (encryptionKey == null || encryptionKey.length == 0) {
+                throw new IllegalStateException("Rawdata encryption is configured, but its key is missing or empty");
+            }
+            if (encryptionSalt == null || encryptionSalt.length == 0) {
+                throw new IllegalStateException("Rawdata encryption is configured, but its salt is missing or empty");
+            }
             return new RawdataClientContentStore(RawdataClient.create(configuration), encryptionKey, encryptionSalt);
         } finally {
             if (encryptionKey != null) Arrays.fill(encryptionKey, '\u0000');
             if (encryptionSalt != null) Arrays.fill(encryptionSalt, (byte) 0);
         }
+    }
+
+    // any rawdata.encryption.* key turns encryption on, and then it must succeed
+    static boolean isEncryptionConfigured(Map<String, String> configuration) {
+        return configuration.keySet().stream().anyMatch(key -> key.startsWith("rawdata.encryption."));
     }
 
     static Map<String, String> secretsConfiguration(String encryptionProvider, Map<String, String> configuration) {

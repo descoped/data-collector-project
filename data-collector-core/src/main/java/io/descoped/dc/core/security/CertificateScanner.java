@@ -24,6 +24,7 @@ class CertificateScanner {
     private static final String PUBLIC_CERTIFICATE = "public.certificate";
     private static final String ARCHIVE_CERTIFICATE = "archive.certificate";
     private static final String SECRET_PASSPHRASE = "secret.passphrase";
+    private static final String TRUST_CERTIFICATES = "trust.certificates";
 
     final Path scanDir;
     Map<String, CertificateBundle> bundles;
@@ -99,6 +100,17 @@ class CertificateScanner {
 
         // secrets-client 2 read a missing passphrase as empty; 3 throws
         builder.passphrase(hasSecret(secretsClient, SECRET_PASSPHRASE) ? secretsClient.readChars(SECRET_PASSPHRASE) : new char[0]);
+
+        // optional: the bundle's trust anchors, a PEM file of CA certificates, for servers whose chain is not in cacerts
+        if (hasSecret(secretsClient, TRUST_CERTIFICATES)) {
+            Path trustCertificatesFile = file.getParent().resolve(secretsClient.readString(TRUST_CERTIFICATES));
+            if (!trustCertificatesFile.toFile().exists()) {
+                // as for the bundle's other files: an incomplete bundle ends the scan
+                LOG.warn("Skipping bundle '{}'. Could not find the file named by {}", bundleName, TRUST_CERTIFICATES);
+                return FileVisitResult.TERMINATE;
+            }
+            builder.trustCertificates(readFileToCharArray(trustCertificatesFile));
+        }
 
         certificateBundles.put(bundleName, builder.build());
         return FileVisitResult.CONTINUE;

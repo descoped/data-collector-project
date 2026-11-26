@@ -47,20 +47,23 @@ public class RawdataClientContentStore implements ContentStore {
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
     /**
-     * Creates the store; content is encrypted only when both the key and the salt are given and not empty.
+     * Creates the store; content is encrypted when the key and the salt are given, and not encrypted when neither is.
      *
      * @param client         the rawdata client
      * @param encryptionKey  the password the content key is derived from, or {@code null}
      * @param encryptionSalt the salt the content key is derived with, or {@code null}
+     * @throws IllegalArgumentException if only one of the key and the salt is given, so content is never written in
+     *                                  clear when encryption was meant
      */
     public RawdataClientContentStore(RawdataClient client, final char[] encryptionKey, final byte[] encryptionSalt) {
         this.encryptionClient = new EncryptionClient(Algorithm.AES256);
 
-        if (encryptionKey != null && encryptionKey.length > 0 && encryptionSalt != null && encryptionSalt.length > 0) {
-            this.secretKey = deriveKey(encryptionClient, encryptionKey, encryptionSalt);
-        } else {
-            this.secretKey = null;
+        boolean hasKey = encryptionKey != null && encryptionKey.length > 0;
+        boolean hasSalt = encryptionSalt != null && encryptionSalt.length > 0;
+        if (hasKey != hasSalt) {
+            throw new IllegalArgumentException("Encryption needs both a key and a salt");
         }
+        this.secretKey = hasKey ? deriveKey(encryptionClient, encryptionKey, encryptionSalt) : null;
 
         this.contentStream = new RawdataClientContentStream(client, this::tryEncryptContent);
         this.monitor = new HealthContentStreamMonitor(this::isClosed, this::activePositionCount, this::activeBufferCount);

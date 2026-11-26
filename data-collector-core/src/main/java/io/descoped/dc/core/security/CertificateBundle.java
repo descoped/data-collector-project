@@ -11,22 +11,25 @@ class CertificateBundle {
     final char[] privateKey;  // base64 pem certificate
     final char[] publicCert;  // base64 pem certificate
     final byte[] archiveCert; // binary certificate archive
+    final char[] trustCertificates; // the bundle's trust anchors, PEM CA certificates, or null
     final String protocol = "TLSv1.2";
 
-    private CertificateBundle(Path secretPropertiesPath, char[] passphrase, char[] privateKey, char[] publicCert) {
+    private CertificateBundle(Path secretPropertiesPath, char[] passphrase, char[] privateKey, char[] publicCert, char[] trustCertificates) {
         this.secretPropertiesPath = secretPropertiesPath;
         this.passphrase = passphrase;
         this.privateKey = privateKey;
         this.publicCert = publicCert;
         this.archiveCert = null;
+        this.trustCertificates = trustCertificates;
     }
 
-    private CertificateBundle(Path secretPropertiesPath, char[] passphrase, byte[] archiveCert) {
+    private CertificateBundle(Path secretPropertiesPath, char[] passphrase, byte[] archiveCert, char[] trustCertificates) {
         this.secretPropertiesPath = secretPropertiesPath;
         this.passphrase = passphrase;
         this.privateKey = null;
         this.publicCert = null;
         this.archiveCert = archiveCert;
+        this.trustCertificates = trustCertificates;
     }
 
     public Optional<Path> secretPropertiesPath() {
@@ -42,6 +45,7 @@ class CertificateBundle {
         emptyCharArray(privateKey);
         emptyCharArray(publicCert);
         emptyByteArray(archiveCert);
+        emptyCharArray(trustCertificates);
     }
 
     void emptyByteArray(byte[] array) {
@@ -67,6 +71,7 @@ class CertificateBundle {
                 Arrays.equals(privateKey, that.privateKey) &&
                 Arrays.equals(publicCert, that.publicCert) &&
                 Arrays.equals(archiveCert, that.archiveCert) &&
+                Arrays.equals(trustCertificates, that.trustCertificates) &&
                 protocol.equals(that.protocol);
     }
 
@@ -77,6 +82,7 @@ class CertificateBundle {
         result = 31 * result + Arrays.hashCode(privateKey);
         result = 31 * result + Arrays.hashCode(publicCert);
         result = 31 * result + Arrays.hashCode(archiveCert);
+        result = 31 * result + Arrays.hashCode(trustCertificates);
         return result;
     }
 
@@ -93,6 +99,7 @@ class CertificateBundle {
         private char[] privateKey;
         private char[] publicCert;
         private byte[] archiveCert;
+        private char[] trustCertificates;
 
         Builder secretFileNamePath(Path secretFileNamePath) {
             this.secretFileNamePath = secretFileNamePath;
@@ -119,11 +126,16 @@ class CertificateBundle {
             return this;
         }
 
+        Builder trustCertificates(char[] trustCertificates) {
+            this.trustCertificates = trustCertificates;
+            return this;
+        }
+
         CertificateBundle build() {
             if (privateKey != null && publicCert != null) {
-                return new CertificateBundle(secretFileNamePath, passphrase, privateKey, publicCert);
+                return new CertificateBundle(secretFileNamePath, passphrase, privateKey, publicCert, trustCertificates);
             } else {
-                return new CertificateBundle(secretFileNamePath, passphrase, archiveCert);
+                return new CertificateBundle(secretFileNamePath, passphrase, archiveCert, trustCertificates);
             }
         }
     }

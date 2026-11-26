@@ -584,9 +584,8 @@ post-check).
 The index must hold at least one duplicated position. Without one there is no stop message, and the copy fails at the
 first message it reads; the failure is logged and the summary shows `COMPLETED` with no copied positions.
 
-The target topic is written through a second content store with the same configuration, except that
-`rawdata.encryption.key` and `rawdata.encryption.salt` are removed, so already encrypted content is not encrypted
-twice, and `local-temp-folder` gets the suffix `-recovery`. See
+The target topic is written through a second content store with the same configuration, except that every
+`rawdata.encryption.*` key is removed, so already encrypted content is not encrypted twice, and `local-temp-folder` gets the suffix `-recovery`. See
 [Administration: integrity check and recovery](administration.md#integrity-check-and-recovery).
 
 The path parameters are used as given.

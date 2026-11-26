@@ -36,6 +36,15 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
 - **A `Process` names its processor's provider** (`"processor": "<name>"`), registered as an
   `io.descoped.dc.api.ProcessorProvider`; `processorClass` is no longer read, so no class is loaded by a name from a
   specification. The Java DSL keeps `process(Class)` and adds `process(String)`.
+- **TLS chains are verified.** A business certificate bundle's trust manager no longer accepts a chain that fails
+  verification because its last certificate equals the bundle's own; in 2.x a man in the middle could use that. A
+  server whose chain is not in the JDK's `cacerts` is trusted through the bundle's trust anchors: `trust.certificates`
+  (a PEM file of CA certificates) in a bundle directory, or `data.collector.sslBundle.trustCertificates` (a secret)
+  with Google Secret Manager.
+- **Rawdata encryption fails closed.** Once any `rawdata.encryption.*` key is set, an unknown provider, only one of key
+  and salt, a secret that is not found or an empty value stops the server; 2.x wrote content in clear. The recovery
+  store's bypass flag `recovery.rawdata.encryption.credentials.ignore` is gone: recovery removes every
+  `rawdata.encryption.*` key from its own store's configuration.
 - **JDK 27:** dc is built for, tested on and runs on JDK 27 (class files of Java 27); 2.x ran on Java 17. The server
   image's runtime is Temurin 27, and its `java` allows native access for the class path (jffi) and lmdbjava's use of
   `sun.misc.Unsafe`, which JDK 27 would otherwise warn about.

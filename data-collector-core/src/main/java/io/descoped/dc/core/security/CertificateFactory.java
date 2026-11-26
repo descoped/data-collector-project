@@ -85,7 +85,7 @@ public class CertificateFactory {
                 bundleBuilder.archiveCert(businessSSLResource.archiveCertificate());
             }
             bundleBuilder.passphrase(businessSSLResource.passphrase());
-            bundleBuilder.build();
+            bundleBuilder.trustCertificates(businessSSLResource.trustCertificates());
 
             factoryBuilder.bundle(businessSSLResource.bundleName(), bundleBuilder.build());
             return factoryBuilder.build();

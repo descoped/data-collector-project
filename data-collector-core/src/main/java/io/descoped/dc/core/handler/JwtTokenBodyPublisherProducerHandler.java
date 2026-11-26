@@ -62,7 +62,7 @@ public class JwtTokenBodyPublisherProducerHandler extends AbstractHandler<JwtTok
 
         Map<String, Object> headers = new LinkedHashMap<>();
         headers.put("alg", jwtIdentity.headerClaims().alg());
-        headers.put("x5c", List.of(certificateContext.trustManager().getAcceptedIssuers()).stream().map(this::getEncodedCertificate).toList());
+        headers.put("x5c", List.of(certificateContext.clientCertificates()).stream().map(this::getEncodedCertificate).toList());
         jwtBuilder.withHeader(headers);
 
         jwtBuilder.withIssuer(evaluateExpression(jwtTokenContext, jwtIdentity.claims().issuer()));
