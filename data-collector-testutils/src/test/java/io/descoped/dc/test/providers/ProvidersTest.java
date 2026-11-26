@@ -63,7 +63,7 @@ class ProvidersTest {
         assertEquals("signed:x", el.evaluateExpression("${sign.hmac('x')}"));
         try {
             assertNull(el.evaluateExpression("${sign.getClass().getClassLoader()}"));
-        } catch (RuntimeException expected) {
+        } catch (RuntimeException _) {
             // refused
         }
     }

@@ -33,6 +33,7 @@ public class NodeBuilderDeserializer extends StdDeserializer<AbstractBuilder> {
     private static final String PIPES = "pipes";
     private static final String QUERY = "query";
     private static final String EXPRESSION = "expression";
+    private static final String PROCESSOR = "processor";
     private static final String RESPONSE_VALIDATORS = "responseValidators";
     private static final String RETURN_VARIABLES = "returnVariables";
 
@@ -418,13 +419,13 @@ public class NodeBuilderDeserializer extends StdDeserializer<AbstractBuilder> {
 
     // a specification names a ProcessorProvider, never a class: no class is loaded by a name from a specification
     private AbstractBuilder buildProcess(JsonNode currentNode) {
-        if (currentNode.has("processorClass") || !currentNode.hasNonNull("processor")) {
+        if (currentNode.has("processorClass") || !currentNode.hasNonNull(PROCESSOR)) {
             throw new IllegalArgumentException("A Process names its processor's provider in 'processor'; 'processorClass' is not read");
         }
-        if (!currentNode.get("processor").isTextual() || currentNode.get("processor").textValue().isBlank()) {
+        if (!currentNode.get(PROCESSOR).isTextual() || currentNode.get(PROCESSOR).textValue().isBlank()) {
             throw new IllegalArgumentException("A Process's 'processor' is the name of its provider, a text that is not blank");
         }
-        ProcessBuilder builder = new ProcessBuilder(currentNode.get("processor").textValue());
+        ProcessBuilder builder = new ProcessBuilder(currentNode.get(PROCESSOR).textValue());
         if (currentNode.has("requiredOutputs")) {
             currentNode.get("requiredOutputs").forEach(output -> builder.output(output.textValue()));
         }

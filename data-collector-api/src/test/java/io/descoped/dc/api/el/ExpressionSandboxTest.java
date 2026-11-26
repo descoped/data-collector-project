@@ -51,7 +51,7 @@ class ExpressionSandboxTest {
         // the call is not made: the expression fails, or gives null as navigation through null does
         try {
             assertNull(el().evaluateExpression(expression), expression);
-        } catch (RuntimeException expected) {
+        } catch (RuntimeException _) {
             // refused
         }
     }
@@ -65,7 +65,7 @@ class ExpressionSandboxTest {
         assertEquals("b", el.evaluateExpression("${map.get('a')}"));
         try {
             assertNull(el.evaluateExpression("${concurrent.get('a')}"));
-        } catch (RuntimeException expected) {
+        } catch (RuntimeException _) {
             // refused
         }
     }

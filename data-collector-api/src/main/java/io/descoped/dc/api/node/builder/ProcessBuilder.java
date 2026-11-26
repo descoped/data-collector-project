@@ -14,6 +14,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class ProcessBuilder extends NodeBuilder {
@@ -97,7 +98,7 @@ public class ProcessBuilder extends NodeBuilder {
         final Class<? extends Processor> processorClass;
         final String processor;
         final Set<String> requiredOutputs;
-        private volatile Class<? extends Processor> resolvedProcessorClass;
+        private final AtomicReference<Class<? extends Processor>> resolvedProcessorClass = new AtomicReference<>();
 
         ProcessNode(Configurations configurations, Class<? extends Processor> processorClass, String processor, Set<String> requiredOutputs) {
             super(configurations);
@@ -113,11 +114,11 @@ public class ProcessBuilder extends NodeBuilder {
             if (processorClass != null) {
                 return processorClass;
             }
-            Class<? extends Processor> resolved = resolvedProcessorClass;
+            Class<? extends Processor> resolved = resolvedProcessorClass.get();
             if (resolved == null) {
                 resolved = ProcessorProvider.find(processor).orElseThrow(() ->
                         new IllegalStateException("No ProcessorProvider is named: " + processor));
-                resolvedProcessorClass = resolved;
+                resolvedProcessorClass.compareAndSet(null, resolved);
             }
             return resolved;
         }
