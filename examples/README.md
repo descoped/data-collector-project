@@ -17,7 +17,7 @@ For how the server is configured, see [Administration](../docs/administration.md
 - Docker with Compose v2.
 - An image of the server. Each setup has two sets of targets:
   - targets ending in `-dev` use a local image, `data-collector:dev` (the debug image), built from this repository
-    with `make build-data-collector-dev-image` (JDK 17 or later);
+    with `make build-data-collector-dev-image` (JDK 27);
   - the others use the released image, `descoped/data-collector:latest`, from Docker Hub.
 - Client certificates in `certs/`, for the specifications that use business SSL. Each bundle is a directory of its
   own, and `certs/` is ignored by Git:

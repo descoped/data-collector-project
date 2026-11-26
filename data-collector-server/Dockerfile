@@ -16,7 +16,7 @@
 # certificates in /certs, and writes rawdata under /rawdata with the filesystem provider. Options of the JVM, system
 # properties (-Dhttp.proxyHost=..., -Dlog4j2.configurationFile=...) included, are given in JAVA_TOOL_OPTIONS.
 #
-# The JDK is 17, the baseline of dc (see .claude/CLAUDE.md), and is raised by hand. The bases are Google's distroless
+# The JDK is 27, the baseline of dc (see .claude/CLAUDE.md), and is raised by hand. The bases are Google's distroless
 # images of Debian 13 (glibc, which the native libraries of jffi and lmdbjava need; CA certificates, time zones). Every
 # image the build starts from is named by its digest, so a build of the same commit starts from the same images;
 # Renovate moves the digests.
@@ -31,13 +31,14 @@ FROM gcr.io/distroless/base-nossl-debian13:debug@sha256:2548abf86d3e319cdfd0184d
 # runtimes. jdeps finds the modules of the JDK that dc and its libraries use, in the classes of every jar taken out
 # into one directory (jdeps cannot resolve the jars as modules: some have no valid module name, some require a module
 # statically that is not there), and the modules of the module path require more (methanol jdk.httpserver), which
-# their descriptors name; jlink links them all. Modules are added that no class names: jdk.crypto.ec (the elliptic
-# curves of TLS, a provider in Java 17), java.instrument (the byte-buddy agent, -javaagent, that ContentStoreAgent
-# needs), jdk.charsets (character sets a source may name that java.base lacks) and jdk.localedata. /jre, of the regular
-# and the distroless image, has no debug information, and of the archives of classes (CDS) that jlink writes only the
-# one of the default settings of the JVM. /jre-debug, of the debug image, keeps the debug information and has the
+# their descriptors name; jlink links them all. Modules are added that no class names: java.instrument (the byte-buddy
+# agent, -javaagent, that ContentStoreAgent needs), jdk.charsets (character sets a source may name that java.base
+# lacks) and jdk.localedata. /jre, of the regular and the distroless image, has no debug information, and of the
+# archives of classes (CDS) that jlink writes only the one of the default settings of the JVM. /jre-debug, of the debug image, keeps the debug information and has the
 # modules of diagnostics.
-FROM eclipse-temurin:17.0.21_9-jdk-noble@sha256:e7984fb69c35910b108a5070b30631c8d350142317b91a5f57313d753fd69987 AS runtime
+# Temurin 27 is built on Ubuntu 26.04 (resolute) only; the runtime that jlink makes from it does not depend on the
+# Ubuntu of this stage.
+FROM eclipse-temurin:27_35-jdk-resolute@sha256:11fb95031e5720b9f6efc684658fde4f3d5a2318cced98602c882df0b328d22c AS runtime
 
 COPY target/dependency/ /dc/lib/
 COPY target/data-collector-*.jar /dc/lib/
@@ -45,6 +46,8 @@ COPY docker/SplitModulePath.java docker/java.args /build/
 
 # jdeps writes its warnings before the list of modules, its last line. pipefail and the test make a failure of jdeps
 # stop the build with its own message. The agent gets a name without its version, so java.args can name it.
+# java.args allows what lmdbjava's libraries do and JDK 27 warns about: jffi (class path) loads its native library,
+# and lmdbjava calls sun.misc.Unsafe's memory-access methods.
 SHELL ["/bin/bash", "-c"]
 RUN set -o pipefail \
     && mkdir /classes \
@@ -66,11 +69,11 @@ RUN set -o pipefail \
             | awk '$1 == "requires" {print $2}' | sort -u | command grep -x -F "${jdk}" | paste -s -d, -)" \
     && echo "required by the module path: ${required}" \
     && modules="${modules},${required}" \
-    && jlink --add-modules "${modules},jdk.crypto.ec,java.instrument,jdk.charsets,jdk.localedata" \
+    && jlink --add-modules "${modules},java.instrument,jdk.charsets,jdk.localedata" \
             --strip-debug --no-man-pages --no-header-files --generate-cds-archive --output /jre \
     && rm -f /jre/lib/server/classes_no*.jsa \
     && /jre/bin/java -Xshare:on --list-modules > /dev/null \
-    && jlink --add-modules "${modules},jdk.crypto.ec,java.instrument,jdk.charsets,jdk.localedata,java.management.rmi,jdk.attach,jdk.hotspot.agent,jdk.jcmd,jdk.jdi,jdk.jdwp.agent,jdk.jfr,jdk.jstatd,jdk.management,jdk.management.agent,jdk.management.jfr" \
+    && jlink --add-modules "${modules},java.instrument,jdk.charsets,jdk.localedata,java.management.rmi,jdk.attach,jdk.hotspot.agent,jdk.jcmd,jdk.jdi,jdk.jdwp.agent,jdk.jfr,jdk.jstatd,jdk.management,jdk.management.agent,jdk.management.jfr" \
             --no-man-pages --no-header-files --generate-cds-archive --output /jre-debug \
     && rm -f /jre-debug/lib/server/classes_no*.jsa \
     && /jre-debug/bin/jcmd -h > /dev/null

@@ -165,8 +165,9 @@ public class IntegrityCheckTest {
 
         {
             client.put("/check-integrity/2020-test-stream").expect201Created();
+            // 200 cancels the running job; 400 when the job over the small test topic has already finished (#41)
             ResponseHelper<String> response = client.delete("/check-integrity/2020-test-stream");
-            LOG.trace("cancel-job: {}", response.expectAnyOf(200).response().statusCode());
+            LOG.trace("cancel-job: {}", response.expectAnyOf(200, 400).response().statusCode());
         }
 
         Thread.sleep(250);

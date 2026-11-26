@@ -1,6 +1,8 @@
 -XX:+UseContainerSupport
 -XX:+StartAttachListener
 -javaagent:@AGENT@
+--enable-native-access=ALL-UNNAMED
+--sun-misc-unsafe-memory-access=allow
 --add-opens java.base/java.nio=lmdbjava
 --add-exports java.base/sun.nio.ch=lmdbjava
 --add-reads io.descoped.dc.core=ALL-UNNAMED

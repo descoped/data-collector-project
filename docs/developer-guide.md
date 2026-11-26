@@ -15,8 +15,7 @@ in [Specification DSL](specification-dsl.md).
 
 ### Requirements
 
-- A JDK, 17 or later. The build compiles with `release 17`, so the class files are Java 17 on any JDK. The enforcer
-  plugin fails the build on a Java older than 17.
+- JDK 27. The build compiles with `release 27`, and the enforcer plugin fails the build on a Java older than 27.
 - Maven comes with the Maven Wrapper, `./mvnw`. The enforcer plugin requires Maven 3.6.3 or later and below 4.
 - Docker with Compose v2, only to build and run the server image. See [Getting started](getting-started.md).
 
@@ -55,11 +54,10 @@ after that zip is checked against the `.sha512` file Maven publishes next to it.
 ### Continuous integration
 
 `.github/workflows/ci.yml` runs on pushes to `master`, release tags, pull requests to `master`, and by hand. It builds
-on JDK 17 and JDK 27 (Temurin) with `./mvnw --batch-mode --no-transfer-progress verify javadoc:javadoc`. On JDK 17,
-for pushes and for pull requests from this repository, it adds the `coverage` profile and a SonarCloud analysis
-(project `descoped_data-collector-project`, profile `sonar`); the analysis does not fail the build. The build on
-JDK 17 also builds the three server images (regular, distroless, debug) and starts each until it is ready; it pushes
-none. Nothing in this repository publishes to Maven Central.
+on JDK 27 (Temurin) with `./mvnw --batch-mode --no-transfer-progress verify javadoc:javadoc`. For pushes and for pull
+requests from this repository, it adds the `coverage` profile and a SonarCloud analysis (project
+`descoped_data-collector-project`, profile `sonar`); the analysis does not fail the build. It also builds the three
+server images (regular, distroless, debug) and starts each until it is ready; it pushes none. Nothing in this repository publishes to Maven Central.
 
 After a green build, the job `snapshot` publishes SNAPSHOTs to Descoped's AWS CodeArtifact repository, read publicly at
 `https://maven.descoped.io/`:

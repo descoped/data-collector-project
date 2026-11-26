@@ -30,7 +30,7 @@
     </modules>
 
     <properties>
-        <java.version>17</java.version>
+        <java.version>27</java.version>
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -40,7 +40,6 @@
         <!-- -Xlint:all -Werror is the rule. A module that is not yet revised lists the lint categories it still
              breaks here, as ",-unchecked,-rawtypes" and so on; its revision empties the list. -->
         <lint.exclusions/>
-        <lint.this-escape/>
         <doclint.exclusions/>
         <!-- The JaCoCo agent: the coverage profile's prepare-agent sets it. Every module that gives surefire an
              argLine starts it with @{argLine}, so coverage reaches its tests; empty when coverage is off. -->
@@ -141,19 +140,6 @@
                 <surefire.excludedGroups/>
             </properties>
         </profile>
-        <!-- javac 21 added the lint category this-escape, and javac 17 rejects its name. The 2.x classes call
-             overridable methods from constructors; to keep them as they are (not final), the category is turned off
-             where javac knows it. -->
-        <profile>
-            <id>jdk21-lint</id>
-            <activation>
-                <jdk>[21,)</jdk>
-            </activation>
-            <properties>
-                <lint.this-escape>,-this-escape</lint.this-escape>
-            </properties>
-        </profile>
-
         <profile>
             <id>coverage</id>
             <build>
@@ -212,13 +198,15 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.16.0</version>
                     <configuration>
-                        <!-- No annotation processors are used. javac before 23 runs any it finds on the class path
-                             (log4j-core ships one), and -Xlint:all then fails on "No processor claimed". -->
+                        <!-- No annotation processors are used (log4j-core ships one); javac 23 and later run none by
+                             default, and this keeps it so. -->
                         <proc>none</proc>
                         <!-- -classfile: dependencies' class files reference annotation classes they do not ship
-                             (log4j-core's SpotBugs annotations); that is not this project's code. -->
+                             (log4j-core's SpotBugs annotations); that is not this project's code. -this-escape: the
+                             2.x classes call overridable methods from their constructors and stay open for
+                             subclassing. -->
                         <compilerArgs>
-                            <arg>-Xlint:all,-classfile${lint.this-escape}${lint.exclusions}</arg>
+                            <arg>-Xlint:all,-classfile,-this-escape${lint.exclusions}</arg>
                             <arg>-Werror</arg>
                         </compilerArgs>
                     </configuration>
