@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -62,9 +63,16 @@ public class IntegrityCheckJob {
     public void consume(String topic) {
         summary.setStarted();
         summary.setTopic(topic);
-        String lastPosition = contentStore.lastPosition(topic);
-        summary.setLastPosition(lastPosition);
         ContentStream contentStream = contentStore.contentStream();
+        // the check ends at the topic's last message, found by its id: its position may also occur earlier in the topic,
+        // as a duplicate, and ending at the first message of that position left the rest of the topic unchecked (#60)
+        ContentStreamBuffer lastMessage = contentStream.lastMessage(topic);
+        String lastPosition = lastMessage != null ? lastMessage.position() : contentStore.lastPosition(topic);
+        summary.setLastPosition(lastPosition);
+        Predicate<ContentStreamBuffer> isLastMessage = lastMessage != null
+                ? buffer -> lastMessage.id().equals(buffer.id())
+                // a store without a last message (discarding): the last position, as in 2.x
+                : buffer -> lastPosition != null && lastPosition.equals(buffer.position());
         try {
             ContentStreamConsumer consumer = contentStream.consumer(topic);
             ContentStreamBuffer buffer;
@@ -85,8 +93,8 @@ public class IntegrityCheckJob {
 
                     index.writeSequence(buffer.id(), buffer.position());
 
-                    if (lastPosition != null && lastPosition.equals(buffer.position())) {
-                        LOG.info("Reached en of stream for topic: {}", topic);
+                    if (isLastMessage.test(buffer)) {
+                        LOG.info("Reached end of stream for topic: {}", topic);
                         break;
                     }
 
