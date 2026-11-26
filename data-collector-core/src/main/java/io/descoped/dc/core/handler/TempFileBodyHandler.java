@@ -15,6 +15,15 @@ class TempFileBodyHandler extends FileBodyHandler {
         super(createTempFile());
     }
 
+    TempFileBodyHandler(Path file) {
+        super(file);
+    }
+
+    @Override
+    FileBodyHandler newHandler(Path file) {
+        return new TempFileBodyHandler(file);
+    }
+
     static Path createTempFile() {
         try {
             return createOwnerOnlyTempFile();

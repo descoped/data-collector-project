@@ -380,7 +380,7 @@ public class Collect {
 | `data.collector.http.client.timeout.seconds` | 20 | Connect timeout. |
 | `data.collector.http.request.timeout.seconds` | 15 | Time to wait for a response. |
 | `data.collector.http.request.retryCount` | 3 | Attempts per request. |
-| `data.collector.http.request.napOnRetryInMillis` | 150 | Pause between attempts. When the key is set, the pause is read from the value of `data.collector.http.request.retryCount`. |
+| `data.collector.http.request.napOnRetryInMillis` | 150 | Pause between attempts, in milliseconds. |
 | `data.collector.parallel.queueBuffer.threshold` | not set | `parallel` waits for its running tasks after this many entries. |
 
 The whole map is also passed to the content store provider; expressions see its `spec.` keys, without the prefix, as

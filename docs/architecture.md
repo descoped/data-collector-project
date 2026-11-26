@@ -197,8 +197,10 @@ which reads the last position of the topic) and the functions of the `Expression
 3. Sends the request with `Client.sendAsync` and waits up to `data.collector.http.request.timeout.seconds` seconds
    (default 15).
 4. Runs the node's validators (`validate(...)`) on the response.
-5. Retries on any exception, up to `data.collector.http.request.retryCount` attempts (default 3), with a pause between
-   them. A failed validation is an exception, so it is retried too. With a `retryWhile(...)` rule, `GetHandler`
+5. Retries on any exception, up to `data.collector.http.request.retryCount` attempts (default 3), with a pause of
+   `data.collector.http.request.napOnRetryInMillis` between them. A failed validation is an exception, so it is retried
+   too. A body streamed to a file gets a new handler of the same file for each attempt: the abandoned attempt is
+   cancelled and writes no more, and the file is written from the start. With a `retryWhile(...)` rule, `GetHandler`
    repeats the request while the rule matches; only the first rule is used.
 6. When the request is a page of a `paginate` with `addPageContent(...)`, writes the response body to the content store
    with `addPaginationDocument`, under the content key `page`. Both connectors write it to the topic `<topic>-pages`.

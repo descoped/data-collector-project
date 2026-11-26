@@ -6,6 +6,7 @@ import io.descoped.dc.api.handler.QueryException;
 import io.descoped.dc.api.handler.SupportHandler;
 import io.descoped.dc.api.node.XmlToken;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -16,11 +17,16 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.sax.SAXSource;
 import javax.xml.transform.stream.StreamResult;
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -110,6 +116,76 @@ public class XmlTokenParser implements DocumentParserFeature {
 
     @Override
     public void tokenDeserializer(InputStream source, Consumer<Object> entryCallback) {
-        // not implemented in 2.x: an XML document gives no token entries
+        // each child element of the root is an entry: a document of its own, whose root is that element, so a query
+        // such as /entry/id reads it as deserialize() would read the element alone (namespace-unaware, as there)
+        try {
+            XMLStreamReader reader = createStAXFactory().createXMLStreamReader(new BufferedInputStream(source));
+            try {
+                if (!toNextElement(reader)) {
+                    throw new IllegalStateException("Root element NOT found!");
+                }
+                DocumentBuilder documentBuilder = createDocumentBuilder();
+                reader.next();
+                while (toNextElement(reader)) {
+                    Document entry = documentBuilder.newDocument();
+                    entry.appendChild(readElement(reader, entry));
+                    entryCallback.accept(entry);
+                    reader.next();
+                }
+            } finally {
+                reader.close();
+            }
+        } catch (XMLStreamException e) {
+            throw new QueryException("Error reading the XML tokens", e);
+        }
+    }
+
+    static XMLInputFactory createStAXFactory() {
+        XMLInputFactory factory = XMLInputFactory.newFactory();
+        // no DTDs or external entities, as for the DOM and SAX parsers
+        factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+        factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+        factory.setProperty(XMLInputFactory.IS_NAMESPACE_AWARE, false);
+        return factory;
+    }
+
+    // moves to the next start element at this level; false at the end of the enclosing element or the document
+    private static boolean toNextElement(XMLStreamReader reader) throws XMLStreamException {
+        while (true) {
+            switch (reader.getEventType()) {
+                case XMLStreamConstants.START_ELEMENT:
+                    return true;
+                case XMLStreamConstants.END_ELEMENT, XMLStreamConstants.END_DOCUMENT:
+                    return false;
+                default:
+                    reader.next();
+            }
+        }
+    }
+
+    // reads the element the reader is at, with its subtree; the reader is left at its end element
+    private static Element readElement(XMLStreamReader reader, Document document) throws XMLStreamException {
+        Element element = document.createElement(reader.getLocalName());
+        for (int i = 0; i < reader.getAttributeCount(); i++) {
+            element.setAttribute(reader.getAttributeLocalName(i), reader.getAttributeValue(i));
+        }
+        while (reader.hasNext()) {
+            switch (reader.next()) {
+                case XMLStreamConstants.START_ELEMENT:
+                    element.appendChild(readElement(reader, document));
+                    break;
+                case XMLStreamConstants.CHARACTERS, XMLStreamConstants.SPACE:
+                    element.appendChild(document.createTextNode(reader.getText()));
+                    break;
+                case XMLStreamConstants.CDATA:
+                    element.appendChild(document.createCDATASection(reader.getText()));
+                    break;
+                case XMLStreamConstants.END_ELEMENT:
+                    return element;
+                default:
+                    break;
+            }
+        }
+        throw new IllegalStateException("Element not closed: " + element.getTagName());
     }
 }

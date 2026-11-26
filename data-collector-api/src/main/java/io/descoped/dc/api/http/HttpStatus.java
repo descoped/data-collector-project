@@ -104,7 +104,7 @@ public enum HttpStatus {
 
     public static List<HttpStatus> okCodes() {
         buildOkMap();
-        return (List<HttpStatus>) okMap.values();
+        return List.copyOf(okMap.values());
     }
 
     public static boolean isOk(int statusCode) {
@@ -114,7 +114,7 @@ public enum HttpStatus {
 
     public static List<HttpStatus> redirectionCodes() {
         buildRedirectionMap();
-        return (List<HttpStatus>) redirectionMap.values();
+        return List.copyOf(redirectionMap.values());
     }
 
     public static boolean isRedirection(int statusCode) {
@@ -124,7 +124,7 @@ public enum HttpStatus {
 
     public static List<HttpStatus> clientErrorList() {
         buildClientErrorMap();
-        return (List<HttpStatus>) clientErrorMap.values();
+        return List.copyOf(clientErrorMap.values());
     }
 
     public static Integer[] clientErrorCodes() {
@@ -138,7 +138,7 @@ public enum HttpStatus {
 
     public static List<HttpStatus> serverErrorCodes() {
         buildServerErrorMap();
-        return (List<HttpStatus>) serverErrorMap.values();
+        return List.copyOf(serverErrorMap.values());
     }
 
     public static boolean isServerError(int statusCode) {

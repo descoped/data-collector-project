@@ -131,6 +131,31 @@ class HttpStatusValidationHandlerTest {
         assertThrows(HttpErrorException.class, () -> handler.execute(context), "Validator did not fail for 500");
     }
 
+    // as the SKE specifications declare it: a 404 is a success when its body names one of the allowed errors
+    static HttpStatusValidationHandler notFoundAllowedFor(String... errorCodes) {
+        HttpStatusValidationBuilder builder = new HttpStatusValidationBuilder();
+        builder.success(200);
+        for (String code : errorCodes) {
+            builder.success(404, new BodyContainsBuilder(Builders.xpath("/feil/kode"), code));
+        }
+        return new HttpStatusValidationHandler(builder.build());
+    }
+
+    static ExecutionContext notFound(String errorCode) {
+        return ExecutionContext.empty()
+                .state(Request.class, Request.newRequestBuilder().GET().url("http://example.com").build())
+                .state(Response.class, mockResponse(new ValidatorPredicate(404, errorCode, null)));
+    }
+
+    @Test
+    void thatAStatusWithPredicatesIsASuccessWhenOneHolds() {
+        HttpStatusValidationHandler handler = notFoundAllowedFor("SM-001", "SM-002");
+        assertDoesNotThrow(() -> handler.execute(notFound("SM-001")));
+        assertDoesNotThrow(() -> handler.execute(notFound("SM-002")));
+        ExecutionContext other = notFound("SM-003");
+        assertThrows(HttpErrorException.class, () -> handler.execute(other), "a 404 with another error is a failure");
+    }
+
     static class ValidatorPredicate {
         final int statusCode;
         final String errorCode;

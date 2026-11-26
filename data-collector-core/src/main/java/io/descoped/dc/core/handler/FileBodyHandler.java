@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -26,6 +27,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Flow;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class FileBodyHandler implements BodyHandler<Path> {
@@ -37,6 +39,8 @@ public class FileBodyHandler implements BodyHandler<Path> {
     private final Object lock = new Object();
     protected final Path file;
     private final AtomicReference<Flow.Subscription> subscription = new AtomicReference<>();
+    private final AtomicBoolean claimed = new AtomicBoolean();
+    private final AtomicBoolean stopped = new AtomicBoolean();
 
     public FileBodyHandler(Path file) {
         Objects.requireNonNull(file);
@@ -48,7 +52,7 @@ public class FileBodyHandler implements BodyHandler<Path> {
 
     @Override
     public void onSubscribe(Flow.Subscription subscription) {
-        if (!this.subscription.compareAndSet(null, subscription)) {
+        if (stopped.get() || !this.subscription.compareAndSet(null, subscription)) {
             subscription.cancel();
             return;
         }
@@ -69,6 +73,9 @@ public class FileBodyHandler implements BodyHandler<Path> {
 
     private void appendToFile(List<ByteBuffer> byteBuffers) {
         synchronized (lock) {
+            if (stopped.get()) {
+                return;
+            }
             try {
                 for (ByteBuffer buf : byteBuffers) {
                     byte[] bytes = new byte[buf.remaining()];
@@ -92,6 +99,9 @@ public class FileBodyHandler implements BodyHandler<Path> {
 
     @Override
     public void onError(Throwable throwable) {
+        if (stopped.get()) {
+            return;
+        }
         if (throwable instanceof RuntimeException runtimeException) {
             throw runtimeException;
         }
@@ -101,8 +111,11 @@ public class FileBodyHandler implements BodyHandler<Path> {
     @Override
     public void onComplete() {
         // try decompress received payload
-        LOG.info("Download completed: {}", file);
         synchronized (lock) {
+            if (stopped.get()) {
+                return;
+            }
+            LOG.info("Download completed: {}", file);
             tryDecompress();
         }
     }
@@ -127,6 +140,41 @@ public class FileBodyHandler implements BodyHandler<Path> {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Claims this handler for a request; a handler receives the body of one request only.
+     *
+     * @return true for the first claim, false when a request already has it
+     */
+    boolean claim() {
+        return claimed.compareAndSet(false, true);
+    }
+
+    /**
+     * The handler for the next attempt of a request: this one stops (its subscription is cancelled and it writes no
+     * more), the file is emptied, and the new handler writes it from the start.
+     *
+     * @return the new handler, of the same file
+     */
+    FileBodyHandler restart() {
+        stopped.set(true);
+        Flow.Subscription current = subscription.get();
+        if (current != null) {
+            current.cancel();
+        }
+        synchronized (lock) {
+            try {
+                Files.write(file, new byte[0], StandardOpenOption.TRUNCATE_EXISTING);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+        return newHandler(file);
+    }
+
+    FileBodyHandler newHandler(Path file) {
+        return new FileBodyHandler(file);
     }
 
     static FileBodyHandler ofFile(Path file) {

@@ -168,9 +168,12 @@ public class HttpRequestDelegate implements Request {
                     httpRequestBuilder.DELETE();
                     break;
 
-                default:
-                    // OPTIONS: the method HttpRequest.Builder has by default, GET
+                case OPTIONS:
+                    httpRequestBuilder.method("OPTIONS", HttpRequest.BodyPublishers.noBody());
                     break;
+
+                default:
+                    throw new IllegalStateException("Unsupported method: " + method);
             }
 
             // copy request-headers to HttpRequest

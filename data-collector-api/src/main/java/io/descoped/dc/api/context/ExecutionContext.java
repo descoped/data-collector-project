@@ -58,9 +58,9 @@ public class ExecutionContext {
         return this;
     }
 
-    @SuppressWarnings("unchecked") // as in 2.x: it stores the supplier and returns the previous value (issue #44)
+    @SuppressWarnings("unchecked") // the caller names the value's type
     public <R> R globalStateIfAbsent(Object key, Supplier<R> supplier) {
-        return (R) globalState.putIfAbsent(key, supplier);
+        return (R) globalState.computeIfAbsent(key, k -> supplier.get());
     }
 
     public Map<String, Object> variables() {
