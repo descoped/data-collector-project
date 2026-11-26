@@ -2,33 +2,37 @@ package io.descoped.dc.application.controller;
 
 import io.descoped.dc.api.http.Request;
 import io.descoped.dc.application.spi.Controller;
-import io.prometheus.client.CollectorRegistry;
-import io.prometheus.client.exporter.common.TextFormat;
+import io.prometheus.metrics.expositionformats.PrometheusTextFormatWriter;
+import io.prometheus.metrics.model.registry.MetricNameFilter;
+import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.StringWriter;
+import java.io.UncheckedIOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 
 // https://github.com/prometheus/client_java#counter
-// https://github.com/prometheus/client_java/blob/master/simpleclient_httpserver/src/main/java/io/prometheus/client/exporter/HTTPServer.java
 /**
  * Serves {@code /metrics} in the Prometheus text format, and {@code /metrics/-/healthy}.
  */
 public class MetricsController implements Controller {
 
     private static final String HEALTHY_RESPONSE = "Exporter is Healthy.";
-    private final CollectorRegistry collectorRegistry;
+    private final PrometheusRegistry registry;
+    private final PrometheusTextFormatWriter writer = PrometheusTextFormatWriter.create();
 
     /**
      * Creates the controller.
      */
     public MetricsController() {
-        collectorRegistry = CollectorRegistry.defaultRegistry;
+        registry = PrometheusRegistry.defaultRegistry;
     }
 
     @Override
@@ -57,19 +61,20 @@ public class MetricsController implements Controller {
     }
 
     private void dealWithMetrics(HttpServerExchange exchange) {
-        try (StringWriter sw = new StringWriter()) {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             if (exchange.getRequestPath().endsWith("/-/healthy")) {
-                sw.write(HEALTHY_RESPONSE);
+                out.write(HEALTHY_RESPONSE.getBytes(StandardCharsets.UTF_8));
             } else {
-                String query = exchange.getQueryString();
-                TextFormat.write004(sw, collectorRegistry.filteredMetricFamilySamples(parseQuery(query)));
+                // no name[] gives every metric, as the simpleclient registry did
+                Set<String> names = parseQuery(exchange.getQueryString());
+                writer.write(out, names.isEmpty() ? registry.scrape() : registry.scrape(MetricNameFilter.builder().nameMustBeEqualTo(names).build()));
             }
 
             exchange.setStatusCode(200);
-            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, TextFormat.CONTENT_TYPE_004);
-            exchange.getResponseSender().send(sw.toString());
+            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, writer.getContentType());
+            exchange.getResponseSender().send(ByteBuffer.wrap(out.toByteArray()));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
     }
 

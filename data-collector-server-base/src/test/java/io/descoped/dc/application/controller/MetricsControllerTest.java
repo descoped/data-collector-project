@@ -2,10 +2,8 @@ package io.descoped.dc.application.controller;
 
 import io.descoped.config.DynamicConfiguration;
 import io.descoped.dc.application.server.UndertowApplication;
-import io.prometheus.client.Counter;
-import io.prometheus.client.Gauge;
-import io.prometheus.client.Histogram;
-import io.prometheus.client.Summary;
+import io.prometheus.metrics.core.metrics.Counter;
+import io.prometheus.metrics.core.metrics.Gauge;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -15,12 +13,12 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.time.Instant;
-import java.util.Optional;
 
 import static io.descoped.dc.api.util.CommonUtils.captureStackTrace;
 import static io.descoped.dc.application.controller.CORSHandlerTest.findFree;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MetricsControllerTest {
 
@@ -78,51 +76,18 @@ class MetricsControllerTest {
         LOG.trace("body:\n{}", response.body);
     }
 
+    // name[] selects samples by the names /metrics shows: a counter with _total
     @Test
-    void experiment() throws InterruptedException {
-        Counter requests = Counter.build("requests_total", "Total requests").namespace("ns").subsystem("foo").register();
+    void thatNameParametersSelectTheMetrics() {
+        Counter requests = Counter.builder().name("ns_foo_requests").help("Requests").register();
+        Gauge time = Gauge.builder().name("ns_foo_time").help("Time").register();
         requests.inc();
+        time.set(1);
 
-        Counter requestCount = Counter.build("requests_count", "Count requests").namespace("ns").subsystem("foo").labelNames("url").register();
-        requests.inc();
-
-        Gauge gauge = Gauge.build("currentTime", "Current Time").namespace("ns").subsystem("foo").register();
-        gauge.set((double) Instant.now().toEpochMilli());
-
-        {
-            // null value causes NPE
-            Optional<String> emptyString = Optional.empty();
-            requestCount.labels(emptyString.orElse("")).inc();
-        }
-
-        {
-            Histogram histogram = Histogram.build("histogram_KEY", "Histogram").register();
-            {
-                Histogram.Timer timer = histogram.startTimer();
-                Thread.sleep(250);
-                histogram.observe(1500);
-                timer.observeDuration();
-            }
-            Thread.sleep(500);
-
-            {
-                Histogram.Timer timer = histogram.startTimer();
-                Thread.sleep(220);
-                histogram.observe(1200);
-                timer.observeDuration();
-            }
-        }
-
-        {
-            Summary summary = Summary.build("someSummary", "Some Summary").register();
-            Summary.Timer timer = summary.startTimer();
-            Thread.sleep(250);
-            summary.observe(1500);
-            timer.observeDuration();
-        }
-
-        // the second inc() above is on requests too
-        assertEquals(2.0, requests.get());
+        HttpResponse response = GET("/metrics?name%5B%5D=ns_foo_requests_total");
+        assertEquals(200, response.statusCode);
+        assertTrue(response.body.contains("ns_foo_requests_total 1.0"), response.body);
+        assertFalse(response.body.contains("ns_foo_time"), response.body);
     }
 
     static class HttpResponse {

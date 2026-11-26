@@ -17,7 +17,7 @@ import io.descoped.dc.application.spi.Component;
 import io.descoped.dc.application.spi.Controller;
 import io.descoped.dc.application.spi.Service;
 import io.descoped.dc.application.ssl.BusinessSSLResourceSupplier;
-import io.prometheus.client.hotspot.DefaultExports;
+import io.prometheus.metrics.instrumentation.jvm.JvmMetrics;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
@@ -145,7 +145,8 @@ public class UndertowApplication {
                                                                     Integer port,
                                                                     BusinessSSLResourceSupplier businessSSLResourceSupplier) {
         if (!Boolean.parseBoolean(configuration.find("prometheus.defaultExports.disabled").orElse(null))) {
-            DefaultExports.initialize();
+            // the JVM and process metrics; registered once per registry, so a second application adds nothing
+            JvmMetrics.builder().register();
         }
         LOG.info("Initializing Data Collector server ...");
         if (businessSSLResourceSupplier != null && LOG.isInfoEnabled()) {

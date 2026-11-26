@@ -35,7 +35,6 @@ public class IntegrityCheckTest {
     static final int NUMBER_OF_MESSAGES = 25000;
     private static final Logger LOG = LoggerFactory.getLogger(IntegrityCheckTest.class);
 
-    // the API's close() is declared to throw Exception, which javac's try lint reports
     static void produceMessages(ContentStream contentStream, String prefixTopic) {
         try (ContentStreamProducer producer = contentStream.producer(prefixTopic + "test-stream")) {
             for (int n = 0; n < NUMBER_OF_MESSAGES; n++) {

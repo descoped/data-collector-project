@@ -5,7 +5,7 @@ import io.descoped.dc.api.http.BodyHandler;
 import io.descoped.dc.api.http.Headers;
 import io.descoped.dc.api.http.Request;
 import io.descoped.dc.api.http.Response;
-import io.prometheus.client.CollectorRegistry;
+import io.descoped.dc.core.metrics.MetricSamples;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -25,8 +25,7 @@ class HttpClientExporterInterceptorTest {
 
     static double sample(String name, String... labels) {
         String[] labelNames = labels.length == 1 ? new String[]{"location"} : new String[]{"location", "statusCode", "emptyResponse"};
-        Double value = CollectorRegistry.defaultRegistry.getSampleValue(name, labelNames, labels);
-        return value == null ? 0 : value;
+        return MetricSamples.value(name, labelNames, labels);
     }
 
     static Request request() {

@@ -76,7 +76,7 @@ Read by `data-collector-server-base` at start-up.
 | `http.cors.allow.header` | not set | `Content-Type,Authorization` | Headers a preflight may ask for; also sent as `Access-Control-Expose-Headers`. |
 | `http.cors.allow.credentials` | not set | `false` | `true` adds `Access-Control-Allow-Credentials: true`. |
 | `http.cors.allow.max-age` | not set | `900` | `Access-Control-Max-Age` of a preflight, in seconds. |
-| `prometheus.defaultExports.disabled` | not set | `false` | `true` leaves out the JVM and process metrics of the Prometheus client. |
+| `prometheus.defaultExports.disabled` | not set | `false` | `true` leaves out the JVM and process metrics of the Prometheus client (`JvmMetrics`). |
 
 How authentication and the CORS handler apply these is described in [REST API: authentication and
 CORS](rest-api.md#authentication-and-cors).
@@ -379,7 +379,8 @@ so setting `LOGBACK_CONFIGURATION_FILE` does not change the configuration in use
 ### Prometheus
 
 `GET /metrics` returns the default Prometheus registry in the text format ([REST API](rest-api.md#metrics)). Counters
-are written with the suffix `_total` (and a `_created` gauge); histograms as `_bucket`, `_count` and `_sum`.
+are written with the suffix `_total`; histograms as `_bucket`, `_count` and `_sum`, with the buckets 0.005 to 10
+seconds of 2.x.
 
 | Metric | Type | Labels | Meaning |
 |---|---|---|---|
@@ -398,7 +399,7 @@ are written with the suffix `_total` (and a `_created` gauge); histograms as `_b
 
 `location` is the scheme, host and port (when not 80 or 443) of the request URL, for example
 `https://data.brreg.no`. Unless `prometheus.defaultExports.disabled=true`, the JVM and process metrics of the
-Prometheus Java client (`simpleclient_hotspot` default exports) are registered as well.
+Prometheus Java client (`JvmMetrics` of client_java 1.x) are registered as well.
 
 `examples/docker-compose-postgres.yml` runs Prometheus (port 9090, `examples/prometheus.yml`, which scrapes
 `data-collector-postgres:9990` every 15 seconds) and Grafana (port 3000).

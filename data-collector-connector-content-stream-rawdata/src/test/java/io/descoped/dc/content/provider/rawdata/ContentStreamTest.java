@@ -59,7 +59,6 @@ class ContentStreamTest {
         assertEquals(Set.of("a", "b", "manifest.json"), message.data().keySet());
     }
 
-    // the API's close() is declared to throw Exception, which javac's try lint reports
     static void consumeMessages(ContentStream client) {
         try (ContentStreamConsumer consumer = client.consumer("my-rawdata-stream")) {
             for (; ; ) {
@@ -76,7 +75,6 @@ class ContentStreamTest {
         }
     }
 
-    // the API's close() is declared to throw Exception, which javac's try lint reports
     static void produceMessages(ContentStream client) throws Exception {
         try (ContentStreamProducer producer = client.producer("my-rawdata-stream")) {
             producer.publishBuilders(producer.builder().position("4BA210EC2")

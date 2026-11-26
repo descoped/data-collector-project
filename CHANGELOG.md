@@ -54,6 +54,13 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
   and salt, a secret that is not found or an empty value stops the server; 2.x wrote content in clear. The recovery
   store's bypass flag `recovery.rawdata.encryption.credentials.ignore` is gone: recovery removes every
   `rawdata.encryption.*` key from its own store's configuration.
+- **Prometheus client_java 1.x** (from simpleclient 0.16, whose line has ended). dc's metrics keep their names, labels
+  and histogram buckets. Changed on `GET /metrics`:
+  - the JVM and process metrics are client_java's `JvmMetrics`: `jvm_memory_bytes_*` is now `jvm_memory_*_bytes`,
+    `jvm_memory_pool_bytes_*` is now `jvm_memory_pool_*_bytes`, `jvm_info` is now `jvm_runtime_info`, and
+    `jvm_compilation_time_seconds_total` is new;
+  - counters no longer have a `_created` series;
+  - `name[]` also matches a metric's own name, and a match returns the whole metric, not only the named sample.
 - **JDK 27:** dc is built for, tested on and runs on JDK 27 (class files of Java 27); 2.x ran on Java 17. The server
   image's runtime is Temurin 27, and its `java` allows native access for the class path (jffi) and lmdbjava's use of
   `sun.misc.Unsafe`, which JDK 27 would otherwise warn about.
