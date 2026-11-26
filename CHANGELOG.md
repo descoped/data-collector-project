@@ -176,6 +176,15 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
 
 ### Fixed
 
+- **A failing `Parallel` entry outside a `Paginate` fails the worker** (#24). Nothing waited for those entries, so the
+  worker completed while they ran and their failures were lost (and an entry still running 5 seconds after the start
+  node returned was interrupted when the thread pool shut down). The worker now waits for every entry it started and
+  fails with the first failure, as inside a `Paginate`.
+- **Stopping the server cancels the running tasks** (#45) and waits for them, at most
+  `data.collector.worker.stop.timeoutInSeconds` (30), before the content store is closed; it stopped none and closed
+  the store under them. A task's future no longer fails with a `NullPointerException` when the task succeeds.
+- **Data races** (#46): the contexts of a worker no longer copy its shared global state onto itself from every thread,
+  the global state is synchronized, and `/health` reads the workers' health resources under the lock that guards them.
 - **`http.port=0` reports the port the server got** (#62): `UndertowApplication.getPort()`, the startup log and the
   health output give the ephemeral port the listener is bound to, not 0. The test servers of data-collector-testutils
   use this: they bind port 0 instead of probing for a free port between 9000 and 9499 and binding it later, which

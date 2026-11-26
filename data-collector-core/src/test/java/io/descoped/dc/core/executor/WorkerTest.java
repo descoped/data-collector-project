@@ -12,10 +12,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static io.descoped.dc.api.Builders.context;
 import static io.descoped.dc.api.Builders.execute;
@@ -122,5 +127,36 @@ class WorkerTest {
 
         assertThrows(CompletionException.class, future::join);
         assertEquals(WorkerStatus.FAILED, monitor.status());
+    }
+
+    // #46: the contexts of a worker share its global state on every thread of its pool
+    @Test
+    void thatTheGlobalStateIsSharedSafely() throws Exception {
+        Worker worker = Worker.newBuilder()
+                .specification(specification("/api/events"))
+                .build();
+        ExecutionContext context = worker.context();
+        int threads = 8;
+        int keys = 5_000;
+
+        List<CompletableFuture<Void>> writers = new ArrayList<>();
+        try (ExecutorService executor = Executors.newFixedThreadPool(threads)) {
+            for (int thread = 0; thread < threads; thread++) {
+                int t = thread;
+                writers.add(CompletableFuture.runAsync(() -> {
+                    for (int key = 0; key < keys; key++) {
+                        ExecutionContext.of(context).globalState("key-" + t + "-" + key, key);
+                        ExecutionContext.of(context).join(ExecutionContext.of(context));
+                    }
+                }, executor));
+            }
+            CompletableFuture.allOf(writers.toArray(new CompletableFuture<?>[0])).get(60, TimeUnit.SECONDS);
+        }
+
+        for (int thread = 0; thread < threads; thread++) {
+            for (int key = 0; key < keys; key += 499) {
+                assertEquals(key, (Integer) context.state("key-" + thread + "-" + key), "key-" + thread + "-" + key);
+            }
+        }
     }
 }

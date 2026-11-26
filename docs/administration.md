@@ -122,6 +122,7 @@ Read by the engine (`data-collector-core`) when a task is built. Every task gets
 | Key | Code default | Meaning |
 |---|---|---|
 | `data.collector.worker.threads` | available processors + 2 | Size of each task's fixed thread pool. |
+| `data.collector.worker.stop.timeoutInSeconds` | 30 | When the server stops, how long it waits for the running tasks it cancels before it closes the content store. |
 | `data.collector.http.version` | `HTTP_2` | `HTTP_1_1` or `HTTP_2` (any case). |
 | `data.collector.http.followRedirects` | not set: the Java HTTP client's default, `NEVER` | `NEVER`, `ALWAYS`, or `NORMAL` (always, except from HTTPS to HTTP); any case. |
 | `data.collector.http.client.timeout.seconds` | `20` | Connect timeout of the HTTP client. |

@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -34,6 +35,9 @@ import java.util.function.Consumer;
 public class WorkerService implements Service {
 
     private static final Logger LOG = LoggerFactory.getLogger(WorkerService.class);
+
+    // how long stop() waits for the workers it cancels
+    static final String STOP_TIMEOUT = "data.collector.worker.stop.timeoutInSeconds";
 
     private final DynamicConfiguration configuration;
     private final MetricsResourceFactory metricsResourceFactory;
@@ -225,10 +229,7 @@ public class WorkerService implements Service {
 
     @Override
     public void stop() {
-        try {
-            workManager.cancel();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        long timeoutInSeconds = configuration.find(STOP_TIMEOUT).map(Long::parseLong).orElse(30L);
+        workManager.cancel(Duration.ofSeconds(timeoutInSeconds));
     }
 }

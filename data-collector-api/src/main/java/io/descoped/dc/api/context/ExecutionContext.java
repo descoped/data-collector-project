@@ -62,10 +62,16 @@ public class ExecutionContext {
         ExecutionContext copyOfThis = of(this);
         ExecutionContext accumulated = of(anotherContext);
         accumulated.variables.putAll(copyOfThis.variables);
-        accumulated.globalState.putAll(copyOfThis.globalState);
+        // the contexts of a worker share its global state, which other threads write to: it is not copied onto
+        // itself (#46)
+        if (accumulated.globalState != copyOfThis.globalState) {
+            accumulated.globalState.putAll(copyOfThis.globalState);
+        }
         accumulated.state.putAll(copyOfThis.state);
         this.variables.putAll(accumulated.variables);
-        this.globalState.putAll(accumulated.globalState);
+        if (this.globalState != accumulated.globalState) {
+            this.globalState.putAll(accumulated.globalState);
+        }
         this.state.putAll(accumulated.state);
         return this;
     }
