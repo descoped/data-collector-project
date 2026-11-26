@@ -30,6 +30,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * The content store {@code rawdata}: it buffers each position's documents and publishes them as one rawdata message,
+ * encrypted when a key and a salt are given.
+ */
 public class RawdataClientContentStore implements ContentStore {
 
     private static final Logger LOG = LoggerFactory.getLogger(RawdataClientContentStore.class);
@@ -42,6 +46,13 @@ public class RawdataClientContentStore implements ContentStore {
     private final Map<String, Lock> lockByTopic = new ConcurrentHashMap<>();
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
+    /**
+     * Creates the store; content is encrypted only when both the key and the salt are given and not empty.
+     *
+     * @param client         the rawdata client
+     * @param encryptionKey  the password the content key is derived from, or {@code null}
+     * @param encryptionSalt the salt the content key is derived with, or {@code null}
+     */
     public RawdataClientContentStore(RawdataClient client, final char[] encryptionKey, final byte[] encryptionSalt) {
         this.encryptionClient = new EncryptionClient(Algorithm.AES256);
 
@@ -210,7 +221,7 @@ public class RawdataClientContentStore implements ContentStore {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         if (closed.compareAndSet(false, true)) {
             contentStream.close();
             LOG.debug("Closed content stream!");

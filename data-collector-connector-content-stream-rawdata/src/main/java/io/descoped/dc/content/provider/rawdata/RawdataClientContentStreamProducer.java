@@ -17,6 +17,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+/**
+ * A producer to a rawdata-client topic: it buffers messages by position and publishes them when their position is
+ * published, with a manifest of the documents in each message.
+ */
 public class RawdataClientContentStreamProducer implements ContentStreamProducer {
 
     private final RawdataProducer producer;
@@ -25,6 +29,13 @@ public class RawdataClientContentStreamProducer implements ContentStreamProducer
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private final Map<String, List<RawdataMessage>> bufferMap;
 
+    /**
+     * Creates the producer.
+     *
+     * @param producer               the rawdata producer
+     * @param closeAndRemoveProducer called with the topic when the producer is closed
+     * @param tryEncryptContent      encrypts the manifest, or returns it as given; {@code null} for none
+     */
     public RawdataClientContentStreamProducer(RawdataProducer producer, Consumer<String> closeAndRemoveProducer, Function<byte[], byte[]> tryEncryptContent) {
         this.producer = producer;
         this.closeAndRemoveProducer = closeAndRemoveProducer;
@@ -118,12 +129,17 @@ public class RawdataClientContentStreamProducer implements ContentStreamProducer
         bufferMap.computeIfAbsent(message.position(), k -> new ArrayList<>()).add(message);
     }
 
+    /**
+     * Whether the producer is closed.
+     *
+     * @return true after {@link #close()}
+     */
     public boolean isClosed() {
         return closed.get();
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         if (closed.compareAndSet(false, true)) {
             try {
                 // Publish all remaining buffered messages

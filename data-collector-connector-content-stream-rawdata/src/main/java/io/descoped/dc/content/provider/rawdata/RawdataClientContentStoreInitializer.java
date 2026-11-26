@@ -15,8 +15,19 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * Creates the {@code rawdata} content store from the configuration: the rawdata client provider and, optionally, the
+ * encryption key and salt or the secret provider that holds them.
+ */
 @ProviderName("rawdata")
 public class RawdataClientContentStoreInitializer implements ContentStoreInitializer {
+
+    /**
+     * Creates the initializer; the service loader calls it.
+     */
+    public RawdataClientContentStoreInitializer() {
+        // no state
+    }
 
     private static final Logger LOG = LoggerFactory.getLogger(RawdataClientContentStoreInitializer.class);
 

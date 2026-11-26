@@ -9,12 +9,21 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
+/**
+ * A consumer of a rawdata-client topic.
+ */
 public class RawdataClientContentStreamConsumer implements ContentStreamConsumer {
 
     private final RawdataConsumer consumer;
     private final Consumer<String> closeAndRemoveConsumer;
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
+    /**
+     * Creates the consumer.
+     *
+     * @param consumer               the rawdata consumer
+     * @param closeAndRemoveConsumer called with the topic when the consumer is closed
+     */
     public RawdataClientContentStreamConsumer(RawdataConsumer consumer, Consumer<String> closeAndRemoveConsumer) {
         this.consumer = consumer;
         this.closeAndRemoveConsumer = closeAndRemoveConsumer;
@@ -47,7 +56,7 @@ public class RawdataClientContentStreamConsumer implements ContentStreamConsumer
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         if (closed.compareAndSet(false, true)) {
             closeAndRemoveConsumer.accept(consumer.topic());
             consumer.close();
