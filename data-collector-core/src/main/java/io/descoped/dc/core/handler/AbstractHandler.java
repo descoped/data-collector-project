@@ -5,10 +5,25 @@ import io.descoped.dc.api.context.ExecutionContext;
 import io.descoped.dc.api.node.Base;
 import io.descoped.dc.api.node.Node;
 
+/**
+ * The base of every handler: the execution of one node of a specification.
+ *
+ * @param <N> the type of node the handler executes
+ */
 public abstract class AbstractHandler<N extends Base> implements Execution {
 
+    /**
+     * The node this handler executes.
+     */
     protected final N node;
 
+    /**
+     * Creates a handler for a node.
+     *
+     * @param node the node to execute
+     * @throws IllegalStateException if the node is a {@code Node} and this handler does not extend
+     *                               {@code AbstractNodeHandler}
+     */
     protected AbstractHandler(N node) {
         if (node instanceof Node && !(this instanceof AbstractNodeHandler)) {
             throw new IllegalStateException(node.getClass() + " is of type Node and should inherit AbstractNodeHandler and successor should invoke super.execute(input) in order to guarantee a configured context!");

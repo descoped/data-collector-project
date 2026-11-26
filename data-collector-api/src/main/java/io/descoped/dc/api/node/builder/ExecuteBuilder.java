@@ -17,6 +17,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+/**
+ * Builds an {@link Execute} node, which runs another function of the specification, by its id, with input variables
+ * read by queries from the current page entry or response.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class ExecuteBuilder extends NodeBuilder {
 
@@ -27,16 +31,34 @@ public class ExecuteBuilder extends NodeBuilder {
     @JsonProperty
     Map<String, QueryBuilder> inputVariables = new LinkedHashMap<>();
 
+    /**
+     * Creates the builder.
+     *
+     * @param executeId the id of the function to run; building fails if the specification has no such function
+     */
     public ExecuteBuilder(String executeId) {
         super(BuilderType.Execute);
         this.executeId = executeId;
     }
 
+    /**
+     * Adds a variable that must be set when the function runs; the execution fails without it.
+     *
+     * @param identifier the variable's name
+     * @return this builder
+     */
     public ExecuteBuilder requiredInput(String identifier) {
         requiredInputs.add(identifier);
         return this;
     }
 
+    /**
+     * Adds an input variable, replacing an earlier one with the same name.
+     *
+     * @param identifier   the variable's name
+     * @param queryBuilder the query that reads the variable's value
+     * @return this builder
+     */
     public ExecuteBuilder inputVariable(String identifier, QueryBuilder queryBuilder) {
         inputVariables.put(identifier, queryBuilder);
         return this;

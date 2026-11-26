@@ -12,6 +12,11 @@ import java.util.Optional;
 
 import static io.descoped.dc.api.node.builder.SpecificationBuilder.GLOBAL_CONFIGURATION;
 
+/**
+ * Builds a {@link JwtTokenBodyPublisherProducer}, which gives a request body made from a signed JWT: the engine
+ * creates the token from a JWT identity of the security configuration, binds it to a variable and evaluates the
+ * token expression into the body.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class JwtIdentityTokenBodyPublisherProducerBuilder extends IdentityTokenBodyPublisherProducerBuilder {
 
@@ -22,20 +27,41 @@ public class JwtIdentityTokenBodyPublisherProducerBuilder extends IdentityTokenB
     @JsonProperty
     String token;
 
+    /**
+     * Creates the builder; set the identity, variable and token with the builder methods.
+     */
     public JwtIdentityTokenBodyPublisherProducerBuilder() {
         super(BuilderType.JwtIdentityTokenBodyPublisherProducer);
     }
 
+    /**
+     * Sets the id of the identity in the security configuration; building fails if there is no such identity.
+     *
+     * @param identityId the identity's id
+     * @return this builder
+     */
     public JwtIdentityTokenBodyPublisherProducerBuilder identityId(String identityId) {
         this.identityId = identityId;
         return this;
     }
 
+    /**
+     * Sets the name of the variable the signed token is bound to.
+     *
+     * @param bindTo the variable's name
+     * @return this builder
+     */
     public JwtIdentityTokenBodyPublisherProducerBuilder bindTo(String bindTo) {
         this.bindTo = bindTo;
         return this;
     }
 
+    /**
+     * Sets the expression that gives the request body; it can use the variable the token is bound to.
+     *
+     * @param token the expression
+     * @return this builder
+     */
     public JwtIdentityTokenBodyPublisherProducerBuilder token(String token) {
         this.token = token;
         return this;

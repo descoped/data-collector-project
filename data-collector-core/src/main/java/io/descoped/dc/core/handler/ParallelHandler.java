@@ -28,15 +28,34 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
+/**
+ * Executes a {@code Parallel} node: splits the response into page entries with the node's split query (by tokens from
+ * the file the body was written to, when the response has a body handler), evaluates the node's variables on each
+ * entry, and executes the node's steps for each entry on the worker's thread pool. It returns the page context with
+ * the futures of the entries.
+ */
 @Handler(forClass = Parallel.class)
 public class ParallelHandler extends AbstractNodeHandler<Parallel> {
 
     private static final Logger LOG = LoggerFactory.getLogger(ParallelHandler.class);
+    /**
+     * The name of the state that limits the number of entries handled; when it is reached, the page is the end of
+     * the stream.
+     */
     public static final String MAX_NUMBER_OF_ITERATIONS = "MAX_NUMBER_OF_ITERATIONS";
     static final String ADD_BODY_CONTENT = "ADD_BODY_CONTENT";
+    /**
+     * The number of entries handled, counted while the {@link #MAX_NUMBER_OF_ITERATIONS} state is set; -1 before
+     * counting starts. It is shared by every handler in the JVM.
+     */
     public static final AtomicLong countNumberOfIterations = new AtomicLong(-1);
     private static final AtomicLong pageCounter = new AtomicLong(-1);
 
+    /**
+     * Creates the handler of a node.
+     *
+     * @param node the node to execute
+     */
     public ParallelHandler(Parallel node) {
         super(node);
     }

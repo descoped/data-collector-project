@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * The content store the workers publish to, as a component of the application.
  */
-@SuppressWarnings("try") // ContentStore.close() is declared to throw Exception
+@SuppressWarnings("try") // Component.close() is declared to throw Exception
 public class ContentStoreComponent implements Component {
 
     private final DynamicConfiguration configuration;

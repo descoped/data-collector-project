@@ -29,11 +29,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Executes a {@code JwtTokenBodyPublisherProducer} node: signs a JWT (RS256) with the key pair of the identity's SSL
+ * bundle, with the certificate chain as {@code x5c} header, the identity's issuer, audience and claims, and an
+ * expiry of the evaluated time-to-live. It binds the token to the node's variable and returns the evaluated token
+ * expression as bytes, the {@code BodyPublisherProducer} state.
+ */
 @Handler(forClass = JwtTokenBodyPublisherProducer.class)
 public class JwtTokenBodyPublisherProducerHandler extends AbstractHandler<JwtTokenBodyPublisherProducer> {
 
     private static final Logger LOG = LoggerFactory.getLogger(JwtTokenBodyPublisherProducerHandler.class);
 
+    /**
+     * Creates the handler of a node.
+     *
+     * @param node the node to execute
+     */
     public JwtTokenBodyPublisherProducerHandler(JwtTokenBodyPublisherProducer node) {
         super(node);
     }

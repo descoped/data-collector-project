@@ -13,6 +13,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Builds a specification's {@link FlowContext}: the request headers, variables and global state every function of
+ * the specification starts with, among them the topic the content is published to.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class SpecificationContextBuilder extends ConfigurationBuilder {
 
@@ -22,39 +26,80 @@ public class SpecificationContextBuilder extends ConfigurationBuilder {
     @JsonProperty
     Map<Object, Object> globalState = new LinkedHashMap<>();
 
+    /**
+     * Creates the builder without headers, variables or global state.
+     */
     public SpecificationContextBuilder() {
         super(BuilderType.SpecificationContext);
     }
 
+    /**
+     * The request headers, serialized as the {@code headers} property.
+     *
+     * @return the headers by name
+     */
     @JsonProperty("headers")
     public Map<String, List<String>> headerMap() {
         return headers.asMap();
     }
 
+    /**
+     * Sets the topic the content is published to, as the global state {@code global.topic}.
+     *
+     * @param topicName the topic's name
+     * @return this builder
+     */
     @ConfigSetter
     public SpecificationContextBuilder topic(String topicName) {
         globalState("global.topic", topicName);
         return this;
     }
 
+    /**
+     * Adds a request header that every request of the specification sends.
+     *
+     * @param name  the header's name
+     * @param value the header's value
+     * @return this builder
+     */
     @ConfigSetter
     public SpecificationContextBuilder header(String name, String value) {
         headers.put(name, value);
         return this;
     }
 
+    /**
+     * Sets a variable, replacing an earlier one with the same name.
+     *
+     * @param name  the variable's name
+     * @param value the variable's value
+     * @return this builder
+     */
     @ConfigSetter
     public SpecificationContextBuilder variable(String name, Object value) {
         variables.put(name, value);
         return this;
     }
 
+    /**
+     * Sets a global state entry, replacing an earlier one with the same key.
+     *
+     * @param key   the entry's key
+     * @param value the entry's value
+     * @return this builder
+     */
     @ConfigSetter
     public SpecificationContextBuilder globalState(Object key, Object value) {
         globalState.put(key, value);
         return this;
     }
 
+    /**
+     * A global state entry.
+     *
+     * @param key the entry's key
+     * @return the entry's value, or {@code null} if there is none
+     */
     public Object globalState(Object key) {
         return globalState.get(key);
     }

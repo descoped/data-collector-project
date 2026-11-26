@@ -2,10 +2,19 @@ package io.descoped.dc.api.content;
 
 import java.util.Objects;
 
+/**
+ * The key of a position's buffered content: a topic and a position.
+ */
 public class ContentStateKey {
     private final String topic;
     final String position;
 
+    /**
+     * Creates the key.
+     *
+     * @param topic    the topic
+     * @param position the position
+     */
     public ContentStateKey(String topic, String position) {
         this.topic = topic;
         this.position = position;

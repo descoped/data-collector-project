@@ -9,9 +9,17 @@ import io.descoped.dc.api.node.XmlToken;
 
 import java.nio.file.Path;
 
+/**
+ * Executes an {@code XmlToken} query: the result is the file the response body was written to.
+ */
 @Handler(forClass = XmlToken.class)
 public class XmlTokenHandler extends AbstractHandler<XmlToken> {
 
+    /**
+     * Creates the handler of a node.
+     *
+     * @param node the node to execute
+     */
     public XmlTokenHandler(XmlToken node) {
         super(node);
     }

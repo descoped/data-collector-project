@@ -12,10 +12,23 @@ import io.descoped.dc.core.executor.Executor;
 
 import java.util.List;
 
+/**
+ * Executes a {@code ForEach} node: splits the current page entry's content (or the response body) into a list with the
+ * node's split query, and executes the node's steps for each item, with the item as the page entry and the
+ * {@link #ADD_BODY_CONTENT} state set to true.
+ */
 @Handler(forClass = ForEach.class)
 public class ForEachHandler extends AbstractNodeHandler<ForEach> {
 
+    /**
+     * The name of the state that tells {@code AddContentHandler} to buffer the response body.
+     */
     public static final String ADD_BODY_CONTENT = ParallelHandler.ADD_BODY_CONTENT;
+    /**
+     * Creates the handler of a node.
+     *
+     * @param node the node to execute
+     */
     public ForEachHandler(ForEach node) {
         super(node);
     }

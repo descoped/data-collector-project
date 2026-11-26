@@ -5,7 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 /**
- * Base for node builder classes
+ * Base for node builder classes. Holds the {@link BuilderType} that is serialized as the builder's {@code type}
+ * property; two builders are equal only if they are of the same class and type.
  */
 public abstract class AbstractBuilder {
 

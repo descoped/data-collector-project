@@ -10,6 +10,10 @@ import io.descoped.dc.api.node.Sequence;
 import java.util.Iterator;
 import java.util.Objects;
 
+/**
+ * Builds a {@link Sequence} node, which determines a page's expected positions: one query splits the page into
+ * entries and another reads each entry's position.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class SequenceBuilder extends NodeBuilder {
 
@@ -18,15 +22,31 @@ public class SequenceBuilder extends NodeBuilder {
     @JsonProperty("expectedQuery")
     QueryBuilder expectedBuilder;
 
+    /**
+     * Creates the builder; set the position query with {@link #expected(QueryBuilder)}.
+     *
+     * @param splitBuilder the query that splits the page into entries
+     */
     public SequenceBuilder(QueryBuilder splitBuilder) {
         super(BuilderType.Sequence);
         this.splitBuilder = splitBuilder;
     }
 
+    /**
+     * Sets the query that splits the page into entries.
+     *
+     * @param splitBuilder the query
+     */
     public void splitBuilder(QueryBuilder splitBuilder) {
         this.splitBuilder = splitBuilder;
     }
 
+    /**
+     * Sets the query that reads an entry's position. It is required: building fails without it.
+     *
+     * @param expectedBuilder the query
+     * @return this builder
+     */
     public SequenceBuilder expected(QueryBuilder expectedBuilder) {
         this.expectedBuilder = expectedBuilder;
         return this;

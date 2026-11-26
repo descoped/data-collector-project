@@ -270,7 +270,7 @@ The sections, in the order they are written:
 | `status` | always | `UP` when every resource that reports a state is up: the application is `RUNNING` and no running task's content stream is closed; else `DOWN` |
 | `application` | always | `status` (`INITIALIZING`, `INITIALIZED`, `RUNNING`, `SHUTTING_DOWN`, `SHUTDOWN`), `host`, `port`, `since`, `now`, `uptime` |
 | `worker-<taskId>` | one per running task | `status` (`RUNNING`), `worker-id`, `specificationId`, `name`, `started`, `duration`, `start-function`, `start-function-id`, `security`, `request-info`, `content-stream`, `thread-pool` |
-| `worker-history` | always | the reports of finished tasks, newest first, with `status` `COMPLETED`, `CANCELED` or `FAILED` and `ended`; a `FAILED` report also has `failure-cause` (the stack trace) and `thread-dump`. At most 26 reports are kept; once the list is full, only its newest report is replaced. |
+| `worker-history` | always | the reports of finished tasks, newest first, with `status` `COMPLETED`, `CANCELED` or `FAILED` and `ended`; a `FAILED` report also has `failure-cause` (the stack trace) and `thread-dump`. The latest 25 reports are kept; once the list is full, the oldest is dropped. |
 | `modules` | always | the `io.descoped*` modules on the module path with Maven group, artifact and version |
 | `configuration` | `config`, `all` | see above |
 | `contexts` | `contexts`, `all` | see above |

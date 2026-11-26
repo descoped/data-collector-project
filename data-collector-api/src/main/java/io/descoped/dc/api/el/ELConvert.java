@@ -9,6 +9,9 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
 
+/**
+ * The built-in expression functions {@code convert}: date conversions.
+ */
 public class ELConvert {
 
     /**
@@ -18,6 +21,13 @@ public class ELConvert {
         // no state
     }
 
+    /**
+     * Converts an ISO-8601 date-time to seconds since the epoch; one without an offset or zone is read as UTC.
+     *
+     * @param value the date-time
+     * @return the seconds since the epoch
+     * @throws java.time.format.DateTimeParseException if the value is not an ISO-8601 date-time
+     */
     public Long utcDateToEpoc(String value) {
         try {
             TemporalAccessor ta = DateTimeFormatter.ISO_DATE_TIME.parse(value);

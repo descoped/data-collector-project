@@ -15,11 +15,6 @@
     <name>Data Collector API</name>
     <description>The data collector specification DSL (builders and nodes), its expression language, and the service interfaces for HTTP, content stores and health.</description>
 
-    <properties>
-        <!-- doclint missing: the Javadoc of the public API follows in a pull request of its own. -->
-        <doclint.exclusions>,-missing</doclint.exclusions>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>io.descoped.spi</groupId>

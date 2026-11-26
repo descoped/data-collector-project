@@ -2,6 +2,9 @@ import io.descoped.dc.api.http.Client;
 import io.descoped.dc.api.http.Request;
 import io.descoped.dc.api.http.Response;
 
+/**
+ * The engine of the Data Collector: the worker, the node handlers, the HTTP client, client certificates and metrics.
+ */
 module io.descoped.dc.core {
     requires io.descoped.dynamic.config;
     requires io.descoped.service.provider.api;

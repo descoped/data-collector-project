@@ -8,9 +8,17 @@ import io.descoped.dc.api.node.Body;
 
 import java.nio.charset.StandardCharsets;
 
+/**
+ * Executes a {@code Body} query: the result is the whole response body as a UTF-8 string.
+ */
 @Handler(forClass = Body.class)
 public class BodyHandler extends AbstractHandler<Body> {
 
+    /**
+     * Creates the handler of a node.
+     *
+     * @param node the node to execute
+     */
     public BodyHandler(Body node) {
         super(node);
     }

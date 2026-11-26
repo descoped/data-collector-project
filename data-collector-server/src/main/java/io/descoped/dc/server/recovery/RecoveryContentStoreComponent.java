@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * The content store a recovery writes to: messages are copied as they are, without encryption keys.
  */
-@SuppressWarnings("try") // ContentStore.close() is declared to throw Exception
+@SuppressWarnings("try") // Component.close() is declared to throw Exception
 public class RecoveryContentStoreComponent implements Component {
 
     private final DynamicConfiguration configuration;

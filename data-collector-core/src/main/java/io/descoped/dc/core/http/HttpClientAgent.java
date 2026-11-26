@@ -14,6 +14,10 @@ import static net.bytebuddy.matcher.ElementMatchers.hasSuperClass;
 import static net.bytebuddy.matcher.ElementMatchers.hasSuperType;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
+/**
+ * Instruments every {@link Client} implementation and the {@code GetHandler} with the metrics advice of
+ * {@link HttpClientExporter}.
+ */
 public class HttpClientAgent {
 
     private static final Logger LOG = LoggerFactory.getLogger(HttpClientAgent.class);
@@ -33,6 +37,12 @@ public class HttpClientAgent {
     // installed once per JVM: a second agent would inline the advice again and count everything twice
     private static final AtomicBoolean INSTALLED = new AtomicBoolean();
 
+    /**
+     * Instruments the HTTP clients and the get handlers, loaded and to be loaded, through the instrumentation. Only the
+     * first successful call in a JVM installs the agent; when installation fails, a later call tries again.
+     *
+     * @param inst the instrumentation to install the agent with
+     */
     public static void install(Instrumentation inst) {
         if (!INSTALLED.compareAndSet(false, true)) {
             return;

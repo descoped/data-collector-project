@@ -10,6 +10,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * A fixed size thread pool for a worker.
+ */
 public class FixedThreadPool {
 
     private static final Logger LOG = LoggerFactory.getLogger(FixedThreadPool.class);
@@ -20,10 +23,21 @@ public class FixedThreadPool {
         this.executorService = createFixedThreadPool(numberOfThreads);
     }
 
+    /**
+     * Creates a pool of {@link #getNumberOfThreads()} threads.
+     *
+     * @return the pool
+     */
     public static FixedThreadPool newInstance() {
         return new FixedThreadPool(-1);
     }
 
+    /**
+     * Creates a pool of the given size.
+     *
+     * @param numberOfThreads the number of threads, or {@code -1} for {@link #getNumberOfThreads()}
+     * @return the pool
+     */
     public static FixedThreadPool newInstance(int numberOfThreads) {
         return new FixedThreadPool(numberOfThreads);
     }
@@ -34,14 +48,29 @@ public class FixedThreadPool {
         return Executors.newFixedThreadPool(configuredThreadCount);
     }
 
+    /**
+     * The default number of threads: the available processors plus two.
+     *
+     * @return the number of threads
+     */
     public static int getNumberOfThreads() {
         return Runtime.getRuntime().availableProcessors() + 2;
     }
 
+    /**
+     * The pool's executor service.
+     *
+     * @return the executor service
+     */
     public ExecutorService getExecutor() {
         return executorService;
     }
 
+    /**
+     * The pool's core and maximum pool size, for the health output.
+     *
+     * @return the pool sizes by name
+     */
     public Map<String, Object> asThreadPoolInfo() {
         Map<String, Object> threadPoolInfoMap = new LinkedHashMap<>();
         ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) executorService;
@@ -50,6 +79,10 @@ public class FixedThreadPool {
         return threadPoolInfoMap;
     }
 
+    /**
+     * Shuts the pool down and waits up to 5 seconds for its tasks, then cancels them and waits up to 60 seconds more.
+     * When the calling thread is interrupted, the tasks are cancelled and the interrupt status is kept.
+     */
     public void shutdownAndAwaitTermination() {
         LOG.debug("Shutdown thread pool..");
         executorService.shutdown(); // Disable new tasks from being submitted

@@ -13,6 +13,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Builds an {@link HttpStatusValidation}, which validates an operation's response status code: a code listed as
+ * success passes, if it has response predicates only when one of them holds; any other code fails the operation.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class HttpStatusValidationBuilder extends LeafNodeBuilder {
 
@@ -21,10 +25,19 @@ public class HttpStatusValidationBuilder extends LeafNodeBuilder {
     @JsonProperty
     List<Integer> failed = new ArrayList<>();
 
+    /**
+     * Creates the builder without status codes.
+     */
     public HttpStatusValidationBuilder() {
         super(BuilderType.HttpStatusValidation);
     }
 
+    /**
+     * Adds success status codes, replacing the response predicates of codes already added.
+     *
+     * @param statusCode the status codes
+     * @return this builder
+     */
     public HttpStatusValidationBuilder success(Integer... statusCode) {
         for (int sc : statusCode) {
             success.put(sc, new ArrayList<>());
@@ -32,6 +45,14 @@ public class HttpStatusValidationBuilder extends LeafNodeBuilder {
         return this;
     }
 
+    /**
+     * Adds the known status codes in a range as success codes, replacing the response predicates of codes already
+     * added.
+     *
+     * @param fromStatusCodeInclusive the first status code of the range
+     * @param toStatusCodeInclusive   the last status code of the range
+     * @return this builder
+     */
     public HttpStatusValidationBuilder success(Integer fromStatusCodeInclusive, Integer toStatusCodeInclusive) {
         List<Integer> statusCodes = HttpStatus.range(fromStatusCodeInclusive, toStatusCodeInclusive).stream().map(HttpStatus::code).toList();
         for (int sc : statusCodes) {
@@ -40,16 +61,36 @@ public class HttpStatusValidationBuilder extends LeafNodeBuilder {
         return this;
     }
 
+    /**
+     * Adds a success status code with a response predicate; the code passes only when one of its predicates holds.
+     *
+     * @param statusCode               the status code
+     * @param responsePredicateBuilder the predicate's builder
+     * @return this builder
+     */
     public HttpStatusValidationBuilder success(Integer statusCode, ResponsePredicateBuilder responsePredicateBuilder) {
         success.computeIfAbsent(statusCode, list -> new ArrayList<>()).add(responsePredicateBuilder);
         return this;
     }
 
+    /**
+     * Adds failure status codes.
+     *
+     * @param statusCode the status codes
+     * @return this builder
+     */
     public HttpStatusValidationBuilder fail(Integer... statusCode) {
         failed.addAll(List.of(statusCode));
         return this;
     }
 
+    /**
+     * Adds the known status codes in a range as failure codes.
+     *
+     * @param fromStatusCodeInclusive the first status code of the range
+     * @param toStatusCodeInclusive   the last status code of the range
+     * @return this builder
+     */
     public HttpStatusValidationBuilder fail(Integer fromStatusCodeInclusive, Integer toStatusCodeInclusive) {
         failed.addAll(HttpStatus.range(fromStatusCodeInclusive, toStatusCodeInclusive).stream().map(HttpStatus::code).toList());
         return this;

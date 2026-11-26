@@ -7,16 +7,28 @@ import io.descoped.dc.api.node.WhenExpressionIsTrue;
 
 import java.util.Objects;
 
+/**
+ * Builds a {@link WhenExpressionIsTrue} condition, which holds when an expression evaluates to true.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class WhenExpressionIsTrueBuilder extends ConditionBuilder {
 
     @JsonProperty
     String identifier;
 
+    /**
+     * Creates the builder without an expression; set it with {@link #identifier(String)}.
+     */
     public WhenExpressionIsTrueBuilder() {
         super(BuilderType.ConditionWhenExpressionIsTrue);
     }
 
+    /**
+     * Sets the expression.
+     *
+     * @param identifier the expression
+     * @return this builder
+     */
     public WhenExpressionIsTrueBuilder identifier(String identifier) {
         this.identifier = identifier;
         return this;

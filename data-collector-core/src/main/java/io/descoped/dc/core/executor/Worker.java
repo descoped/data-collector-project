@@ -43,6 +43,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
+/**
+ * Runs one specification: executes its start node with the worker's execution context, publishes to the content
+ * store, keeps the health monitor up to date and tells the observers when it starts and finishes. Made with
+ * {@link #newBuilder()}.
+ */
 public class Worker {
 
     private static final Logger LOG = LoggerFactory.getLogger(Worker.class);
@@ -57,6 +62,16 @@ public class Worker {
     private final ExecutionContext context;
     private final boolean keepContentStoreOpenOnWorkerCompletion;
 
+    /**
+     * Creates a worker with a new id.
+     *
+     * @param specificationId                        the specification's id
+     * @param name                                   the specification's name
+     * @param workerObservers                        the observers to tell when the worker starts and finishes
+     * @param node                                   the start node
+     * @param context                                the execution context
+     * @param keepContentStoreOpenOnWorkerCompletion whether the topic is left open when the worker ends
+     */
     public Worker(String specificationId, String name, List<WorkerObserver> workerObservers, Node node, ExecutionContext context, boolean keepContentStoreOpenOnWorkerCompletion) {
         this.specificationId = specificationId;
         this.name = name;
@@ -67,22 +82,47 @@ public class Worker {
         this.keepContentStoreOpenOnWorkerCompletion = keepContentStoreOpenOnWorkerCompletion;
     }
 
+    /**
+     * Creates a worker builder.
+     *
+     * @return the builder
+     */
     public static WorkerBuilder newBuilder() {
         return new WorkerBuilder();
     }
 
+    /**
+     * The specification's id.
+     *
+     * @return the id
+     */
     public String getSpecificationId() {
         return specificationId;
     }
 
+    /**
+     * The specification's name.
+     *
+     * @return the name
+     */
     public String getSpecificationName() {
         return name;
     }
 
+    /**
+     * The worker's id.
+     *
+     * @return the id
+     */
     public UUID getWorkerId() {
         return workerId;
     }
 
+    /**
+     * The worker's execution context.
+     *
+     * @return the context
+     */
     public ExecutionContext context() {
         return context;
     }
@@ -91,11 +131,24 @@ public class Worker {
      * Aimed at test case scenarios where you want to execute subsequent runs
      */
 
+    /**
+     * Removes the iteration limit and resets the iteration count of the parallel handler, so that the worker can run
+     * again.
+     */
     public void resetMaxNumberOfIterations() {
         context.state(ParallelHandler.MAX_NUMBER_OF_ITERATIONS, null);
         ParallelHandler.countNumberOfIterations.set(-1);
     }
 
+    /**
+     * Runs the worker on the calling thread: tells the observers it starts, executes the start node, closes the topic
+     * (unless the content store is kept open) and shuts the thread pool down. Then it sets the status on the monitor
+     * ({@link WorkerStatus#CANCELED} when terminated, {@link WorkerStatus#FAILED} on another failure) and tells the
+     * observers, in reverse order, that it finished. A failure is rethrown, a checked exception wrapped in a
+     * {@link WorkerException}.
+     *
+     * @return the output context of the start node
+     */
     public ExecutionContext run() {
         AtomicBoolean startWorkerObserverIsFired = new AtomicBoolean(false);
         AtomicBoolean finishWorkerObserverIsFired = new AtomicBoolean(false);
@@ -286,6 +339,11 @@ public class Worker {
         monitor.setStartedTimestamp();
     }
 
+    /**
+     * Runs the worker in the common fork-join pool.
+     *
+     * @return the future output context of the start node
+     */
     public CompletableFuture<ExecutionContext> runAsync() {
         return CompletableFuture
                 .supplyAsync(this::run)
@@ -300,11 +358,18 @@ public class Worker {
                 });
     }
 
+    /**
+     * Asks the worker to stop, through its {@code Termination} service.
+     */
     public void terminate() {
         Termination termination = context.services().get(Termination.class);
         termination.terminate();
     }
 
+    /**
+     * Builds a {@link Worker} from a specification and its configuration, content store, headers, state and
+     * certificates.
+     */
     public static class WorkerBuilder {
 
         private static final Logger LOG = LoggerFactory.getLogger(WorkerBuilder.class);
@@ -333,71 +398,162 @@ public class Worker {
             // the state is in the fields
         }
 
+        /**
+         * Sets the specification to run.
+         *
+         * @param specificationBuilder the specification
+         * @return this builder
+         */
         public WorkerBuilder specification(SpecificationBuilder specificationBuilder) {
             this.specificationBuilder = specificationBuilder;
             return this;
         }
 
+        /**
+         * The specification to run.
+         *
+         * @return the specification, or {@code null} when none is set
+         */
         public SpecificationBuilder getSpecificationBuilder() {
             return specificationBuilder;
         }
 
+        /**
+         * Sets a node to run instead of a specification; the node builder's simple class name is used as the specification's
+         * id and name.
+         *
+         * @param nodeBuilder the node
+         * @return this builder
+         */
         public WorkerBuilder specification(NodeBuilder nodeBuilder) {
             this.nodeBuilder = nodeBuilder;
             return this;
         }
 
+        /**
+         * Sets the configuration, copied.
+         *
+         * @param configurationMap the configuration
+         * @return this builder
+         */
         public WorkerBuilder configuration(Map<String, String> configurationMap) {
             this.configurationMap = new ConfigurationMap(new LinkedHashMap<>(configurationMap));
             return this;
         }
 
+        /**
+         * Adds an observer of the worker's start and finish.
+         *
+         * @param observer the observer
+         * @return this builder
+         */
         public WorkerBuilder workerObserver(WorkerObserver observer) {
             this.workerObservers.add(observer);
             return this;
         }
 
+        /**
+         * Adds a header to the global request headers.
+         *
+         * @param name  the header's name
+         * @param value the header's value
+         * @return this builder
+         */
         public WorkerBuilder header(String name, String value) {
             headers.put(name, value);
             return this;
         }
 
+        /**
+         * Sets a variable of the execution context.
+         *
+         * @param name  the variable's name
+         * @param value the variable's value
+         * @return this builder
+         */
         public WorkerBuilder variable(String name, Object value) {
             variables.put(name, value);
             return this;
         }
 
+        /**
+         * Puts a value into the execution context's global state.
+         *
+         * @param name  the key
+         * @param value the value
+         * @return this builder
+         */
         public WorkerBuilder globalState(Object name, Object value) {
             globalState.put(name, value);
             return this;
         }
 
+        /**
+         * Puts a value into the execution context's state.
+         *
+         * @param name  the key
+         * @param value the value
+         * @return this builder
+         */
         public WorkerBuilder state(Object name, Object value) {
             state.put(name, value);
             return this;
         }
 
+        /**
+         * Makes the worker scan the directory for certificate bundles; the bundle is the one named in the specification's
+         * security configuration.
+         *
+         * @param scanDirectory the directory to scan
+         * @return this builder
+         */
         public WorkerBuilder buildCertificateFactory(Path scanDirectory) {
             this.sslFactoryScanDirectory = scanDirectory;
             return this;
         }
 
+        /**
+         * Makes the worker scan the directory for certificate bundles and use the named one.
+         *
+         * @param scanDirectory the directory to scan
+         * @param bundleName    the bundle's name
+         * @return this builder
+         */
         public WorkerBuilder buildCertificateFactory(Path scanDirectory, String bundleName) {
             this.sslFactoryScanDirectory = scanDirectory;
             this.sslFactoryBundleName = bundleName;
             return this;
         }
 
+        /**
+         * Makes the worker take its certificate bundle from the supplier when no scan directory is set; the bundle is the
+         * one named in the specification's security configuration unless a bundle name is set.
+         *
+         * @param businessSSLResourceSupplier supplies the bundle
+         * @return this builder
+         */
         public WorkerBuilder useBusinessSSLResourceSupplier(Supplier<? extends BusinessSSLResource> businessSSLResourceSupplier) {
             this.businessSSLResourceSupplier = businessSSLResourceSupplier;
             return this;
         }
 
+        /**
+         * Sets the topic to publish to; when none is set, the specification's topic is used.
+         *
+         * @param topicName the topic
+         * @return this builder
+         */
         public WorkerBuilder topic(String topicName) {
             this.topicName = topicName;
             return this;
         }
 
+        /**
+         * Sets the content store; when none is set, one is made from the configured connector.
+         *
+         * @param contentStore the content store
+         * @return this builder
+         */
         public WorkerBuilder contentStore(ContentStore contentStore) {
             this.contentStore = contentStore;
             return this;
@@ -406,30 +562,55 @@ public class Worker {
         /**
          * Use only when this is intended. If conent store is not closed after each worker is completet, this may lead to memory leaks.
          *
-         * @param keepContentStoreOpenOnWorkerCompletion
-         * @return
+         * @param keepContentStoreOpenOnWorkerCompletion whether the topic is left open when the worker ends
+         * @return this builder
          */
         public WorkerBuilder keepContentStoreOpenOnWorkerCompletion(boolean keepContentStoreOpenOnWorkerCompletion) {
             this.keepContentStoreOpenOnWorkerCompletion = keepContentStoreOpenOnWorkerCompletion;
             return this;
         }
 
+        /**
+         * Limits the number of iterations of the parallel handler.
+         *
+         * @param numberOfIterations the maximum number of iterations
+         * @return this builder
+         */
         public WorkerBuilder stopAtNumberOfIterations(Integer numberOfIterations) {
             state.put(ParallelHandler.MAX_NUMBER_OF_ITERATIONS, numberOfIterations);
             return this;
         }
 
+        /**
+         * Makes {@link #build()} log the execution plan.
+         *
+         * @return this builder
+         */
         public WorkerBuilder printExecutionPlan() {
             this.printExecutionPlan = true;
             return this;
         }
 
+        /**
+         * Makes {@link #build()} log the specification.
+         *
+         * @return this builder
+         */
         public WorkerBuilder printConfiguration() {
             this.printConfiguration = true;
             return this;
         }
 
 
+        /**
+         * Builds the worker: registers the services (configuration, termination, reordering, thread pool, HTTP client,
+         * certificate factory and content store) and creates the execution context. The defaults are an HTTP client
+         * timeout of 20 seconds, a request timeout of 15 seconds and the {@code discarding} connector.
+         *
+         * @return the worker
+         * @throws IllegalStateException when no specification or node is set, the start node is missing, a certificate
+         *                               source is set but no bundle is named, or no topic is set
+         */
         public Worker build() {
             if (configurationMap == null) {
                 configurationMap = new ConfigurationMap(new LinkedHashMap<>());

@@ -9,19 +9,43 @@ import io.descoped.dc.api.node.Base;
 
 import java.util.List;
 
+/**
+ * The base of the query handlers: {@link #execute(ExecutionContext)} reads the {@code QueryState} of the input
+ * context, evaluates its data as a list, an object or a string literal, and returns the result as the
+ * {@code QueryResult} state of a new context. A handler executes once: a second execution throws
+ * {@code IllegalStateException}.
+ *
+ * @param <N> the type of query node the handler executes
+ */
 public abstract class AbstractQueryHandler<N extends Base> extends AbstractHandler<N> implements QueryFeature {
 
     private ExecutionContext context;
 
+    /**
+     * Creates a handler for a query node.
+     *
+     * @param node the query node to execute
+     */
     protected AbstractQueryHandler(N node) {
         super(node);
     }
 
+    /**
+     * The context this handler was executed with.
+     *
+     * @return the context, or {@code null} before {@link #execute(ExecutionContext)}
+     */
     protected ExecutionContext context() {
         return context;
     }
 
     // Xpath and JqPath expression evaluation
+    /**
+     * Evaluates the expressions in a query expression against the variables of the context.
+     *
+     * @param expression the query expression
+     * @return the expression with its expressions evaluated, or the expression itself when it has none
+     */
     protected String evaluateExpression(String expression) {
         ExpressionLanguage el = new ExpressionLanguage(context());
         if (el.isExpression(expression)) {

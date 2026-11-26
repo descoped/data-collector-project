@@ -9,9 +9,18 @@ import io.descoped.dc.api.node.Query;
 
 import java.util.Map;
 
+/**
+ * Executes a {@code NextPage} node: evaluates each output query on the response body, and sets the result both as a
+ * variable of the output context and as a next position of the page context.
+ */
 @Handler(forClass = NextPage.class)
 public class NextPageHandler extends AbstractNodeHandler<NextPage> {
 
+    /**
+     * Creates the handler of a node.
+     *
+     * @param node the node to execute
+     */
     public NextPageHandler(NextPage node) {
         super(node);
     }

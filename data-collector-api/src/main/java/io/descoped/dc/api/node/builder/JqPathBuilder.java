@@ -7,12 +7,20 @@ import io.descoped.dc.api.node.JqPath;
 
 import java.util.Objects;
 
+/**
+ * Builds a {@link JqPath} query, which reads values from a JSON document with a jq expression.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class JqPathBuilder extends QueryBuilder {
 
     @JsonProperty
     String expression;
 
+    /**
+     * Creates the builder.
+     *
+     * @param expression the jq expression
+     */
     public JqPathBuilder(String expression) {
         super(BuilderType.QueryJqPath);
         this.expression = expression;

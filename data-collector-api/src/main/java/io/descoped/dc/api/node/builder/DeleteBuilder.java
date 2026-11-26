@@ -18,6 +18,10 @@ import java.util.Objects;
 
 import static io.descoped.dc.api.Builders.status;
 
+/**
+ * Builds a {@link Delete} operation: an HTTP DELETE request with headers, response validators, and steps, the
+ * pipes, that run on the response. Without a validator, the response must have status 200.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class DeleteBuilder extends OperationBuilder {
 
@@ -34,36 +38,78 @@ public class DeleteBuilder extends OperationBuilder {
         super(BuilderType.Delete);
     }
 
+    /**
+     * Creates the builder.
+     *
+     * @param id the operation's id, by which the specification refers to it as a function
+     */
     public DeleteBuilder(String id) {
         super(BuilderType.Delete);
         setId(id);
     }
 
+    /**
+     * Sets the operation's id.
+     *
+     * @param id the id
+     * @return this builder
+     */
     public DeleteBuilder id(String id) {
         setId(id);
         return this;
     }
 
+    /**
+     * Sets the request URL; it may contain expressions.
+     *
+     * @param urlString the URL
+     * @return this builder
+     */
     public DeleteBuilder url(String urlString) {
         this.url = urlString;
         return this;
     }
 
+    /**
+     * Adds a request header.
+     *
+     * @param name  the header's name
+     * @param value the header's value
+     * @return this builder
+     */
     public DeleteBuilder header(String name, String value) {
         requestHeaders.put(name, value);
         return this;
     }
 
+    /**
+     * Adds a response validator, such as an {@link HttpStatusValidationBuilder}.
+     *
+     * @param validationBuilder the validator's builder
+     * @return this builder
+     */
     public DeleteBuilder validate(LeafNodeBuilder validationBuilder) {
         validators.add(validationBuilder);
         return this;
     }
 
+    /**
+     * Adds a step to run on the response.
+     *
+     * @param builder the step's builder
+     * @return this builder
+     */
     public DeleteBuilder pipe(NodeBuilder builder) {
         pipes.add(builder);
         return this;
     }
 
+    /**
+     * Adds names of variables the operation returns to its caller after its steps have run.
+     *
+     * @param variableKeys the variables' names
+     * @return this builder
+     */
     public DeleteBuilder returnVariables(String... variableKeys) {
         Collections.addAll(returnVariables, variableKeys);
         return this;

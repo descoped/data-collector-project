@@ -14,6 +14,11 @@ import org.slf4j.LoggerFactory;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Executes a {@code Paginate} node: evaluates the flow's global variables into the context, then fetches pages one
+ * after another, prefetching the next page when the number of pending positions falls below the node's threshold, until
+ * the end of the stream or the node's until condition.
+ */
 @Handler(forClass = Paginate.class)
 public class PaginateHandler extends AbstractNodeHandler<Paginate> {
 
@@ -22,6 +27,11 @@ public class PaginateHandler extends AbstractNodeHandler<Paginate> {
     private static final Logger LOG = LoggerFactory.getLogger(PaginateHandler.class);
 
 
+    /**
+     * Creates the handler of a node.
+     *
+     * @param node the node to execute
+     */
     public PaginateHandler(Paginate node) {
         super(node);
     }
@@ -82,6 +92,12 @@ public class PaginateHandler extends AbstractNodeHandler<Paginate> {
 
     /**
      * Execute targets
+     * <p>
+     * Fetches one page: executes each target of the node with the node's variables and merges their outputs. When the
+     * node's until condition holds on the output, the output's page context is marked as the end of the stream.
+     *
+     * @param input the context of the page
+     * @return the merged output of the targets, with the page context
      */
     public ExecutionContext doPage(ExecutionContext input) {
         ExecutionContext output = ExecutionContext.of(input);

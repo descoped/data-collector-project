@@ -8,6 +8,9 @@ import io.descoped.dc.api.node.Query;
 
 import java.util.Objects;
 
+/**
+ * Builds a {@link BodyContains} predicate, which holds when a query of the response body gives a given string.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class BodyContainsBuilder extends ResponsePredicateBuilder {
 
@@ -16,6 +19,12 @@ public class BodyContainsBuilder extends ResponsePredicateBuilder {
     @JsonProperty
     String equalToStringLiteral;
 
+    /**
+     * Creates the builder.
+     *
+     * @param queryBuilder         the query that reads a string from the response body
+     * @param equalToStringLiteral the string the query's result must equal
+     */
     public BodyContainsBuilder(QueryBuilder queryBuilder, String equalToStringLiteral) {
         super(BuilderType.HttpResponseBodyContains);
         this.queryBuilder = queryBuilder;

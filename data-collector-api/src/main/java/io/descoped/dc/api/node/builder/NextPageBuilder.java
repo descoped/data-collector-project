@@ -14,16 +14,30 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+/**
+ * Builds a {@link NextPage} node, which reads the variables of the next page from a page's response, one query per
+ * variable.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class NextPageBuilder extends NodeBuilder {
 
     @JsonProperty("outputs")
     Map<String, QueryBuilder> outputMap = new LinkedHashMap<>();
 
+    /**
+     * Creates the builder without outputs.
+     */
     public NextPageBuilder() {
         super(BuilderType.NextPage);
     }
 
+    /**
+     * Adds an output variable, replacing an earlier one with the same name.
+     *
+     * @param variable     the variable's name
+     * @param queryBuilder the query that reads the variable's value from the response body
+     * @return this builder
+     */
     public NextPageBuilder output(String variable, QueryBuilder queryBuilder) {
         outputMap.put(variable, queryBuilder);
         return this;

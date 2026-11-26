@@ -8,6 +8,9 @@ import io.descoped.dc.api.node.RegEx;
 
 import java.util.Objects;
 
+/**
+ * Builds a {@link RegEx} query, which applies a regular expression to the string another query gives.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class RegExBuilder extends QueryBuilder {
 
@@ -16,6 +19,12 @@ public class RegExBuilder extends QueryBuilder {
     @JsonProperty
     String expression;
 
+    /**
+     * Creates the builder.
+     *
+     * @param queryBuilder the query whose result the regular expression is applied to
+     * @param expression   the regular expression
+     */
     public RegExBuilder(QueryBuilder queryBuilder, String expression) {
         super(BuilderType.QueryRegEx);
         this.queryBuilder = queryBuilder;

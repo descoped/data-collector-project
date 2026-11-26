@@ -7,12 +7,20 @@ import io.descoped.dc.api.node.StringBodyPublisherProducer;
 
 import java.util.Objects;
 
+/**
+ * Builds a {@link StringBodyPublisherProducer}, which gives a request body a fixed text.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class StringBodyPublisherProducerBuilder extends BodyPublisherProducerBuilder {
 
     @JsonProperty
     String data;
 
+    /**
+     * Creates the builder.
+     *
+     * @param data the text of the request body
+     */
     public StringBodyPublisherProducerBuilder(String data) {
         super(BuilderType.StringBodyPublisherProducer);
         this.data = data;
@@ -38,10 +46,18 @@ public class StringBodyPublisherProducerBuilder extends BodyPublisherProducerBui
         return Objects.hash(super.hashCode(), data);
     }
 
+    /**
+     * The {@link StringBodyPublisherProducer} this builder builds.
+     */
     public class StringBodyPublisherProducerNode extends LeafNode implements StringBodyPublisherProducer {
 
         private final String text;
 
+        /**
+         * Creates the node.
+         *
+         * @param text the text of the request body
+         */
         public StringBodyPublisherProducerNode(String text) {
             this.text = text;
         }

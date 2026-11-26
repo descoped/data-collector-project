@@ -11,9 +11,20 @@ import io.descoped.dc.api.node.AddContent;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Executes an {@code AddContent} node: buffers content in the content store of the flow's topic, under the evaluated
+ * position and content key. When the {@code ADD_BODY_CONTENT} state is true it buffers the response body as a
+ * document; otherwise it buffers the current page entry's content as a pagination entry, with the node's state
+ * evaluated.
+ */
 @Handler(forClass = AddContent.class)
 public class AddContentHandler extends AbstractNodeHandler<AddContent> {
 
+    /**
+     * Creates the handler of a node.
+     *
+     * @param node the node to execute
+     */
     public AddContentHandler(AddContent node) {
         super(node);
     }

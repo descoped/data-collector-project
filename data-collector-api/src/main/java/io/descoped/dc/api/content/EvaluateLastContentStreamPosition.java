@@ -4,20 +4,42 @@ import io.descoped.dc.api.context.ExecutionContext;
 import io.descoped.dc.api.el.EvaluationException;
 import io.descoped.dc.api.health.HealthResourceUtils;
 
+/**
+ * Reads the last position of the specification's topic from the content store, and updates the health monitor
+ * with it.
+ */
 public class EvaluateLastContentStreamPosition {
 
     private final ExecutionContext context;
 
+    /**
+     * Creates the evaluator.
+     *
+     * @param context the context, with the topic in its state ({@code global.topic}) and the content store in its
+     *                services
+     */
     public EvaluateLastContentStreamPosition(ExecutionContext context) {
         this.context = context;
     }
 
+    /**
+     * The last position of the topic's page topic ({@code <topic>-pages}).
+     *
+     * @return the position, or {@code null} if the topic has none
+     * @throws io.descoped.dc.api.el.EvaluationException if the topic is not set or the content store is absent or closed
+     */
     public String getLastPagePosition() {
         String topic = context.state("global.topic");
         checkIfTopicIsNull(topic);
         return getLastPositionForTopic(topic + "-pages");
     }
 
+    /**
+     * The last position of the topic.
+     *
+     * @return the position, or {@code null} if the topic has none
+     * @throws io.descoped.dc.api.el.EvaluationException if the topic is not set or the content store is absent or closed
+     */
     public String getLastPosition() {
         String topic = context.state("global.topic");
         checkIfTopicIsNull(topic);

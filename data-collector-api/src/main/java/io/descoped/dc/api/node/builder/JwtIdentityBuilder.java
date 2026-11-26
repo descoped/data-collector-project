@@ -7,6 +7,9 @@ import io.descoped.dc.api.node.JwtIdentity;
 
 import java.util.Objects;
 
+/**
+ * Builds a {@link JwtIdentity}: the header and claims of a JWT that the engine signs and sends as a grant.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class JwtIdentityBuilder extends IdentityBuilder {
 
@@ -15,6 +18,13 @@ public class JwtIdentityBuilder extends IdentityBuilder {
     @JsonUnwrapped
     JwtClaims claims;
 
+    /**
+     * Creates the builder.
+     *
+     * @param id           the identity's id
+     * @param headerClaims the header settings of the token
+     * @param claims       the claims of the token
+     */
     public JwtIdentityBuilder(String id, JwtHeaderClaims headerClaims, JwtClaims claims) {
         super(BuilderType.JwtIdentity, id);
         this.headerClaims = headerClaims;

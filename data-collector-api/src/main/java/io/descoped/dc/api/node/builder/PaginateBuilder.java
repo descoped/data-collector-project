@@ -17,6 +17,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * Builds a {@link Paginate} node, which pages through an API: for each page it runs its execute targets with its
+ * variables, prefetches the next page when few positions are pending, and stops when its condition holds.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class PaginateBuilder extends NodeWithIdBuilder {
 
@@ -37,31 +41,68 @@ public class PaginateBuilder extends NodeWithIdBuilder {
         super(BuilderType.Paginate);
     }
 
+    /**
+     * Creates the builder.
+     *
+     * @param id the paginate's id, by which the specification refers to it as a function
+     */
     public PaginateBuilder(String id) {
         super(BuilderType.Paginate);
         setId(id);
     }
 
+    /**
+     * Sets a variable given to the targets, replacing an earlier one with the same name. The value applies only
+     * when the input does not set the variable; an expression whose variable the input sets is evaluated.
+     *
+     * @param identifier the variable's name
+     * @param expression the variable's value or expression
+     * @return this builder
+     */
     public PaginateBuilder variable(String identifier, String expression) {
         variables.put(identifier, expression);
         return this;
     }
 
+    /**
+     * Adds a target that runs for each page.
+     *
+     * @param executeBuilder the target's builder
+     * @return this builder
+     */
     public PaginateBuilder iterate(ExecuteBuilder executeBuilder) {
         children.add(executeBuilder);
         return this;
     }
 
+    /**
+     * Sets the prefetch threshold: the next page is fetched when fewer positions than this are pending.
+     *
+     * @param threshold the threshold
+     * @return this builder
+     */
     public PaginateBuilder prefetchThreshold(int threshold) {
         this.threshold = threshold;
         return this;
     }
 
+    /**
+     * Sets the condition that stops the pagination. It is required: building fails without it.
+     *
+     * @param conditionBuilder the condition's builder
+     * @return this builder
+     */
     public PaginateBuilder until(ConditionBuilder conditionBuilder) {
         this.conditionBuilder = conditionBuilder;
         return this;
     }
 
+    /**
+     * Makes each page's response body be added as content, under the position in the given variable.
+     *
+     * @param positionVariable the name of the variable that holds the page's position
+     * @return this builder
+     */
     public PaginateBuilder addPageContent(String positionVariable) {
         this.positionVariable = positionVariable;
         this.addPageContent = true;

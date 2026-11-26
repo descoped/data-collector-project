@@ -12,11 +12,20 @@ import org.slf4j.LoggerFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
+/**
+ * Executes a {@code Console} node: logs at debug level the response's URL and status code, the context's variables
+ * (masked) and the current entry's content or the response body.
+ */
 @Handler(forClass = Console.class)
 public class ConsoleHandler extends AbstractNodeHandler<Console> {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConsoleHandler.class);
 
+    /**
+     * Creates the handler of a node.
+     *
+     * @param node the node to execute
+     */
     public ConsoleHandler(Console node) {
         super(node);
     }

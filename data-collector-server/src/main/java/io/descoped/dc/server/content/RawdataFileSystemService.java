@@ -117,7 +117,6 @@ public class RawdataFileSystemService implements Service {
         }
     }
 
-    @SuppressWarnings("try") // ContentStreamConsumer.close() is declared to throw Exception
     CompletableFuture<Void> createFuture(String topic, Path targetPath) {
         Metadata metadata = new Metadata();
         Detector detector = new DefaultDetector();

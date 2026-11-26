@@ -82,6 +82,10 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
 
 ### Changed
 
+- **Javadoc for api and core.** Every public element of their exported packages is documented, and Javadoc's doclint
+  checks them in full (`missing` is no longer excluded).
+- **`close()` of `ContentStore`, `ContentStream`, `ContentStreamConsumer` and `ContentStreamProducer`** throws no
+  checked exception; every implementation already closed without one.
 - **One reactor, one version.**
   - Every module has one version under `io.descoped.dc`, with a new BOM, `data-collector-bom`.
   - Artifact ids and JPMS module names are unchanged.
@@ -152,6 +156,12 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
 
 ### Fixed
 
+- **The worker history on `/health` keeps the latest 25 workers** (#56). Once full, it dropped the newest entry
+  instead of the oldest, so it showed the 25 oldest workers and the latest one, and it held 26.
+- **A `Process` fails when its output lacks any required variable** (#57). It failed only when the output had none of
+  them, so a `Process` without required outputs always failed and one with several passed when one was present.
+- **The `Execute specification` log of a node is YAML**, as for a specification; `NodeBuilder.serializeAsYaml()` gave
+  JSON.
 - **The client and content store metrics are recorded** (#25). The metrics agent's interceptors are ByteBuddy
   `Advice`; `MethodDelegation` could not define its helper classes on JDK 27, so no `dc_client_*` or
   `dc_content_stream_*` metric was recorded. A type the agent cannot instrument is now logged as a warning.

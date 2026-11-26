@@ -35,7 +35,6 @@ class EncryptionFailsClosedTest {
     }
 
     @Test
-    @SuppressWarnings("try") // ContentStore.close() is declared to throw Exception
     void thatNoEncryptionSettingMeansNoEncryption() throws Exception {
         try (ContentStore store = new RawdataClientContentStoreInitializer().initialize(configuration())) {
             assertNotNull(store.contentStream());
@@ -43,7 +42,6 @@ class EncryptionFailsClosedTest {
     }
 
     @Test
-    @SuppressWarnings("try") // ContentStore.close() is declared to throw Exception
     void thatKeyAndSaltEncrypt() throws Exception {
         try (ContentStore store = new RawdataClientContentStoreInitializer().initialize(configuration(
                 "rawdata.encryption.key", "password", "rawdata.encryption.salt", "salt"))) {

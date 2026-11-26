@@ -2,20 +2,41 @@ package io.descoped.dc.api.handler;
 
 import java.util.Objects;
 
+/**
+ * The data a query is evaluated on, with its kind, kept in the execution state.
+ *
+ * @param <T> the data's type
+ */
 public class QueryState<T> {
 
     private final QueryFeature.Type type;
     private final T data;
 
+    /**
+     * Creates the state.
+     *
+     * @param type the kind of data
+     * @param data the data
+     */
     public QueryState(QueryFeature.Type type, T data) {
         this.type = type;
         this.data = data;
     }
 
+    /**
+     * The kind of data.
+     *
+     * @return the kind
+     */
     public QueryFeature.Type type() {
         return type;
     }
 
+    /**
+     * The data.
+     *
+     * @return the data
+     */
     public T data() {
         return data;
     }

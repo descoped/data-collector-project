@@ -18,11 +18,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Executes an {@code HttpStatusValidation} node: the response's status code is a success when it is in the node's
+ * success list and has no response predicates or one of them holds; any other status code throws
+ * {@code HttpErrorException}, with secret headers masked.
+ */
 @Handler(forClass = HttpStatusValidation.class)
 public class HttpStatusValidationHandler extends AbstractHandler<HttpStatusValidation> {
 
     private static final Logger LOG = LoggerFactory.getLogger(HttpStatusValidationHandler.class);
 
+    /**
+     * Creates the handler of a node.
+     *
+     * @param node the node to execute
+     */
     public HttpStatusValidationHandler(HttpStatusValidation node) {
         super(node);
     }

@@ -5,15 +5,31 @@ import io.descoped.dc.api.context.ExecutionContext;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+/**
+ * Helpers of the health resources.
+ */
 public class HealthResourceUtils {
 
     private HealthResourceUtils() {
     }
 
+    /**
+     * Divides, giving zero for a zero denominator.
+     *
+     * @param numerator   the numerator
+     * @param denominator the denominator
+     * @return the quotient, or 0 if the denominator is 0
+     */
     public static float divide(long numerator, long denominator) {
         return denominator == 0 ? 0 : (float) (((double) numerator) / ((double) denominator));
     }
 
+    /**
+     * The time elapsed since a moment, as days, hours, minutes, seconds and milliseconds.
+     *
+     * @param since the moment, in milliseconds since the epoch
+     * @return the text
+     */
     public static String durationAsString(long since) {
         long elapsedTime = System.currentTimeMillis() - since;
 
@@ -46,6 +62,14 @@ public class HealthResourceUtils {
         );
     }
 
+    /**
+     * Sets the last position on the worker's health monitor in the context's services, if there is one. It reaches
+     * the core module's monitor by reflection.
+     *
+     * @param context      the context
+     * @param lastPosition the position
+     * @throws RuntimeException if the monitor cannot be reached
+     */
     public static void updateMonitorLastPosition(ExecutionContext context, String lastPosition) {
         try {
             Method getServiceMethod = context.services().getClass().getDeclaredMethod("get", Class.class);

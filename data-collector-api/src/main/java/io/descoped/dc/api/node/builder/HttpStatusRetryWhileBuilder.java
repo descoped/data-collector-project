@@ -10,22 +10,46 @@ import io.descoped.dc.api.node.HttpStatusRetryWhile;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Builds an {@link HttpStatusRetryWhile}: when an operation's response has the given status code, the engine waits
+ * for the given time and sends the request again.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class HttpStatusRetryWhileBuilder extends LeafNodeBuilder {
 
+    /**
+     * The status code that makes the request be sent again.
+     */
     @JsonProperty("statusCode")
     public Integer statusCode;
+    /**
+     * The unit of the time to wait before the request is sent again.
+     */
     @JsonProperty("duration")
     public TimeUnit duration;
+    /**
+     * The time to wait before the request is sent again, in {@link #duration} units.
+     */
     @JsonProperty("amount")
     public Integer amount;
     @JsonProperty("bodyContains")
     BodyContainsBuilder bodyContainsBuilder;
 
+    /**
+     * Creates the builder; set the status code and time with an {@code is} method.
+     */
     public HttpStatusRetryWhileBuilder() {
         super(BuilderType.HttpStatusRetryWhile);
     }
 
+    /**
+     * Sets the status code to retry on and the time to wait.
+     *
+     * @param statusCode the status code
+     * @param duration   the unit of the time to wait
+     * @param amount     the time to wait, in {@code duration} units
+     * @return this builder
+     */
     public HttpStatusRetryWhileBuilder is(Integer statusCode, TimeUnit duration, Integer amount) {
         this.statusCode = statusCode;
         this.duration = duration;
@@ -33,6 +57,14 @@ public class HttpStatusRetryWhileBuilder extends LeafNodeBuilder {
         return this;
     }
 
+    /**
+     * Sets the status code to retry on and the time to wait.
+     *
+     * @param statusCode the status code
+     * @param duration   the unit of the time to wait
+     * @param amount     the time to wait, in {@code duration} units
+     * @return this builder
+     */
     public HttpStatusRetryWhileBuilder is(HttpStatus statusCode, TimeUnit duration, Integer amount) {
         this.statusCode = statusCode.code();
         this.duration = duration;

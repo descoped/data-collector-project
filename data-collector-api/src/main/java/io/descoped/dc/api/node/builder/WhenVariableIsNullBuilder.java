@@ -7,16 +7,28 @@ import io.descoped.dc.api.node.WhenVariableIsNull;
 
 import java.util.Objects;
 
+/**
+ * Builds a {@link WhenVariableIsNull} condition, which holds when a variable is null.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class WhenVariableIsNullBuilder extends ConditionBuilder {
 
     @JsonProperty
     String identifier;
 
+    /**
+     * Creates the builder without a variable; set it with {@link #identifier(String)}.
+     */
     public WhenVariableIsNullBuilder() {
         super(BuilderType.ConditionWhenVariableIsNull);
     }
 
+    /**
+     * Sets the name of the variable.
+     *
+     * @param identifier the variable's name
+     * @return this builder
+     */
     public WhenVariableIsNullBuilder identifier(String identifier) {
         this.identifier = identifier;
         return this;

@@ -11,6 +11,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static net.bytebuddy.matcher.ElementMatchers.hasSuperType;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
+/**
+ * Instruments every {@link ContentStore} implementation with the metrics advice of {@link ContentStoreExporter}.
+ */
 public class ContentStoreAgent {
 
     private ContentStoreAgent() {
@@ -19,6 +22,12 @@ public class ContentStoreAgent {
     // installed once per JVM: a second agent would inline the advice again and count everything twice
     private static final AtomicBoolean INSTALLED = new AtomicBoolean();
 
+    /**
+     * Instruments the content stores, loaded and to be loaded, through the instrumentation. Only the first successful
+     * call in a JVM installs the agent; when installation fails, a later call tries again.
+     *
+     * @param inst the instrumentation to install the agent with
+     */
     public static void install(Instrumentation inst) {
         if (!INSTALLED.compareAndSet(false, true)) {
             return;

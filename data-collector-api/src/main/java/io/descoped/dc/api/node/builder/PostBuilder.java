@@ -19,6 +19,10 @@ import java.util.Objects;
 
 import static io.descoped.dc.api.Builders.status;
 
+/**
+ * Builds a {@link Post} operation: an HTTP POST request with headers and a body, response validators, and steps,
+ * the pipes, that run on the response. Without a validator, the response must have status 200.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class PostBuilder extends OperationBuilder {
 
@@ -37,41 +41,89 @@ public class PostBuilder extends OperationBuilder {
         super(BuilderType.Post);
     }
 
+    /**
+     * Creates the builder.
+     *
+     * @param id the operation's id, by which the specification refers to it as a function
+     */
     public PostBuilder(String id) {
         super(BuilderType.Post);
         setId(id);
     }
 
+    /**
+     * Sets the operation's id.
+     *
+     * @param id the id
+     * @return this builder
+     */
     public PostBuilder id(String id) {
         setId(id);
         return this;
     }
 
+    /**
+     * Sets the request URL; it may contain expressions.
+     *
+     * @param urlString the URL
+     * @return this builder
+     */
     public PostBuilder url(String urlString) {
         this.url = urlString;
         return this;
     }
 
+    /**
+     * Adds a request header.
+     *
+     * @param name  the header's name
+     * @param value the header's value
+     * @return this builder
+     */
     public PostBuilder header(String name, String value) {
         requestHeaders.put(name, value);
         return this;
     }
 
+    /**
+     * Sets the request body.
+     *
+     * @param bodyPublisherBuilder the body's builder
+     * @return this builder
+     */
     public PostBuilder data(BodyPublisherBuilder bodyPublisherBuilder) {
         this.bodyPublisherBuilder = bodyPublisherBuilder;
         return this;
     }
 
+    /**
+     * Adds a response validator, such as an {@link HttpStatusValidationBuilder}.
+     *
+     * @param validationBuilder the validator's builder
+     * @return this builder
+     */
     public PostBuilder validate(LeafNodeBuilder validationBuilder) {
         validators.add(validationBuilder);
         return this;
     }
 
+    /**
+     * Adds a step to run on the response.
+     *
+     * @param builder the step's builder
+     * @return this builder
+     */
     public PostBuilder pipe(NodeBuilder builder) {
         pipes.add(builder);
         return this;
     }
 
+    /**
+     * Adds names of variables the operation returns to its caller after its steps have run.
+     *
+     * @param variableKeys the variables' names
+     * @return this builder
+     */
     public PostBuilder returnVariables(String... variableKeys) {
         Collections.addAll(returnVariables, variableKeys);
         return this;

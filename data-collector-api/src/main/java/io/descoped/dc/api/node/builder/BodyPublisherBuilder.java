@@ -14,6 +14,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Builds a {@link BodyPublisher}, the request body of a post or put: plain text, URL-encoded form data or multipart
+ * form data. Each method sets the body's encoding; the last one called decides it.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class BodyPublisherBuilder extends OperationPublisherBuilder {
 
@@ -26,46 +30,96 @@ public class BodyPublisherBuilder extends OperationPublisherBuilder {
     @JsonProperty("partsData")
     List<BodyPart> parts = new ArrayList<>();
 
+    /**
+     * Creates the builder of an empty body.
+     */
     public BodyPublisherBuilder() {
         super(BuilderType.BodyPublisher);
     }
 
+    /**
+     * Sets a plain text body.
+     *
+     * @param text the text
+     * @return this builder
+     */
     public BodyPublisherBuilder plainText(String text) {
         this.plainText = new StringBodyPublisherProducerBuilder(text);
         this.encoding = FormEncoding.TEXT_PLAIN;
         return this;
     }
 
+    /**
+     * Sets a plain text body whose content a producer gives.
+     *
+     * @param bodyPublisherProducerBuilder the producer's builder
+     * @return this builder
+     */
     public BodyPublisherBuilder plainText(BodyPublisherProducerBuilder bodyPublisherProducerBuilder) {
         this.plainText = bodyPublisherProducerBuilder;
         this.encoding = FormEncoding.TEXT_PLAIN;
         return this;
     }
 
+    /**
+     * Sets a URL-encoded form body.
+     *
+     * @param data the URL-encoded data
+     * @return this builder
+     */
     public BodyPublisherBuilder urlEncoded(String data) {
         this.urlEncodedData = new StringBodyPublisherProducerBuilder(data);
         this.encoding = FormEncoding.APPLICATION_X_WWW_FORM_URLENCODED;
         return this;
     }
 
+    /**
+     * Sets a URL-encoded form body whose content a producer gives.
+     *
+     * @param bodyPublisherProducerBuilder the producer's builder
+     * @return this builder
+     */
     public BodyPublisherBuilder urlEncoded(BodyPublisherProducerBuilder bodyPublisherProducerBuilder) {
         this.urlEncodedData = bodyPublisherProducerBuilder;
         this.encoding = FormEncoding.APPLICATION_X_WWW_FORM_URLENCODED;
         return this;
     }
 
+    /**
+     * Adds a text part to a multipart form body, in UTF-8.
+     *
+     * @param name  the part's name
+     * @param value the part's text
+     * @return this builder
+     */
     public BodyPublisherBuilder textPart(String name, String value) {
         this.encoding = FormEncoding.MULTIPART_FORM_DATA;
         this.parts.add(new BodyPart(name, value, StandardCharsets.UTF_8));
         return this;
     }
 
+    /**
+     * Adds a file part to a multipart form body.
+     *
+     * @param name     the part's name
+     * @param filename the file's name
+     * @param value    the file's content
+     * @return this builder
+     */
     public BodyPublisherBuilder formPart(String name, String filename, byte[] value) {
         this.encoding = FormEncoding.MULTIPART_FORM_DATA;
         this.parts.add(new BodyPart(name, filename, value, StandardCharsets.UTF_8));
         return this;
     }
 
+    /**
+     * Adds a file part to a multipart form body, with text content in UTF-8.
+     *
+     * @param name     the part's name
+     * @param filename the file's name
+     * @param value    the file's content
+     * @return this builder
+     */
     public BodyPublisherBuilder formPart(String name, String filename, String value) {
         this.encoding = FormEncoding.MULTIPART_FORM_DATA;
         this.parts.add(new BodyPart(name, filename, value, StandardCharsets.UTF_8));

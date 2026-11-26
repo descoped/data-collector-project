@@ -6,10 +6,18 @@ import io.descoped.dc.api.http.Request;
 import io.descoped.dc.api.http.Response;
 import io.descoped.dc.api.node.Delete;
 
+/**
+ * Executes a {@code Delete} node: sends an HTTP DELETE request and handles its response.
+ */
 @SuppressWarnings("unchecked")
 @Handler(forClass = Delete.class)
 public class DeleteHandler extends OperationHandler<Delete> {
 
+    /**
+     * Creates the handler of a node.
+     *
+     * @param node the node to execute
+     */
     public DeleteHandler(Delete node) {
         super(node);
     }

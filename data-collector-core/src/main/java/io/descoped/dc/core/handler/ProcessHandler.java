@@ -7,9 +7,19 @@ import io.descoped.dc.api.http.Response;
 import io.descoped.dc.api.node.Process;
 import io.descoped.dc.api.services.ObjectCreator;
 
+/**
+ * Executes a {@code Process} node: creates the node's processor with the context's services, runs it with the
+ * response, and returns its output. It throws {@code IllegalStateException} when the output lacks any of the node's
+ * required output variables.
+ */
 @Handler(forClass = Process.class)
 public class ProcessHandler extends AbstractNodeHandler<Process> {
 
+    /**
+     * Creates the handler of a node.
+     *
+     * @param process the node to execute
+     */
     public ProcessHandler(Process process) {
         super(process);
     }
@@ -24,7 +34,7 @@ public class ProcessHandler extends AbstractNodeHandler<Process> {
 
         ExecutionContext processorOutput = processInstance.process(processInput);
 
-        if (node.requiredOutputs().stream().noneMatch(key -> processorOutput.variables().containsKey(key))) {
+        if (!node.requiredOutputs().stream().allMatch(key -> processorOutput.variables().containsKey(key))) {
             throw new IllegalStateException("A variable is missing!");
         }
 

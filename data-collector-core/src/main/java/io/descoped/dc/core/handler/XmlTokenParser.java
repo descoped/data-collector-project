@@ -35,9 +35,16 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
+/**
+ * The document parser of {@code XmlToken} queries: serializes and deserializes XML documents without DTDs or external
+ * entities, namespace-unaware, and reads each child element of the root as a document of its own, one at a time.
+ */
 @SupportHandler(forClass = XmlToken.class, selectorClass = DocumentParserFeature.class)
 public class XmlTokenParser implements DocumentParserFeature {
 
+    /**
+     * Creates a parser.
+     */
     public XmlTokenParser() {
         // stateless
     }

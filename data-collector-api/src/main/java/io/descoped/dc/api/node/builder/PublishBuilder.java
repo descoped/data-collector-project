@@ -10,12 +10,20 @@ import io.descoped.dc.api.node.Publish;
 import java.util.Iterator;
 import java.util.Objects;
 
+/**
+ * Builds a {@link Publish} node, which publishes the content added for the positions to the content stream.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class PublishBuilder extends NodeBuilder {
 
     @JsonProperty
     String positionVariableExpression;
 
+    /**
+     * Creates the builder.
+     *
+     * @param positionVariableExpression the expression that gives the position to publish
+     */
     public PublishBuilder(String positionVariableExpression) {
         super(BuilderType.Publish);
         this.positionVariableExpression = positionVariableExpression;

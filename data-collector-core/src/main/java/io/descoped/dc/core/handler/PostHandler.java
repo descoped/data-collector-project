@@ -14,10 +14,19 @@ import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.concurrent.Flow;
 
+/**
+ * Executes a {@code Post} node: sends an HTTP POST request with the body of the node's body publisher, or no body
+ * without one, and handles its response.
+ */
 @SuppressWarnings("unchecked")
 @Handler(forClass = Post.class)
 public class PostHandler extends OperationHandler<Post> {
 
+    /**
+     * Creates the handler of a node.
+     *
+     * @param node the node to execute
+     */
     public PostHandler(Post node) {
         super(node);
     }

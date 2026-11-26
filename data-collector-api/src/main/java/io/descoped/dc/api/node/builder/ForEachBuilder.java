@@ -12,6 +12,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Builds a {@link ForEach} node, which splits a document into items with a query and runs its steps, the pipes, for
+ * each item.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class ForEachBuilder extends NodeBuilder {
 
@@ -20,11 +24,22 @@ public class ForEachBuilder extends NodeBuilder {
     @JsonProperty("pipes")
     List<NodeBuilder> pipes = new ArrayList<>();
 
+    /**
+     * Creates the builder without steps.
+     *
+     * @param splitBuilder the query that splits the document into items
+     */
     public ForEachBuilder(QueryBuilder splitBuilder) {
         super(BuilderType.ForEach);
         this.splitBuilder = splitBuilder;
     }
 
+    /**
+     * Adds a step to run for each item.
+     *
+     * @param builder the step's builder
+     * @return this builder
+     */
     public ForEachBuilder pipe(NodeBuilder builder) {
         pipes.add(builder);
         return this;

@@ -15,6 +15,10 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+/**
+ * The health resource {@code thread-info}: every thread of the JVM, grouped by thread group, with its state and
+ * stack trace. It is rendered when the query has {@code threads} or {@code all}.
+ */
 @HealthRenderPriority(priority = 50)
 public class HealthThreadsResource implements HealthResource {
 
@@ -75,15 +79,34 @@ public class HealthThreadsResource implements HealthResource {
         return new ThreadStatus(threadGroups.size(), threads.size(), threadGroups);
     }
 
+    /**
+     * The threads of the JVM, grouped by thread group.
+     */
     @SuppressWarnings("WeakerAccess")
     public static class ThreadStatus {
+        /**
+         * The number of thread groups.
+         */
         @JsonProperty("thread-group-count")
         public final Integer threadGroupCount;
+        /**
+         * The number of threads.
+         */
         @JsonProperty("thread-count")
         public final Integer threadCount;
+        /**
+         * The threads by thread group name.
+         */
         @JsonProperty("threads")
         public final Map<String, List<ThreadInfo>> threadInfoList;
 
+        /**
+         * Creates the status.
+         *
+         * @param threadGroupCount the number of thread groups
+         * @param threadCount      the number of threads
+         * @param threadInfoMap    the threads by thread group name
+         */
         public ThreadStatus(Integer threadGroupCount, Integer threadCount, Map<String, List<ThreadInfo>> threadInfoMap) {
             this.threadGroupCount = threadGroupCount;
             this.threadCount = threadCount;
@@ -91,25 +114,64 @@ public class HealthThreadsResource implements HealthResource {
         }
     }
 
+    /**
+     * One thread.
+     */
     @SuppressWarnings("WeakerAccess")
     public static class ThreadInfo {
+        /**
+         * The thread's id.
+         */
         @JsonProperty
         public final Long id;
+        /**
+         * The thread's name.
+         */
         @JsonProperty
         public final String name;
+        /**
+         * The thread's state.
+         */
         @JsonProperty
         public final Thread.State state;
+        /**
+         * The thread's priority.
+         */
         @JsonProperty
         public final Integer priority;
+        /**
+         * Whether the thread is alive.
+         */
         @JsonProperty
         public final Boolean alive;
+        /**
+         * Whether the thread is interrupted.
+         */
         @JsonProperty
         public final Boolean interrupted;
+        /**
+         * {@code Daemon} for a daemon thread, else {@code Normal}.
+         */
         @JsonProperty
         public final String type;
+        /**
+         * The thread's stack trace, one element per frame.
+         */
         @JsonProperty("stackTrace")
         public final List<String> stackTraceElement;
 
+        /**
+         * Creates the thread info.
+         *
+         * @param id                 the thread's id
+         * @param name               the thread's name
+         * @param state              the thread's state
+         * @param priority           the thread's priority
+         * @param alive              whether the thread is alive
+         * @param interrupted        whether the thread is interrupted
+         * @param type               {@code Daemon} or {@code Normal}
+         * @param stackTraceElements the thread's stack trace
+         */
         public ThreadInfo(Long id, String name, Thread.State state, Integer priority, Boolean alive, Boolean interrupted, String type, List<String> stackTraceElements) {
             this.id = id;
             this.name = name;

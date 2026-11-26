@@ -4,9 +4,15 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.descoped.dc.api.node.Base;
 import io.descoped.dc.api.node.Body;
 
+/**
+ * Builds a {@link Body} query, which returns the response body unaltered.
+ */
 @JsonDeserialize(using = NodeBuilderDeserializer.class)
 public class BodyBuilder extends QueryBuilder {
 
+    /**
+     * Creates the builder.
+     */
     public BodyBuilder() {
         super(BuilderType.QueryBody);
     }

@@ -30,6 +30,10 @@ import java.util.concurrent.Flow;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * A body handler that appends the response body to a file and, when the download completes, decompresses the file in
+ * place if it is gzip compressed. A handler receives the body of one request.
+ */
 public class FileBodyHandler implements BodyHandler<Path> {
 
     private static final Logger LOG = LoggerFactory.getLogger(FileBodyHandler.class);
@@ -37,11 +41,21 @@ public class FileBodyHandler implements BodyHandler<Path> {
     private static final FileAttribute<Set<PosixFilePermission>> OWNER_ONLY = PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------"));
 
     private final Object lock = new Object();
+    /**
+     * The file the body is written to.
+     */
     protected final Path file;
     private final AtomicReference<Flow.Subscription> subscription = new AtomicReference<>();
     private final AtomicBoolean claimed = new AtomicBoolean();
     private final AtomicBoolean stopped = new AtomicBoolean();
 
+    /**
+     * Creates a handler that writes to a file.
+     *
+     * @param file the file, which must exist and be writable
+     * @throws NullPointerException  if the file is {@code null}
+     * @throws IllegalStateException if the file is not writable
+     */
     public FileBodyHandler(Path file) {
         Objects.requireNonNull(file);
         this.file = file;
@@ -61,6 +75,12 @@ public class FileBodyHandler implements BodyHandler<Path> {
         LOG.info("Start download: {}", file);
     }
 
+    /**
+     * Whether any of the buffers has bytes remaining.
+     *
+     * @param byteBuffers the buffers
+     * @return true when at least one buffer has bytes remaining
+     */
     public boolean hasRemaining(List<ByteBuffer> byteBuffers) {
         synchronized (lock) {
             for (ByteBuffer buf : byteBuffers) {
@@ -181,6 +201,11 @@ public class FileBodyHandler implements BodyHandler<Path> {
         return new FileBodyHandler(file);
     }
 
+    /**
+     * The file the body is written to.
+     *
+     * @return the file
+     */
     public Path getFile() {
         return file;
     }
