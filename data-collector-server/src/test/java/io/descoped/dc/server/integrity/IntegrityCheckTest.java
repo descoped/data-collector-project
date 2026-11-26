@@ -207,23 +207,25 @@ public class IntegrityCheckTest {
                 .value("data.collector.integrityCheck.dbSizeInMb", "100")
                 .build();
         ContentStoreComponent contentStoreComponent = ContentStoreComponent.create(configuration);
-        ContentStore contentStore = contentStoreComponent.getDelegate();
-        try (ContentStreamProducer producer = contentStore.contentStream().producer("repeat-stream")) {
-            for (String position : new String[]{"a", "b", "c", "d", "b"}) {
-                producer.publishBuilders(producer.builder().position(position).put("entry", "DATA".getBytes(StandardCharsets.UTF_8)));
-            }
-        }
-
-        Path dbPath = CommonUtils.currentPath().resolve("target").resolve("lmdb-repeat");
-        LmdbEnvironment.removePath(dbPath);
         IntegrityCheckJob job;
-        try (LmdbEnvironment lmdbEnvironment = new LmdbEnvironment(configuration, dbPath, "repeat-stream");
-             IntegrityCheckIndex index = new IntegrityCheckIndex(lmdbEnvironment)) {
-            job = new IntegrityCheckJob(configuration, contentStoreComponent, index, new IntegrityCheckJobSummary());
-            job.consume("repeat-stream");
-        }
+        try {
+            ContentStore contentStore = contentStoreComponent.getDelegate();
+            try (ContentStreamProducer producer = contentStore.contentStream().producer("repeat-stream")) {
+                for (String position : new String[]{"a", "b", "c", "d", "b"}) {
+                    producer.publishBuilders(producer.builder().position(position).put("entry", "DATA".getBytes(StandardCharsets.UTF_8)));
+                }
+            }
 
-        contentStoreComponent.close();
+            Path dbPath = CommonUtils.currentPath().resolve("target").resolve("lmdb-repeat");
+            LmdbEnvironment.removePath(dbPath);
+            try (LmdbEnvironment lmdbEnvironment = new LmdbEnvironment(configuration, dbPath, "repeat-stream");
+                 IntegrityCheckIndex index = new IntegrityCheckIndex(lmdbEnvironment)) {
+                job = new IntegrityCheckJob(configuration, contentStoreComponent, index, new IntegrityCheckJobSummary());
+                job.consume("repeat-stream");
+            }
+        } finally {
+            contentStoreComponent.close();
+        }
 
         assertEquals(5, job.getSummary().checkedPositions);
         assertEquals("b", job.getSummary().lastPosition);

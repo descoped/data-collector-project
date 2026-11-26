@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -68,6 +69,10 @@ public class IntegrityCheckJob {
         ContentStreamBuffer lastMessage = contentStream.lastMessage(topic);
         String lastPosition = lastMessage != null ? lastMessage.position() : contentStore.lastPosition(topic);
         summary.setLastPosition(lastPosition);
+        Predicate<ContentStreamBuffer> isLastMessage = lastMessage != null
+                ? buffer -> lastMessage.id().equals(buffer.id())
+                // a store without a last message (discarding): the last position, as in 2.x
+                : buffer -> lastPosition != null && lastPosition.equals(buffer.position());
         try {
             ContentStreamConsumer consumer = contentStream.consumer(topic);
             ContentStreamBuffer buffer;
@@ -88,8 +93,8 @@ public class IntegrityCheckJob {
 
                     index.writeSequence(buffer.id(), buffer.position());
 
-                    if (lastMessage != null ? lastMessage.id().equals(buffer.id()) : lastPosition != null && lastPosition.equals(buffer.position())) {
-                        LOG.info("Reached en of stream for topic: {}", topic);
+                    if (isLastMessage.test(buffer)) {
+                        LOG.info("Reached end of stream for topic: {}", topic);
                         break;
                     }
 

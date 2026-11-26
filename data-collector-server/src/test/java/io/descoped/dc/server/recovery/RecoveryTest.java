@@ -11,6 +11,8 @@ import io.descoped.dc.api.util.CommonUtils;
 import io.descoped.dc.server.content.ContentStoreComponent;
 import io.descoped.dc.server.db.LmdbEnvironment;
 import io.descoped.dc.server.db.SequenceDbHelper;
+import io.descoped.dc.server.integrity.IntegrityCheckIndex;
+import io.descoped.dc.server.integrity.IntegrityCheckJob;
 import io.descoped.dc.server.integrity.IntegrityCheckJobSummary;
 import io.descoped.dc.server.integrity.IntegrityCheckService;
 import io.descoped.dc.test.client.ResponseHelper;
@@ -32,6 +34,8 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Test requires vm arg: --add-opens java.base/java.nio=lmdbjava --add-exports=java.base/sun.nio.ch=lmdbjava
@@ -240,6 +244,45 @@ class RecoveryTest {
         Thread.sleep(1000);
 
         server.stop();
+    }
+
+    // #60: an index without a duplicate position has no stop message; recovery refuses before it copies anything
+    @Test
+    void thatRecoveryWithoutDuplicatesFailsBeforeCopying() throws Exception {
+        DynamicConfiguration configuration = DynamicConfiguration.builder()
+                .value("content.stream.connector", "rawdata")
+                .value("rawdata.client.provider", "memory")
+                .value("data.collector.integrityCheck.consumer.timeoutInSeconds", "1")
+                .value("data.collector.integrityCheck.dbSizeInMb", "100")
+                .value("data.collector.integrityCheck.database.location", "./target")
+                .build();
+        ContentStoreComponent contentStoreComponent = ContentStoreComponent.create(configuration);
+        RecoveryContentStoreComponent recoveryContentStoreComponent = RecoveryContentStoreComponent.create(configuration);
+        try {
+            ContentStore contentStore = contentStoreComponent.getDelegate();
+            try (ContentStreamProducer producer = contentStore.contentStream().producer("unique-test-stream")) {
+                for (String position : new String[]{"a", "b", "c"}) {
+                    producer.publishBuilders(producer.builder().position(position).put("entry", "DATA".getBytes(StandardCharsets.UTF_8)));
+                }
+            }
+            Path dbLocation = SequenceDbHelper.getSequenceDatabaseLocation(configuration);
+            LmdbEnvironment.removePath(SequenceDbHelper.topicDirectory(dbLocation, "unique-test-stream"));
+            try (LmdbEnvironment lmdbEnvironment = new LmdbEnvironment(configuration, dbLocation, "unique-test-stream");
+                 IntegrityCheckIndex index = new IntegrityCheckIndex(lmdbEnvironment)) {
+                new IntegrityCheckJob(configuration, contentStoreComponent, index, new IntegrityCheckJobSummary()).consume("unique-test-stream");
+            }
+
+            RecoveryWorker recoveryWorker = new RecoveryWorker(configuration, contentStoreComponent, recoveryContentStoreComponent);
+            assertThrows(IllegalStateException.class, () -> recoveryWorker.recover("unique-test-stream", "unique-target-stream"));
+            assertEquals("COMPLETED", recoveryWorker.monitor().build().status);
+            ContentStore recoveryContentStore = recoveryContentStoreComponent.getDelegate();
+            try (ContentStreamConsumer consumer = recoveryContentStore.contentStream().consumer("unique-target-stream")) {
+                assertNull(consumer.receive(1, TimeUnit.SECONDS), "nothing is copied to the target topic");
+            }
+        } finally {
+            recoveryContentStoreComponent.close();
+            contentStoreComponent.close();
+        }
     }
 
     @Test

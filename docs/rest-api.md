@@ -426,10 +426,10 @@ curl -H "Authorization: Bearer $DC_TOKEN" localhost:9990/metrics/-/healthy
 
 ## Integrity check
 
-An integrity check reads a topic from its first message until it reaches the topic's last message, found by its id
-(or until no message arrives for `data.collector.integrityCheck.consumer.timeoutInSeconds`, 15 by default). It writes
-every message id and position to an LMDB index in `<data.collector.integrityCheck.database.location>/<topic>`, then reports the
-positions that occur more than once. One check per topic runs at a time. See
+An integrity check reads a topic from its first message until it reaches the topic's last message, found by its id (or
+until no message arrives for `data.collector.integrityCheck.consumer.timeoutInSeconds`, 15 by default). It writes
+every message id and position to an LMDB index in `<data.collector.integrityCheck.database.location>/<topic>`, then
+reports the positions that occur more than once. One check per topic runs at a time. See
 [Administration: integrity check and recovery](administration.md#integrity-check-and-recovery).
 
 The topic is the path segment as given; it is used as a directory name under the LMDB location.

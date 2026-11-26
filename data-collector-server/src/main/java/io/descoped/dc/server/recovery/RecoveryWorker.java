@@ -79,12 +79,7 @@ public class RecoveryWorker {
             SequenceDbHelper sequenceDbHelper = new SequenceDbHelper(lmdbEnvironment, sequenceDb);
             PositionAndIdVersion firstPosition = sequenceDbHelper.findFirstPosition();
             monitor.setStartPosition(firstPosition.position());
-            PositionAndIdVersion lastPosition = sequenceDbHelper.findLastPosition();
-            if (lastPosition.id() == null) {
-                // the last position is found among the duplicate positions of the index; without one there is none (#60)
-                monitor.setEnded();
-                throw new IllegalStateException("The integrity check index of " + sourceTopic + " has no duplicate position to recover to");
-            }
+            PositionAndIdVersion lastPosition = stopMessage(sequenceDbHelper, sourceTopic);
             monitor.setLastPosition(lastPosition.position());
 
             int publishAtCount = 1000;
@@ -194,6 +189,16 @@ public class RecoveryWorker {
         bufferCounter.set(0);
         bufferedPositions.clear();
         monitor.resetBufferedPositions();
+    }
+
+    // the stop message is found among the duplicate positions of the index; without one there is none (#60)
+    private PositionAndIdVersion stopMessage(SequenceDbHelper sequenceDbHelper, String sourceTopic) {
+        PositionAndIdVersion lastPosition = sequenceDbHelper.findLastPosition();
+        if (lastPosition.id() == null) {
+            monitor.setEnded();
+            throw new IllegalStateException("The integrity check index of " + sourceTopic + " has no duplicate position to recover to");
+        }
+        return lastPosition;
     }
 
     /**
