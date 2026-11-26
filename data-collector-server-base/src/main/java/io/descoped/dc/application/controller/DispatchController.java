@@ -8,10 +8,18 @@ import io.undertow.util.Headers;
 import java.util.Map;
 import java.util.NavigableMap;
 
+/**
+ * Dispatches a request to the controller of its first path segment.
+ */
 public class DispatchController implements HttpHandler {
 
     private final NavigableMap<String, Controller> controllers;
 
+    /**
+     * Creates the dispatcher.
+     *
+     * @param controllers the controllers by context path
+     */
     public DispatchController(NavigableMap<String, Controller> controllers) {
         this.controllers = controllers;
     }

@@ -15,11 +15,17 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * The controllers in the health output: their context paths and methods.
+ */
 @HealthRenderPriority(priority = 40)
 public class HealthContextsResource implements HealthResource {
 
     private final List<ControllerContext> contexts = new ArrayList<>();
 
+    /**
+     * Creates the resource.
+     */
     public HealthContextsResource() {
         add("", Set.of(Request.Method.OPTIONS), CORSHandler.class);
         add("", Set.of(Request.Method.values()), DispatchController.class);
@@ -51,6 +57,13 @@ public class HealthContextsResource implements HealthResource {
         return contexts;
     }
 
+    /**
+     * Adds a controller.
+     *
+     * @param contextPath    the controller's context path
+     * @param allowedMethods the methods it serves
+     * @param controller     its class
+     */
     public void add(String contextPath, Set<Request.Method> allowedMethods, Class<?> controller) {
         contexts.add(new ControllerContext(contextPath, allowedMethods, controller));
     }

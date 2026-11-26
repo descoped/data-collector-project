@@ -16,10 +16,9 @@
     <description>The Undertow application of the data collector server: service discovery, routing, CORS, health and Prometheus metrics.</description>
 
     <properties>
-        <!-- Lint and doclint groups this module still breaks (javac -Xlint:all -Werror, Javadoc doclint all with
-             warnings failing); its revision empties both lists. -->
-        <doclint.exclusions>,-missing</doclint.exclusions>
-        <lint.exclusions>,-deprecation,-missing-explicit-ctor,-requires-automatic,-requires-transitive-automatic,-serial,-try,-unchecked</lint.exclusions>
+        <!-- Undertow, the Prometheus simpleclient and FreeMarker are automatic modules: javac warns on every
+             requires of them, which this module cannot change. -->
+        <lint.exclusions>,-requires-automatic,-requires-transitive-automatic</lint.exclusions>
     </properties>
 
     <dependencies>

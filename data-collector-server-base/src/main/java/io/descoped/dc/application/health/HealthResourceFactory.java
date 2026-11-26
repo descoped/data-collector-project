@@ -19,6 +19,9 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.UUID;
 
+/**
+ * Creates and holds the health resources: the discovered ones and those added at run time by id.
+ */
 public class HealthResourceFactory {
 
     private final List<Class<? extends HealthResource>> healthResourceClasses;
@@ -31,14 +34,31 @@ public class HealthResourceFactory {
         dynamicHealthResources = new LinkedHashMap<>();
     }
 
+    /**
+     * Creates the factory with the discovered resources.
+     *
+     * @return the factory
+     */
     public static HealthResourceFactory create() {
         return new HealthResourceFactory();
     }
 
+    /**
+     * The discovered resource of a class.
+     *
+     * @param healthResourceClass the class
+     * @param <R>                 the resource's type
+     * @return the resource, or {@code null}
+     */
     public <R extends HealthResource> R getHealthResource(Class<R> healthResourceClass) {
         return healthResourceClass.cast(healthResources.get(healthResourceClass));
     }
 
+    /**
+     * Every resource, discovered and added.
+     *
+     * @return the resources
+     */
     public List<HealthResource> getHealthResources() {
         SortedSet<HealthResource> resourceList = new TreeSet<>(new HealthResourcePriorityComparator());
         resourceList.addAll(healthResources.values());
@@ -101,16 +121,37 @@ public class HealthResourceFactory {
         return healthResourceMap;
     }
 
+    /**
+     * Creates a resource and adds it under an id.
+     *
+     * @param id                         the id
+     * @param healthDynamicResourceClass the resource's class
+     * @param <R>                        the resource's type
+     * @return the resource
+     */
     public <R extends HealthResource> R createAndAdddHealthResource(UUID id, Class<R> healthDynamicResourceClass) {
         HealthResource healthResource = createHealthResource(id, healthDynamicResourceClass);
         dynamicHealthResources.put(id, healthResource);
-        return (R) healthResource;
+        return healthDynamicResourceClass.cast(healthResource);
     }
 
+    /**
+     * The resource added under an id.
+     *
+     * @param id  the id
+     * @param <R> the resource's type
+     * @return the resource, or {@code null}
+     */
+    @SuppressWarnings("unchecked") // the caller names the type it registered under the id
     public <R extends HealthResource> R getHealthResource(UUID id) {
         return (R) dynamicHealthResources.get(id);
     }
 
+    /**
+     * Removes the resource added under an id.
+     *
+     * @param id the id
+     */
     public void removeHealthResource(UUID id) {
         dynamicHealthResources.remove(id);
     }

@@ -14,6 +14,9 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * The business certificate bundle read from the secret provider named in {@code data.collector.sslBundle.provider}.
+ */
 public class SecretManagerSSLResource implements BusinessSSLResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(SecretManagerSSLResource.class);
@@ -23,6 +26,11 @@ public class SecretManagerSSLResource implements BusinessSSLResource {
     private final String businessSslResourceProvider;
     private final SecretManagerClient secretManagerClient;
 
+    /**
+     * Creates the resource from the configuration.
+     *
+     * @param configuration the configuration
+     */
     public SecretManagerSSLResource(DynamicConfiguration configuration) {
         this.configuration = configuration;
         this.businessSslResourceProvider = configuration.find("data.collector.sslBundle.provider").orElse(null);
@@ -43,10 +51,20 @@ public class SecretManagerSSLResource implements BusinessSSLResource {
         this.secretManagerClient = SecretManagerClient.create(providerConfiguration);
     }
 
+    /**
+     * The secret provider's name.
+     *
+     * @return the name, or {@code null}
+     */
     public String getResourceProvider() {
         return businessSslResourceProvider;
     }
 
+    /**
+     * Whether a secret provider is configured.
+     *
+     * @return true if one is
+     */
     public boolean hasResourceProvider() {
         return hasBusinessSslResourceProvider;
     }

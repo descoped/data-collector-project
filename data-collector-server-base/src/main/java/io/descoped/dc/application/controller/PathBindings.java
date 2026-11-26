@@ -4,16 +4,30 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * A request path matched against a path template.
+ */
 public class PathBindings {
 
     private final UriTemplate templateElements;
     private final UriTemplate pathElements;
 
+    /**
+     * Creates the bindings.
+     *
+     * @param template the template
+     * @param path     the request path
+     */
     public PathBindings(UriTemplate template, UriTemplate path) {
         this.templateElements = template;
         this.pathElements = path;
     }
 
+    /**
+     * The template's variables with the request path's values.
+     *
+     * @return the values by variable name
+     */
     public Map<String, String> extractVariables() {
         Map<String, String> variables = new LinkedHashMap<>();
         Set<String> variableNames = templateElements.variableNames();
@@ -37,6 +51,11 @@ public class PathBindings {
         return element.startsWith("{") && element.endsWith("}");
     }
 
+    /**
+     * Whether the request path matches the template; a variable matches any element.
+     *
+     * @return true if it matches
+     */
     public boolean isSatisfied() {
         if (pathElements.size() > templateElements.size()) {
             return false;
@@ -55,6 +74,11 @@ public class PathBindings {
         return true;
     }
 
+    /**
+     * The number of elements in the request path.
+     *
+     * @return the number
+     */
     public int length() {
         return pathElements.size();
     }

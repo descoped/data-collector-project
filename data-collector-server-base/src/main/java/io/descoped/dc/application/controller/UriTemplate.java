@@ -9,6 +9,9 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * A path split into its elements, with the positions of its {@code {variable}} elements.
+ */
 public class UriTemplate {
 
     private static final Pattern PATH_GROUPS_PATTERN = Pattern.compile("(?:[^}{/]++|\\{[^}{]++})++");
@@ -17,6 +20,11 @@ public class UriTemplate {
     private final List<String> pathElements;
     private final Map<String, Integer> variableNamesAndElementPosition = new LinkedHashMap<>();
 
+    /**
+     * Splits a path.
+     *
+     * @param uri the path
+     */
     public UriTemplate(String uri) {
         this.path = uri;
         pathElements = parse(uri);
@@ -37,18 +45,39 @@ public class UriTemplate {
         return elements;
     }
 
+    /**
+     * The path.
+     *
+     * @return the path
+     */
     public String path() {
         return path;
     }
 
+    /**
+     * The path's elements.
+     *
+     * @return the elements
+     */
     public List<String> elements() {
         return pathElements;
     }
 
+    /**
+     * The names of the variables.
+     *
+     * @return the names
+     */
     public Set<String> variableNames() {
         return variableNamesAndElementPosition.keySet();
     }
 
+    /**
+     * The position of a variable.
+     *
+     * @param name the variable's name
+     * @return the position, or {@code null}
+     */
     public Integer variableIndex(String name) {
         if (!variableNamesAndElementPosition.containsKey(name)) {
             return -1;
@@ -56,6 +85,11 @@ public class UriTemplate {
         return variableNamesAndElementPosition.get(name);
     }
 
+    /**
+     * The number of elements.
+     *
+     * @return the number
+     */
     public int size() {
         return pathElements.size();
     }

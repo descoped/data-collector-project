@@ -53,6 +53,12 @@ public class CORSHandler implements HttpHandler {
     private final Set<String> allowedHeaders;
     private final boolean supportsCredential;
 
+    /**
+     * Creates a handler that allows the given origins, with the default methods and headers and no credentials.
+     *
+     * @param next           the handler of an allowed request
+     * @param originPatterns the allowed origins
+     */
     public CORSHandler(HttpHandler next, List<Pattern> originPatterns) {
         this(next, next, originPatterns, false);
     }
@@ -70,6 +76,18 @@ public class CORSHandler implements HttpHandler {
                 allowedHeaders);
     }
 
+    /**
+     * Creates the handler.
+     *
+     * @param next                  the handler of an allowed request
+     * @param fail                  the handler of a refused request
+     * @param originPatterns        the allowed origins
+     * @param supportsCredential    whether credentials are allowed
+     * @param preflightResponseCode the status code of a preflight answer
+     * @param maxAge                how long a preflight answer may be cached, in seconds; not -1
+     * @param allowedMethods        the allowed methods
+     * @param allowedHeaders        the allowed headers
+     */
     public CORSHandler(HttpHandler next, HttpHandler fail, List<Pattern> originPatterns, boolean supportsCredential,
                        int preflightResponseCode, long maxAge, Set<String> allowedMethods, Set<String> allowedHeaders) {
         this.next = next;
@@ -88,6 +106,8 @@ public class CORSHandler implements HttpHandler {
     }
 
     private static final class OutOfScopeException extends Exception {
+        private static final long serialVersionUID = 1L;
+
         public OutOfScopeException(String message) {
             super(message);
         }

@@ -1,3 +1,6 @@
+/**
+ * The data collector application on Undertow: service discovery, routing, CORS, health and Prometheus metrics.
+ */
 module io.descoped.dc.application {
 
     requires io.descoped.service.provider.api;

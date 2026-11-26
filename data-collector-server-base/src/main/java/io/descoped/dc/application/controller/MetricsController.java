@@ -16,11 +16,17 @@ import java.util.Set;
 
 // https://github.com/prometheus/client_java#counter
 // https://github.com/prometheus/client_java/blob/master/simpleclient_httpserver/src/main/java/io/prometheus/client/exporter/HTTPServer.java
+/**
+ * Serves {@code /metrics} in the Prometheus text format, and {@code /metrics/-/healthy}.
+ */
 public class MetricsController implements Controller {
 
     private static final String HEALTHY_RESPONSE = "Exporter is Healthy.";
     private final CollectorRegistry collectorRegistry;
 
+    /**
+     * Creates the controller.
+     */
     public MetricsController() {
         collectorRegistry = CollectorRegistry.defaultRegistry;
     }
@@ -67,6 +73,13 @@ public class MetricsController implements Controller {
         }
     }
 
+    /**
+     * The metric names asked for by {@code name[]} parameters.
+     *
+     * @param query the query string, or {@code null}
+     * @return the names
+     * @throws UnsupportedEncodingException never; UTF-8 is always supported
+     */
     protected static Set<String> parseQuery(String query) throws UnsupportedEncodingException {
         Set<String> names = new HashSet<>();
         if (query != null) {

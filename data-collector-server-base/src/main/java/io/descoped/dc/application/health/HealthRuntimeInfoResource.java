@@ -9,8 +9,18 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * The Java runtime in the health output.
+ */
 @HealthRenderPriority(priority = 45)
 public class HealthRuntimeInfoResource implements HealthResource {
+
+    /**
+     * Creates the resource.
+     */
+    public HealthRuntimeInfoResource() {
+        // the state is in the fields
+    }
 
     @Override
     public Optional<Boolean> isUp() {
