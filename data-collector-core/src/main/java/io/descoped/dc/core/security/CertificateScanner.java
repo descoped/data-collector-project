@@ -106,7 +106,7 @@ class CertificateScanner {
             Path trustCertificatesFile = file.getParent().resolve(secretsClient.readString(TRUST_CERTIFICATES));
             if (!trustCertificatesFile.toFile().exists()) {
                 // as for the bundle's other files: an incomplete bundle ends the scan
-                LOG.warn("Skipping bundle '{}'. Could not find trustCertificatesFile: {}", bundleName, trustCertificatesFile.toAbsolutePath());
+                LOG.warn("Skipping bundle '{}'. Could not find the file named by {}", bundleName, TRUST_CERTIFICATES);
                 return FileVisitResult.TERMINATE;
             }
             builder.trustCertificates(readFileToCharArray(trustCertificatesFile));

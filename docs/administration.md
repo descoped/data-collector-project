@@ -148,7 +148,7 @@ See [Client certificates](#client-certificates).
 | `data.collector.sslBundle.privateCertificate` | not set | `pem`: name of the secret with the private key. |
 | `data.collector.sslBundle.archiveCertificate` | not set | PKCS#12: name of the secret with the archive. |
 | `data.collector.sslBundle.passphrase` | not set | Name of the secret with the passphrase. |
-| `data.collector.sslBundle.trustCertificates` | not set | Name of the secret with the bundle's trust anchors: CA certificates in PEM, for servers whose chain is not in the JDK's `cacerts`. Not set: `cacerts` only. |
+| `data.collector.sslBundle.trustCertificates` | not set | Name of the secret with the bundle's trust anchors: CA certificates in PEM, for servers whose chain is not in the JDK's `cacerts`. Not set: `cacerts` only. Set, with the secret missing or empty: the bundle is not created. |
 
 ### Integrity check and recovery settings
 

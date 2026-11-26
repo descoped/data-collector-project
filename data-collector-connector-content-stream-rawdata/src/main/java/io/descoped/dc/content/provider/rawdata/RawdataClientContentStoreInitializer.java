@@ -74,7 +74,7 @@ public class RawdataClientContentStoreInitializer implements ContentStoreInitial
 
         String encryptionProvider = configuration.get("rawdata.encryption.provider");
         if (encryptionProvider != null && !Set.of(DYNAMIC, DYNAMIC_CONFIGURATION, GOOGLE).contains(encryptionProvider)) {
-            throw new IllegalStateException("Unknown rawdata.encryption.provider: " + encryptionProvider);
+            throw new IllegalStateException("Unknown rawdata.encryption.provider");
         }
         Map<String, String> secretsConfiguration = secretsConfiguration(encryptionProvider, configuration);
         if (secretsConfiguration.isEmpty()) {

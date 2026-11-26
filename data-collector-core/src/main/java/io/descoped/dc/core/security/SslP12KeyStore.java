@@ -67,7 +67,7 @@ class SslP12KeyStore implements SslKeyStore {
                     new SecureRandom()
             );
 
-            return new CertificateContext(context, (X509TrustManager) trustManagers[0], keyPair);
+            return new CertificateContext(context, (X509TrustManager) trustManagers[0], keyPair, cert);
 
         } catch (IOException | NoSuchAlgorithmException | KeyStoreException | UnrecoverableKeyException |
                  KeyManagementException | CertificateException e) {

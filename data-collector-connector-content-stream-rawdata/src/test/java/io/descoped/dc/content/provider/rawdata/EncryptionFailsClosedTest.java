@@ -74,7 +74,7 @@ class EncryptionFailsClosedTest {
 
     @Test
     void thatAnUnknownProviderIsRefused() {
-        assertRefused("Unknown rawdata.encryption.provider: google-secrets-manager",
+        assertRefused("Unknown rawdata.encryption.provider",
                 configuration("rawdata.encryption.provider", "google-secrets-manager",
                         "rawdata.encryption.key", "key-secret", "rawdata.encryption.salt", "salt-secret"));
     }
