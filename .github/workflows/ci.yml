@@ -59,13 +59,14 @@ jobs:
           distribution: temurin
           cache: maven
 
+      # --update-snapshots: a SNAPSHOT dependency is tested at its newest build, not at the one in the restored cache
       - name: Build, test and Javadoc
         if: env.ANALYSE != 'true'
-        run: ./mvnw --batch-mode --no-transfer-progress verify javadoc:javadoc
+        run: ./mvnw --batch-mode --no-transfer-progress --update-snapshots verify javadoc:javadoc
 
       - name: Build, test, Javadoc and coverage
         if: env.ANALYSE == 'true'
-        run: ./mvnw --batch-mode --no-transfer-progress verify javadoc:javadoc -P coverage
+        run: ./mvnw --batch-mode --no-transfer-progress --update-snapshots verify javadoc:javadoc -P coverage
 
       # The three images of the server, as release.yml builds them (for this runner's platform only, and not pushed),
       # each started with the filesystem example until it is ready: a Dockerfile or a runtime that misses a module is
