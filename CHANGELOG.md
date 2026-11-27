@@ -127,8 +127,10 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
   assumes that on `filesystem` and `gcs`, `local-temp-folder` is on durable, persistent storage (a persistent block
   device such as AWS EBS or a GCE persistent disk, or a `PersistentVolume`). On ephemeral storage (EC2 instance store,
   the container's writable layer, `emptyDir`, `tmpfs`) the guarantees fall away, and positions that were not uploaded
-  are silently lost. A recovery run repeated over the same source no longer duplicates the target's messages (on 3.0.1
-  the `filesystem` provider stored them twice and `postgres` failed on its key).
+  are silently lost. A crash of the operating system or the host, rather than the process, can lose up to
+  `avro-file.sync.interval` bytes per topic that were not yet forced to disk. A recovery run repeated over the same
+  source no longer duplicates the target's messages (on 3.0.1 the `filesystem` provider stored them twice and
+  `postgres` failed on its key).
 
   Every other dependency is at its latest version. classgraph 6 (for JDK 25 and later) scans only the sources it is
   given and no longer loads classes: dc enables the class path and the module path, as 4.x scanned by default, and

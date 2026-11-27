@@ -106,11 +106,21 @@ The class path defaults also hold the `postgres.driver.*` and `rawdata.postgres.
 **`local-temp-folder` must be on durable, persistent storage** with the `filesystem` and `gcs` providers. dc's
 durability rests on it:
 
-- rawdata-client forces each publish to disk in `local-temp-folder` before it returns.
+- rawdata-client writes each publish to its buffer file in `local-temp-folder` before it returns, and forces the
+  file to disk every `avro-file.sync.interval` bytes.
 - When the next process opens the topic, rawdata-client uploads what a crashed process left there.
 - dc counts a returned publish as committed and resumes after it.
 
-That holds only if the folder survives the process, the container and the machine.
+That holds only if the folder survives the process, the container and the machine (a stop, a restart or a replaced
+instance); what a crash of the machine itself can lose is below.
+
+**What a crash loses.** A returned publish survives a crash of the process or the container while the machine keeps
+running: what was written to the file is in the operating system's cache and reaches the disk. An operating system
+crash, a power loss, or a host that fails under its volume can lose what was not yet forced to disk: up to
+`avro-file.sync.interval` bytes per topic, which with the `gcs` profile (512 KiB) can be many publishes. dc then
+resumes behind those positions without knowing that they are missing. A smaller `avro-file.sync.interval` narrows that
+loss and costs more disk syncs (the `filesystem` profile uses 200 bytes, which syncs nearly every publish; the `gcs`
+profile 524288).
 
 | Storage for `local-temp-folder` | Durable? |
 |---|---|
@@ -125,9 +135,9 @@ instance loses every publish that was not yet uploaded (up to one upload window,
 resumes behind them without knowing that anything is missing, so the topic silently lacks those positions. The
 examples mount `/target` from the host.
 
-Each publish costs one disk sync: on a network block device such as EBS that bounds a topic at a few hundred publish
-calls per second. The `postgres` provider does not use `local-temp-folder`; there the database's own storage must be
-durable.
+The `postgres` provider does not use `local-temp-folder`: it commits each publish in the database, so a returned
+publish survives a host crash as far as the database's storage is durable and its `fsync` and `synchronous_commit`
+settings are on (PostgreSQL's defaults).
 
 ### Encryption
 
@@ -365,7 +375,8 @@ the container.
 With the `filesystem` or `gcs` provider, the mount that holds `local-temp-folder` must be durable, persistent storage,
 such as an AWS EBS volume, a GCE persistent disk or a Kubernetes `PersistentVolume`. On EC2 instance store, the
 container's writable layer, `emptyDir` or `tmpfs`, a crash or a replaced instance silently loses publishes that were
-not uploaded yet (see [Content store](#content-store)).
+not uploaded yet. Even on durable storage, a host crash can lose up to `avro-file.sync.interval` bytes per topic (see
+[Content store](#content-store)).
 
 ## Running without Docker
 
