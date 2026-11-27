@@ -61,17 +61,24 @@ class PaginationLifecycle {
                 }
             }
 
-            CompletableFuture<ExecutionContext> future = preFetchPage(ExecutionContext.of(output), threadPool);
-
+            startPage(ExecutionContext.of(output), threadPool);
             LOG.trace("Added prefetch: {}", logNextReturnVariables);
-            pageFutures.add(future);
-            lastPageFuture.set(future);
         });
     }
 
-    private CompletableFuture<ExecutionContext> preFetchPage(ExecutionContext context, FixedThreadPool threadPool) {
-        return CompletableFuture
-                .supplyAsync(() -> {
+    // records the page as the last page, and queues it, before it can run: a page that runs reports its expected
+    // positions, which can start the next prefetch, and that must chain on this page, not on the one before (#75)
+    private void startPage(ExecutionContext context, FixedThreadPool threadPool) {
+        CompletableFuture<Void> start = new CompletableFuture<>();
+        CompletableFuture<ExecutionContext> page = preFetchPage(start, context, threadPool);
+        lastPageFuture.set(page);
+        pageFutures.add(page);
+        start.complete(null);
+    }
+
+    private CompletableFuture<ExecutionContext> preFetchPage(CompletableFuture<Void> start, ExecutionContext context, FixedThreadPool threadPool) {
+        return start
+                .thenApplyAsync(ignored -> {
                     LOG.info("Pre-fetching next-page. Variables: {}", Masking.of(context.services().get(ConfigurationMap.class)).variables(context.variables()));
 
                     checkTerminationSignal(context.services().get(Termination.class));
@@ -111,11 +118,7 @@ class PaginationLifecycle {
     }
 
     private void doStartAsync(ExecutionContext context) {
-        FixedThreadPool threadPool = context.services().get(FixedThreadPool.class);
-
-        CompletableFuture<ExecutionContext> future = preFetchPage(context, threadPool);
-        pageFutures.add(future);
-        lastPageFuture.set(future);
+        startPage(context, context.services().get(FixedThreadPool.class));
     }
 
     private void monitorLifecycleUntilLoopConditionIsSatisfied(ExecutionContext context, Termination termination, HealthWorkerMonitor monitor) throws InterruptedException {

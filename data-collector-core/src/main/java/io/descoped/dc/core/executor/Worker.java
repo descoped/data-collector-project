@@ -12,6 +12,7 @@ import io.descoped.dc.api.http.Headers;
 import io.descoped.dc.api.node.FlowContext;
 import io.descoped.dc.api.node.Node;
 import io.descoped.dc.api.node.NodeWithId;
+import io.descoped.dc.api.node.Paginate;
 import io.descoped.dc.api.node.Security;
 import io.descoped.dc.api.node.builder.NodeBuilder;
 import io.descoped.dc.api.node.builder.SpecificationBuilder;
@@ -39,6 +40,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -143,6 +145,25 @@ public class Worker {
         return context;
     }
 
+    // the producers of the worker's topic, and of its page topic when a paginate adds page content
+    private void openTopics() {
+        String topic = node.configurations().flowContext().topic();
+        ContentStore contentStore = context.services().get(ContentStore.class);
+        if (topic == null || contentStore == null || contentStore.isClosed()) {
+            return;
+        }
+        contentStore.contentStream().producer(topic);
+        AtomicBoolean addsPageContent = new AtomicBoolean();
+        node.traverse(0, new LinkedHashSet<>(), new ArrayList<>(), (ancestors, descendant) -> {
+            if (descendant instanceof Paginate paginate && paginate.addPageContent()) {
+                addsPageContent.set(true);
+            }
+        });
+        if (addsPageContent.get()) {
+            contentStore.contentStream().producer(topic + "-pages");
+        }
+    }
+
     /*
      * Aimed at test case scenarios where you want to execute subsequent runs
      */
@@ -185,6 +206,10 @@ public class Worker {
 
             if (LOG.isDebugEnabled()) LOG.debug("[{}] Initialize worker monitor", workerId);
             initializeMonitor();
+
+            // rawdata-client 3.2 (G1): a topic's last message is exact once a producer of it exists, also after a crash,
+            // so the producers are opened before the worker or the specification's expressions read what is committed
+            openTopics();
 
             // what an earlier run of the topic committed is never written again (#71)
             if (context.services().contains(CommittedPositions.class)) {
