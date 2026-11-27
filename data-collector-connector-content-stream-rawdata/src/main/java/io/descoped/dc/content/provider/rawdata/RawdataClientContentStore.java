@@ -227,11 +227,14 @@ public class RawdataClientContentStore implements ContentStore {
 
     @Override
     public void closeTopic(String topic) {
-        lock(topic);
+        // not interruptibly: a stopped worker closes its topic in its finally, maybe on an interrupted thread, and
+        // closing uploads what the producer holds (rawdata-client 3.2 closes on an interrupted thread)
+        Lock lock = lockByTopic.computeIfAbsent(topic, t -> new ReentrantLock());
+        lock.lock();
         try {
             contentStream.closeAndRemoveProducer(topic);
         } finally {
-            unlock(topic);
+            lock.unlock();
         }
     }
 

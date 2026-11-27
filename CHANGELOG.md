@@ -203,6 +203,10 @@ dependencies and JDK 27. dc's own behaviour stays as in 2.x, except for the chan
   topic is now claimed before anything starts, and the request that loses gets 409 Conflict.
 - **An integrity check's buffer pool fails at once when it is empty** (#68), instead of waiting about 26 seconds for a
   buffer that no other thread can release.
+- **A stopped worker closes its topic on an interrupted thread.** The rawdata content store took the topic's lock
+  interruptibly in `closeTopic`, so a worker whose thread was interrupted while it waited for its pool failed in its
+  `finally` before its producer was closed, and what the producer held stayed in `local-temp-folder` until the next
+  start. The lock is now taken uninterruptibly, and the interrupt flag is kept.
 - **A page is no longer fetched twice** (#75). When a page completed, the next page was scheduled and only then
   recorded as the last page; if it ran first and started the next prefetch, that prefetch chained on the completed
   page and fetched the same page again, so its entries were published twice. A page is now recorded and queued before
